@@ -2,10 +2,12 @@
     <div>
         <div class="row mb-3">
             <div class="col-md-6 pull-right text-left">
-                <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('back')" ><i class="fas fa-chevron-circle-left"></i> Units</button>
+                <!-- <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('back')" ><i class="fas fa-chevron-circle-left"></i> Units</button> -->
+                <button class="btn btn-md" :class="'btn-info'" @click="proceedTab('back')" ><i class="fas fa-chevron-circle-left"></i> Units</button>
             </div>
             <div class="col-md-6 pull-right text-right">
-                <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('next')" ><i class="fas fa-chevron-circle-right"></i> Course Structure and Fees</button>
+                <!-- <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('next')" ><i class="fas fa-chevron-circle-right"></i> Course Structure and Fees</button> -->
+                <button class="btn btn-md" :class="'btn-info'" @click="proceedTab('next')" ><i class="fas fa-chevron-circle-right"></i> Course Structure and Fees</button>
             </div>
         </div>
         <div v-bind:class="'horizontal-line-wrapper-'+app_color+' my-3'" id="directEdit">
@@ -118,7 +120,17 @@
                 <div class="col-lg-12">
                     <div class="form-group formunits">
                         <label for="units">Units:</label>
-                        <ul id="sortable" class="list-group">
+                        <draggable :list="units_list" class="list-group" handle=".handle" @start="dragging = true" @end="dragging = false">
+                            <div class="list-group-item" v-for="(v,k) in units_list" :key="k">
+                                <span class="float-left"><i class="fas fa-align-justify handle mr-3"></i>{{v.unit_code}} - {{v.unit_title}}</span>
+                                <span class="float-right">
+                                    <!-- <button class="btn btn-sm" title="move up" @click="changeOrder('up',k)" :class="'btn-'+app_color"><i class="fas fa-arrow-circle-up"></i></button> -->
+                                    <!-- <button class="btn btn-sm" title="move down" @click="changeOrder('down',k)" :class="'btn-'+app_color"><i class="fas fa-arrow-circle-down"></i></button> -->
+                                    <button class="btn btn-sm" title="remove" @click="removeOrder(k)" :class="'btn-danger'"><i class="fas fa-trash"></i></button>
+                                </span>
+                            </div>
+                        </draggable>
+                        <!-- <ul id="sortable" class="list-group">
                             <li class="list-group-item" v-for="(v,k) in units_list" :key="k">
                                 <span class="float-left">{{v.unit_code}} - {{v.unit_title}}</span>
                                 <span class="float-right">
@@ -127,7 +139,7 @@
                                     <button class="btn btn-sm" title="remove" @click="removeOrder(k)" :class="'btn-danger'"><i class="fas fa-trash"></i></button>
                                 </span>
                             </li>
-                        </ul>
+                        </ul> -->
                         <!-- <multiselect 
                             v-model="units_list" 
                             :options="selections" 
@@ -190,6 +202,7 @@ export default {
       course: {},
       selections: [],
       units_list: [],
+      units_list_temp : [],
       cur_locations: {},
       is_open: 0,
       is_update: 0,
@@ -557,6 +570,7 @@ export default {
     edit(row) {
         this.is_update = 1;
         this.fields = row;
+        this.units_list = row.course_units;
         this.topFunction();
     },
     remove(row) {

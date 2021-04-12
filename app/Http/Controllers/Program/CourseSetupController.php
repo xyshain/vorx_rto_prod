@@ -256,7 +256,7 @@ class CourseSetupController extends Controller
                     'scheduled_hours' => isset($v['schedule_hours']) ? $v['schedule_hours'] : null,
                     'training_method_id' => isset($v['training_method_id']) ? $v['training_method_id'] : null,
                     'vet_flag' => isset($v['vet_flag']) ? 1 : 0,
-                    // 'extra_unit' => $request->extra_unit == 1 ? $request->extra_unit : 0,
+                    'extra_unit' => isset($v['extra_unit']) ? 1 : 0,
                     'active' => 1,
                     'course_code' => $cc,
                 ];
