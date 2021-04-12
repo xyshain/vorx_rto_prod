@@ -2,10 +2,12 @@
     <div>
         <div class="row mb-3">
             <div class="col-md-6 pull-left text-left">
-                <a class="btn btn-md" :class="'btn-'+app_color" href="/course" ><i class="fas fa-chevron-circle-left"></i> Course and Units</a>
+                <a class="btn btn-md" :class="'btn-danger'" href="/course" ><i class="fas fa-chevron-circle-left"></i> Course and Units</a>
+                <!-- <a class="btn btn-md" :class="'btn-'+app_color" href="/course" ><i class="fas fa-chevron-circle-left"></i> Course and Units</a> -->
             </div>
             <div class="col-md-6 pull-right text-right">
-                <button class="btn btn-md" :class="'btn-'+app_color" @click="checkCourse()" ><i class="fas fa-chevron-circle-right"></i> Units</button>
+                <!-- <button class="btn btn-md" :class="'btn-'+app_color" @click="checkCourse()" ><i class="fas fa-chevron-circle-right"></i> Units</button> -->
+                <button class="btn btn-md" :class="'btn-info'" @click="checkCourse()" ><i class="fas fa-chevron-circle-right"></i> Units</button>
             </div>
         </div>
         <div class="clearfix"></div>
