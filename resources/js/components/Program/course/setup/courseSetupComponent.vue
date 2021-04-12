@@ -17,7 +17,7 @@
                           <a v-bind:class="'nav-item disabled nav-link-'+app_color" id="nav-units-tab" data-toggle="tab" href="#nav-units" role="tab" aria-controls="nav-units" aria-selected="true">Units</a>
                           <a v-bind:class="'nav-item disabled nav-link-'+app_color" id="nav-prospectus-tab" data-toggle="tab" href="#nav-prospectus" role="tab" aria-controls="nav-prospectus" aria-selected="false">Course Delivery Location</a>
                           <a v-bind:class="'nav-item disabled nav-link-'+app_color" id="nav-matrix-tab" data-toggle="tab" href="#nav-matrix" role="tab" aria-controls="nav-matrix" aria-selected="false">Course Structure and Fees</a>
-                          <a v-bind:class="'nav-item disabled nav-link-'+app_color" id="nav-package-tab" data-toggle="tab" href="#nav-package" role="tab" aria-controls="nav-package" aria-selected="false">Course Package</a>
+                          <!-- <a v-bind:class="'nav-item disabled nav-link-'+app_color" id="nav-package-tab" data-toggle="tab" href="#nav-package" role="tab" aria-controls="nav-package" aria-selected="false">Course Package</a> -->
                           <a v-bind:class="'nav-item disabled nav-link-'+app_color" id="nav-class-tab" data-toggle="tab" href="#nav-class" role="tab" aria-controls="nav-class" aria-selected="false">Class</a>
                       </div>
                   </nav>
@@ -34,9 +34,9 @@
                       <div class="tab-pane fade" id="nav-matrix" role="tabpanel" aria-labelledby="nav-matrix-tab">
                           <course-matrix></course-matrix>
                       </div>
-                      <div class="tab-pane fade" id="nav-package" role="tabpanel" aria-labelledby="nav-package-tab">
+                      <!-- <div class="tab-pane fade" id="nav-package" role="tabpanel" aria-labelledby="nav-package-tab">
                           <course-package></course-package>
-                      </div>
+                      </div> -->
                       <div class="tab-pane fade" id="nav-class" role="tabpanel" aria-labelledby="nav-class-tab">
                           <course-class></course-class>
                       </div>

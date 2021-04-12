@@ -2,10 +2,12 @@
   <div>
     <div class="row mb-3">
         <div class="col-md-6 pull-right text-left">
-            <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('back')" ><i class="fas fa-chevron-circle-left"></i> Course Delivery Location</button>
+            <!-- <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('back')" ><i class="fas fa-chevron-circle-left"></i> Course Delivery Location</button> -->
+            <button class="btn btn-md" :class="'btn-info'" @click="proceedTab('back')" ><i class="fas fa-chevron-circle-left"></i> Course Delivery Location</button>
         </div>
         <div class="col-md-6 pull-right text-right">
-            <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('next')" ><i class="fas fa-chevron-circle-right"></i> Course Package</button>
+            <!-- <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('next')" ><i class="fas fa-chevron-circle-right"></i> Course Package</button> -->
+            <button class="btn btn-md" :class="'btn-info'" @click="proceedTab('next')" ><i class="fas fa-chevron-circle-right"></i> Class</button>
         </div>
     </div>
     <div id="accordion">
@@ -53,7 +55,7 @@
                     </div>
                     <!-- International Funding -->
                     <div v-bind:class="'horizontal-line-wrapper-'+app_color+' my-3'" id="directEdit">
-                        <h6>International Structure and Fees</h6>
+                        <h6>Offer Letter Structure and Fees</h6>
                     </div>
                     <div class="clearfix"></div>
                     <div class="form-padding-left-right">
@@ -154,9 +156,11 @@ export default {
         }
         if(proceed == 'next'){
             this.$parent.$children[4].fetchData()
-            document.getElementById("nav-package-tab").classList.remove('disabled')
+            // document.getElementById("nav-package-tab").classList.remove('disabled')
+            document.getElementById("nav-class-tab").classList.remove('disabled')
             // this.is_open = 0;
-            $('a[href="#nav-package"]').tab('show')
+            $('a[href="#nav-class"]').tab('show')
+            // $('a[href="#nav-package"]').tab('show')
         }
     },
     fetchData() {
