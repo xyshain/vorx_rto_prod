@@ -28,94 +28,76 @@
               :class="'btn btn-'+app_color+' text-primary btn-sm text-light'"
               style="padding: 0px 6px;"
             >
-              <i class="fas fa-award fa-sm"></i>
+              <i class="fas fa-user fa-sm"></i>
             </a>
           </span>
         </h6>
       </div>
       <div class="card-body">
-        <div v-bind:class="'horizontal-line-wrapper-'+app_color+' mb-2'">
-            <h6>Attendance Sheet</h6>
-        </div>
-        
-        <div :class="'horizontal-line-wrapper-'+app_color+' my-3'">
-        <h6>Add New</h6>
-        </div>
-        <div class="row">
-            <!-- <div class="col-md-6">
-                <div class="form-group">
-                    <label for="">Unit Code:</label>
-                    <multiselect v-model="new_student_attendance.unit" 
-                    :options="units" 
-                    :custom-label="getUnitInfo"
-                    placeholder="Select one" 
-                    label="getUnitInfo" 
-                    track-by="id"
-                    ></multiselect>
-                    <div v-if="new_student_attendance.errors">
-                    <span v-if="new_student_attendance.errors.unit" :class="['badge badge-danger']">{{ new_student_attendance.errors.unit[0] }}</span>
-                    </div>
-                </div>
-            </div> -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="">Date taken:</label>
-                    <span style="font-size: 74%;opacity: 73%;">( DD/M/YYYY )</span>
-                    <date-picker
-                    locale="en"
-                    v-model="admod.date_taken"
-                    :masks="{L:'DD/MM/YYYY'}"
-                    />
-                    <div v-if="errors">
-                    <span v-if="errors.date_taken" :class="['badge badge-danger']">{{ errors.date_taken[0] }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-              <div class="form-group">
-                  <label for="">Status:</label>
-                  <select name="" id="" class="form-control" v-model="admod.status">
-                      <option value="Present">Present</option>
-                      <option value="Absent">Absent</option>
-                      <option value="N/A">N/A</option>
-                  </select>
-                  <div v-if="errors">
-                  <span v-if="errors.status" :class="['badge badge-danger']">{{ errors.status[0] }}</span>
-                  </div>
-              </div>
-          </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="">Preferred hours</label>
-                    <input type="number" class="form-control" v-model="admod.preferred_hours" placeholder="8">
-                    <div v-if="errors"> 
-                      <span v-if="errors.preferred_hours" :class="['badge badge-danger']">{{ errors.preferred_hours[0] }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="">Actual hours:</label>
-                    <input type="number" class="form-control" v-model="admod.actual_hours" placeholder="0">
-                    <div v-if="errors">
-                      <span v-if="errors.actual_hours" :class="['badge badge-danger']">{{ errors.actual_hours[0] }}</span>
-                    </div>
-                </div>
-            </div>
-          
-      </div>
-      <div v-if="typeof admod.id != 'undefined'">
-          <button class="btn btn-success" @click="saveChanges()">
-              <i class="far fa-save"></i> Update
-          </button>
-          <button class="btn btn-danger" @click="cancelEdit()">
-              <i class="fa fa-window-close"></i> Cancel 
-          </button>
+      <div v-if="is_open == 0">
+        <button class="btn btn-success" @click="admod_attendance">
+          <i class="far fa-save"></i>
+          <span>Add</span>
+        </button>
       </div>
       <div v-else>
-            <button class="btn btn-success" @click="saveChanges()">
-              <i class="far fa-save"></i> Add
-          </button>
+        <button class="btn btn-success" @click="saveChanges()">
+              <i class="far fa-save"></i> Save Changes
+              </button>
+              <button class="btn btn-danger" @click="cancelEdit()">
+                  <i class="fa fa-window-close"></i> Cancel 
+              </button>
+              <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="">Date taken:</label>
+                        <span style="font-size: 74%;opacity: 73%;">( DD/M/YYYY )</span>
+                        <date-picker
+                        locale="en"
+                        v-model="admod.date_taken"
+                        :masks="{L:'DD/MM/YYYY'}"
+                        />
+                        <div v-if="errors">
+                        <span v-if="errors.date_taken" :class="['badge badge-danger']">{{ errors.date_taken[0] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                      <label for="">Status:</label>
+                      <select name="" id="" class="form-control" v-model="admod.status">
+                          <option value="Present">Present</option>
+                          <option value="Absent">Absent</option>
+                          <option value="N/A">N/A</option>
+                      </select>
+                      <div v-if="errors">
+                      <span v-if="errors.status" :class="['badge badge-danger']">{{ errors.status[0] }}</span>
+                      </div>
+                  </div>
+              </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="">Preferred hours</label>
+                        <input type="number" class="form-control" v-model="admod.preferred_hours" placeholder="8">
+                        <div v-if="errors"> 
+                          <span v-if="errors.preferred_hours" :class="['badge badge-danger']">{{ errors.preferred_hours[0] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="">Actual hours:</label>
+                        <input type="number" class="form-control" v-model="admod.actual_hours" placeholder="0">
+                        <div v-if="errors">
+                          <span v-if="errors.actual_hours" :class="['badge badge-danger']">{{ errors.actual_hours[0] }}</span>
+                        </div>
+                    </div>
+                </div>
+          </div>
+      </div>
+      <br>
+      <div v-bind:class="'horizontal-line-wrapper-'+app_color+' mb-2'">
+          <h6>Attendance</h6>
       </div>
       <div class="clear-fix" style="height:20px;"></div>
         <v-client-table
@@ -164,6 +146,7 @@ export default {
   name: "app-modal",
   data() {
     return {
+      is_open:0,
       app_color:app_color,
       attendance_sheet:[],
       student_attendance:window.student_attendance,
@@ -203,7 +186,14 @@ export default {
       this.getUnits();
   },
   methods: {
+    admod_attendance(){
+      this.is_open = 1;
+    },
+    toType(obj) {
+          return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+      },
     cancelEdit(){
+      this.is_open = 0;
       this.admod = {};
       this.errors = {};
 
