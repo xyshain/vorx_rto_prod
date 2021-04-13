@@ -16,10 +16,12 @@
             <!-- <form> -->
             <div class="row mb-3">
                 <div class="col-md-6 pull-right text-left">
-                    <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('course')" ><i class="fas fa-chevron-circle-left"></i> Course</button>
+                    <!-- <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('course')" ><i class="fas fa-chevron-circle-left"></i> Course</button> -->
+                    <button class="btn btn-md" :class="'btn-info'" @click="proceedTab('course')" ><i class="fas fa-chevron-circle-left"></i> Course</button>
                 </div>
                 <div class="col-md-6 pull-right text-right">
-                    <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('next')" ><i class="fas fa-chevron-circle-right"></i> Course Delivery Location</button>
+                    <!-- <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('next')" ><i class="fas fa-chevron-circle-right"></i> Course Delivery Location</button> -->
+                    <button class="btn btn-md" :class="'btn-info'" @click="proceedTab('next')" ><i class="fas fa-chevron-circle-right"></i> Course Delivery Location</button>
                 </div>
             </div>
               <div v-bind:class="'horizontal-line-wrapper-'+app_color+' mb-2'">
@@ -233,6 +235,21 @@
                           value="0"
                         />
                         <label class="custom-control-label" for="vet_flag">VET Flag Status</label>
+                      </div>
+                    </div>
+                  </div> <!--  -->
+                  <div class="col-lg-4">
+                    <div class="form-group">
+                      <div class="custom-control custom-switch my-3">
+                        <input
+                          type="checkbox"
+                          class="custom-control-input"
+                          id="extra_unit"
+                          name="extra_unit"
+                          v-model="unit.extra_unit"
+                          value="0"
+                        />
+                        <label class="custom-control-label" for="extra_unit">Set as Unit of Competency</label>
                       </div>
                     </div>
                   </div> <!--  -->

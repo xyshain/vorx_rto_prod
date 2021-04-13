@@ -2,7 +2,8 @@
   <div>
     <div class="row mb-3">
         <div class="col-md-6 pull-right text-left">
-            <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('back')" ><i class="fas fa-chevron-circle-left"></i> Course Package</button>
+            <!-- <button class="btn btn-md" :class="'btn-'+app_color" @click="proceedTab('back')" ><i class="fas fa-chevron-circle-left"></i> Course Package</button> -->
+            <button class="btn btn-md" :class="'btn-info'" @click="proceedTab('back')" ><i class="fas fa-chevron-circle-left"></i> Course Structure and Fees</button>
         </div>
         <div class="col-md-6 pull-right text-right">
             <button class="btn btn-md" :class="'btn-success'" @click="proceedTab('next')" ><i class="fas fa-check"></i> Finish</button>
@@ -191,9 +192,11 @@ export default {
         this.$parent.$store.state.classes = this.fields;
         document.getElementById("nav-class-tab").classList.add('disabled')
         if(proceed == 'back'){
-            document.getElementById("nav-package-tab").classList.remove('disabled')
-            this.$parent.$children[4].fetchData();
-            $('a[href="#nav-package"]').tab('show')
+            // document.getElementById("nav-package-tab").classList.remove('disabled')
+            document.getElementById("nav-matrix-tab").classList.remove('disabled')
+            this.$parent.$children[3].fetchData();
+            $('a[href="#nav-matrix"]').tab('show')
+            // $('a[href="#nav-package"]').tab('show')
         }
         if(proceed == 'next'){
             swal.fire({

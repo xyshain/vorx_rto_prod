@@ -21,7 +21,7 @@
               <span>
                 ( {{ id }} - {{ student.firstname }} {{ student.middlename }}
                 {{ student.lastname }} )
-                <a
+                <!-- <a
                   :href="this.completion_url"
                   :class="
                     'btn btn-' +
@@ -33,7 +33,7 @@
                   style="padding: 0px 6px"
                 >
                   <i class="fas fa-award fa-sm"></i>
-                </a>
+                </a> -->
               </span>
             </h6>
           </div>
@@ -462,6 +462,10 @@ export default {
         lastname: "",
         gender: "",
         date_of_birth: "",
+        verified : false,
+        student_type_id: "",
+        unique_student_id : '',
+
       },
       englishTestData: {},
       type: [],
@@ -614,12 +618,18 @@ export default {
           )._d;
           this.student.student_id =
             data.student_id == null ? `ETI${window.student}` : data.student_id;
-
+    
           this.type = response.data.type;
           this.country = response.data.country;
           this.state = response.data.state;
           this.agent = response.data.agent;
           this.wh_List = response.data.emailTrail;
+
+          this.student.unique_student_id = data.funded_detail.unique_student_id;
+          this.student.verified = data.funded_detail.verified;
+          this.student.student_type_id = data.student_type_id;
+          console.log(data);
+
           // this.checklist =
           //   data.checklist.checklist != null
           //     ? JSON.parse(data.checklist.checklist)
