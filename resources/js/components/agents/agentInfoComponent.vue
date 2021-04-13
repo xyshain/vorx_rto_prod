@@ -326,7 +326,7 @@
                         } else {
                         swal.fire({
                             type: "error",
-                            title: response.data.message,
+                            title: "Something went wrong.",
                         });
                         }
                     })
