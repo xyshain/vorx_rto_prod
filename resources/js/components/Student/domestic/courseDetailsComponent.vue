@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="float-left mr-2 pt-2" style="color: #858796 !important;font-weight: 700;margin-bottom: 0;"> Report Status:</div>
+    <div class="float-left mr-2 pt-2" style="color: #858796 !important;font-weight: 700;margin-bottom: 0;" v-if="this.course != null"> Report Status:</div>
     <div class="float-left" v-if="this.course != null">
       <select v-model="course.report_course_status_id" class="form-control" id="" @change="reportCourse">
         <option v-for="(i,k) in report_course_statuses" :key="k" :value="i.id">{{i.status}}</option>
@@ -566,6 +566,7 @@ export default {
       makeForm: [
         {
           FormTitle: "Course Details",
+          FormWrapper: 'level1',
           FormBody: [
             {
               type: "select",
@@ -585,6 +586,50 @@ export default {
               value: "",
               avetmiss: "required",
             },
+          ],
+        },
+        {
+          FormTitle: "none",
+          FormWrapper: 'level2',
+          FormBody: [
+            {
+              type: "hr",
+              col_size: 12,
+            },
+            {
+              type: "select",
+              lable: "Eligibility",
+              name: "eligibility",
+              items: {
+                E: "Eligible",
+                NE: "Not Eligible",
+              },
+              value: "",
+              col_size: 12,
+            },
+            {
+              type: "select",
+              lable: "Course Fee Type",
+              name: "course_fee_type",
+              items: "",
+              value: "",
+            },
+            {
+              type: "text",
+              lable: "Course Fee",
+              name: "course_fee",
+              value: "",
+            },
+          ]
+        },
+        {
+          FormTitle: "none",
+          FormWrapper: 'level3',
+          FormBody: [
+            {
+              type: "hr",
+              col_size: 12,
+            },
             {
               type: "select",
               lable: "Class",
@@ -597,15 +642,11 @@ export default {
             },
             {
               type: "select",
-              lable: "Eligibility",
-              name: "eligibility",
-              items: {
-                E: "Eligible",
-                NE: "Not Eligible",
-              },
+              lable: "Status",
+              name: "status_id",
+              items: window.slct_offer_lttr_statuses,
               value: "",
             },
-
             {
               type: "datepicker",
               lable: "Start Date",
@@ -623,26 +664,6 @@ export default {
               avetmiss: "required",
               disabled: "",
               // disabledDates: [],
-            },
-            {
-              type: "select",
-              lable: "Course Fee Type",
-              name: "course_fee_type",
-              items: "",
-              value: "",
-            },
-            {
-              type: "text",
-              lable: "Course Fee",
-              name: "course_fee",
-              value: "",
-            },
-            {
-              type: "select",
-              lable: "Status",
-              name: "status_id",
-              items: window.slct_offer_lttr_statuses,
-              value: "",
             },
             {
               type: "datepicker",
@@ -664,10 +685,11 @@ export default {
               value: "",
               col_size: 12,
             },
-          ],
+          ]
         },
         {
           FormTitle: "Enrolment Details",
+          FormWrapper: 'level3',
           FormBody: [
             // {
             //   type: "select",
@@ -920,8 +942,12 @@ export default {
 
       return `${subject_code} — ${description}`;
     },
+    findFormBody(){
+
+    },
     fetchData() {
-      // console.log('check');
+      console.log('check');
+      console.log(this.makeForm);
       if (this.getValues.class != "") {
         if (this.getValues.class !== 0) {
           this.getTimetable(this.getValues.class);
@@ -942,6 +968,19 @@ export default {
         );
       }
       // this.fundingtype(this.getValues.funding_type.traineeship_apprenticeship);
+
+      if (
+        this.getValues.location == "" ||
+        this.getValues.course_code == ""
+      ) {
+        console.log(this.makeForm);
+        this.makeForm.forEach(element => {
+          if(element.FormWrapper !== 'level1'){
+            
+          }
+        });
+      } else {
+      }
 
       if (window.course_details != null) {
         let vm = this;

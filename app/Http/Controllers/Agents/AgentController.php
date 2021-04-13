@@ -466,7 +466,8 @@ class AgentController extends Controller
         }else{
             // vorx theme and content
             // $pdf_template = 'agent-application.education-agent-agreement-pdf';
-            abort(403, 'No File Found.'); 
+            // abort(403, 'File not found.');
+            return response()->json(['status' => 'error', 'message' => 'Please provide us template.']);
         }
 
         \PDF::loadView($pdf_template, compact('detail','org','dated','app_form','signed'))->setPaper(array(0, 0, 612, 870), 'portrait')->save($path.'/education-agent-agreement.pdf')->stream($detail->agent_name .' - Education Agent Agreement.pdf');
@@ -517,12 +518,12 @@ class AgentController extends Controller
             }else{
                 // vorx theme and content
                 // $pdf_template = 'agent-application.education-agent-agreement-pdf';
-                abort(403, 'No File Found.'); 
+                abort(403, 'File not found.'); 
             }
 
             return \PDF::loadView($pdf_template, compact('detail','org','dated','app_form','signed'))->setPaper(array(0, 0, 612, 870), 'portrait')->stream($detail->agent_name. ' - Education Agent Agreement.pdf');
         }else{
-            abort(403, 'No File Found.'); 
+            abort(403, 'File not found.'); 
         }
     }
     // application_email
