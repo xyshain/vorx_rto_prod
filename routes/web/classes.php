@@ -58,3 +58,6 @@ Route::get('classes/{id}/time-table/reset', 'StudentClass\TimeTableController@re
 
 // generate time table from start date
 Route::get('/generate-time-table/{start_date}/{class_id}/{funded_course}', 'StudentClass\TimeTableController@generate_time_table');
+
+// new time table generation
+Route::get('/new-generate-time-table', 'StudentClass\TimeTableController@new_generate_time_table');
