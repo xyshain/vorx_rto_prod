@@ -21,5 +21,9 @@ Route::get('/reports/download/{type}/{file}', 'Reports\ReportsController@downloa
 Route::get('/reports/download/{type}/{file}/{rename}', 'Reports\ReportsController@download');
 Route::get('reports/student-list', 'Reports\ReportsController@student_list');
 
+
+//for generate attendance module
+Route::get('/reports/attendance-list-generator','Reports\ReportsController@attendance');
+
 // send progress report
 Route::post('/report/send/course-progress', 'Reports\ReportsController@send_course_progress');

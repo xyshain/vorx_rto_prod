@@ -39,7 +39,7 @@
                                         <div class="form-group">
                                             <label for="firstname">Firstname *</label>
                                             <input class="form-control" name="firstname" type="text" v-model="trainer.firstname" id="firstname">
-                                            <div v-if="toType(errors['trainer.firstname'])  !== 'undefined'" class="badge badge-danger">{{ errors['trainer.firstname'][0] }}</div>
+                                            <div v-if="typeof errors['trainer.firstname'] !== 'undefined'" class="badge badge-danger">{{ errors['trainer.firstname'][0] }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -55,14 +55,14 @@
                                         <div class="form-group">
                                             <label for="lastname">Lastname *</label>
                                             <input class="form-control" name="lastname" type="text" v-model="trainer.lastname" id="lastname">
-                                            <div v-if=" toType(errors['trainer.lastname']) !== 'undefined'" class="badge badge-danger">{{ errors['trainer.lastname'][0] }}</div>
+                                            <div v-if="typeof errors['trainer.lastname'] !== 'undefined'" class="badge badge-danger">{{ errors['trainer.lastname'][0] }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="phone_number">Phone Number *</label>
                                             <input class="form-control" name="phone_number" type="number" v-model="trainer.phone_number" id="phone_number">
-                                            <div v-if="toType(errors['trainer.phone_number']) !== 'undefined'" class="badge badge-danger">{{ errors['trainer.phone_number'][0] }}</div>
+                                            <div v-if="typeof errors['trainer.phone_number'] !== 'undefined'" class="badge badge-danger">{{ errors['trainer.phone_number'][0] }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -71,7 +71,7 @@
                                         <div class="form-group">
                                             <label for="email">Email *</label>
                                             <input class="form-control" name="email" type="email" v-model="trainer.email" id="email">
-                                            <div v-if="toType(errors['trainer.email']) !== 'undefined'" class="badge badge-danger">{{ errors['trainer.email'][0] }}</div>
+                                            <div v-if="typeof errors['trainer.email'] !== 'undefined'" class="badge badge-danger">{{ errors['trainer.email'][0] }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -124,24 +124,24 @@
                                 </div>
                             </div>
                             <div class="clearfix"></div>
-                            <div v-bind:class="'horizontal-line-wrapper-'+app_color+' mb-2'" v-if="hasPortal == 1">
+                            <div v-bind:class="'horizontal-line-wrapper-'+app_color+' mb-2'">
                                 <h6>Login Credentials <i>(Note: {{has_logins != false ? 'Username and Password is required to change logins' : 'Username and Password is required to create logins'}})</i></h6>
                             </div>
                             <div class="clearfix"></div>
-                            <div class="form-padding-left-right" v-if="hasPortal == 1">
+                            <div class="form-padding-left-right">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="username">Username</label>
                                             <input class="form-control" name="username" type="text" id="uname" v-model="user.username">
-                                            <div v-if="toType(errors['user.username']) !== 'undefined'" class="badge badge-danger">{{ errors['user.username'][0] }}</div>
+                                            <div v-if="typeof errors['user.username'] !== 'undefined'" class="badge badge-danger">{{ errors['user.username'][0] }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="password">Password</label>
                                             <input class="form-control" name="password" type="password" id="password" :placeholder="has_logins != false ? 'Fill to change password' : 'Fill to create password'" v-model="user.make_password">
-                                            <div v-if="toType(errors['user.make_password']) !== 'undefined'" class="badge badge-danger">{{ errors['user.make_password'][0] }}</div>
+                                            <div v-if="typeof errors['user.make_password'] !== 'undefined'" class="badge badge-danger">{{ errors['user.make_password'][0] }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -214,7 +214,6 @@ export default {
                 trainer_id : window.trainer_id,
                 csrfToken: '',
                 errors: {},
-                hasPortal : window.hasPortal,
             };
         },
         created(){
@@ -229,9 +228,6 @@ export default {
             this.has_logins = typeof window.hasLogins.id !== 'undefined' ?  window.hasLogins.id : false;
         },
         methods: {
-            toType(obj) {
-                return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
-            },
             locInfo({postcode,suburb,state}){
                 return `${postcode} - ${suburb} - ${state}`;
             },
@@ -270,7 +266,6 @@ export default {
                     let str = s.charAt(0).toUpperCase() + s.slice(1)
                     return str.replace('_', ' ')
                 }
-                // console.log('test');
                 
                 if(typeof vm.user.username !== 'undefined' && ['',null].indexOf(vm.user.username) == -1){
                     username = vm.user.username;
@@ -297,7 +292,7 @@ export default {
                     }
                 });
 
-                // console.log('test 2');
+
                 // console.log(vm.errors)
                 if(username != null && password != null){
                     delete error['user.make_password'];
@@ -305,24 +300,17 @@ export default {
                 }
 
                 if(username == null && password == null && vm.has_login == false){
-                    console.log('in');
                     delete error['user.make_password'];
                     delete error['user.username'];
                 }
 
                 this.errors = error;
 
-                // console.log(vm)
-                // console.log(error.length);
-                console.log(vm.has_logins);
-                console.log(username);
-                console.log(password);
-
                 if(error.length > 0){
                     return false;
                 }
-                // console.log('in');
-                if(vm.has_logins === false && typeof username != null && password != null){
+                
+                if(vm.has_logins == false && typeof username != null && password != null){
                     
                     delete error['user.make_password'];
                     delete error['user.username'];
@@ -340,7 +328,7 @@ export default {
                             vm.saveChanges();
                         }
                     })
-                }else if(vm.has_logins !== false && typeof username != null && password != null){
+                }else if(vm.has_logins != false && typeof username != null && password != null){
                     swal.fire({
                         title: 'Are you sure to change password?',
                         // text: "You won't be able to revert this!",
@@ -354,12 +342,10 @@ export default {
                             vm.saveChanges();
                         }
                     })
-                }else if(vm.has_logins !== false && username != null && password == null){
+                }else if(vm.has_logins != false && typeof username != null && password == null){
                     vm.saveChanges();
-                }else if (vm.has_logins === false && username == null && password == null){
+                }else if (vm.has_logins == false && typeof username == null && password == null){
                     vm.saveChanges();
-                }else {
-                    console.log('last');
                 }
 
                 

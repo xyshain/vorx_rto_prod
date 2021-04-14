@@ -232,10 +232,6 @@ export default {
 };
 </script>
 
-<style scoped>
-.list-group-item { border: none; }
-</style>
-
 <style>
 .dropdown-submenu {
     position: relative;

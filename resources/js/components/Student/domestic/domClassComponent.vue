@@ -18,6 +18,9 @@
                     aria-expanded="false"
                     :aria-controls="'collapse'+cl.id"
                     >{{cl.student_class.desc}}({{cl.course_code}}) - {{cl.total_hours}} total hours</button>
+                    <div class="d-inline-block float-right">
+                        <a :href="'/attendance/pdf/'+cl.id" target="_blank" class="btn btn-warning" title="Generate PDF"><i class="fas fa-file-pdf"></i></a>
+                    </div>
                 </h2>
                 </div>
                 <div
@@ -27,32 +30,24 @@
                 :data-parent="'#accordion'+cl.id"
                 >
                 <div class="card-body">
-                    <div class="row mb-3">
-                    <div class="col-md-12 pull-right text-right">
-                            <!-- <a type="button" v-bind:class="'btn btn-info btn-sm'" target="_blank" :href="'/classes/attendance/'+cl.class_id" title="Go to class module"><i class="fas fa-eye"></i>  View class</a> -->
-                            <a type="button" v-bind:class="'btn btn-'+app_color+' btn-sm'" target="_blank" :href="'/attendance/pdf/'+cl.id"><i class="fas fa-file-pdf"></i>  Generate Student Attendance</a>
+                    <div v-if="is_open == false">
+                        <div class="col-md-12 pull-right text-right">
+                        <button class="btn btn-success" @click="admod_attendance">
+                        <i class="far fa-save"></i>
+                        <span>Add</span>
+                        </button>
+                        </div>
                     </div>
-                    </div>
-                    <div :class="'horizontal-line-wrapper-'+app_color+' my-3'">
-                    <h6>Add New</h6>
-                    </div>
-                    <div class="row">
-                        <!-- <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="">Unit Code:</label>
-                                <multiselect v-model="cl.unit" 
-                                @select="getPrefTime(index)"
-                                :options="cl.units" 
-                                :custom-label="getUnitInfo"
-                                placeholder="Select one" 
-                                label="getUnitInfo" 
-                                track-by="id"
-                                ></multiselect>
-                                <div v-if="cl.errors">
-                                <span v-if="cl.errors.unit" :class="['badge badge-danger']">{{ cl.errors.unit[0] }}</span>
-                                </div>
-                            </div>
-                        </div> -->
+                    <div v-else>
+                        <div class="col-md-12 pull-right text-right">
+                            <button class="btn btn-success" @click="saveChanges(index)">
+                                <i class="far fa-save"></i> Save Changes
+                            </button>
+                            <button class="btn btn-danger" @click="cancelEdit(index)">
+                                <i class="fa fa-window-close"></i> Cancel 
+                            </button>
+                        </div>
+                        <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="">Date taken:</label>
@@ -81,44 +76,45 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="">Preferred hours:</label>
-                                <input type="number" class="form-control" v-model="cl.admod.preferred_hours" placeholder="8">
-                                <div v-if="cl.errors">
-                                <span v-if="cl.errors.preferred_hours" :class="['badge badge-danger']">{{ cl.errors.preferred_hours[0] }}</span>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="">Preferred hours:</label>
+                                    <input type="number" class="form-control" v-model="cl.admod.preferred_hours" placeholder="8">
+                                    <div v-if="cl.errors">
+                                    <span v-if="cl.errors.preferred_hours" :class="['badge badge-danger']">{{ cl.errors.preferred_hours[0] }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="">Actual hours:</label>
+                                    <input type="number" class="form-control" v-model="cl.admod.actual_hours" placeholder="0">
+                                    <div v-if="cl.errors">
+                                    <span v-if="cl.errors.actual_hours" :class="['badge badge-danger']">{{ cl.errors.actual_hours[0] }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="">Actual hours:</label>
-                                <input type="number" class="form-control" v-model="cl.admod.actual_hours" placeholder="0">
-                                <div v-if="cl.errors">
-                                <span v-if="cl.errors.actual_hours" :class="['badge badge-danger']">{{ cl.errors.actual_hours[0] }}</span>
-                                </div>
-                            </div>
+                        <div class="row">
+                            
                         </div>
+                        <!-- <div v-if="toType(cl.admod.id) != 'undefined'">
+                            <button class="btn btn-success" @click="saveChanges(index)">
+                                <i class="far fa-save"></i> Update
+                            </button>
+                            <button class="btn btn-danger" @click="cancelEdit(index)">
+                                <i class="fa fa-window-close"></i> Cancel 
+                            </button>
+                        </div>
+                        <div v-else>
+                            <button class="btn btn-success" @click="saveChanges(index)">
+                                <i class="far fa-save"></i> Add
+                            </button>
+                        </div> -->
                     </div>
-                    <div class="row">
-                        
                     </div>
-                    <div v-if="typeof cl.admod.id != 'undefined'">
-                        <button class="btn btn-success" @click="saveChanges(index)">
-                            <i class="far fa-save"></i> Update
-                        </button>
-                        <button class="btn btn-danger" @click="cancelEdit(index)">
-                            <i class="fa fa-window-close"></i> Cancel 
-                        </button>
-                    </div>
-                    <div v-else>
-                         <button class="btn btn-success" @click="saveChanges(index)">
-                            <i class="far fa-save"></i> Add
-                        </button>
-                    </div>
-                </div>
                 <div class="card-body">
                     <div :class="'horizontal-line-wrapper-'+app_color+' my-3'">
                     <h6>Attendance</h6>
@@ -161,6 +157,7 @@ export default {
     props : ['updateDom'],
     data(){
         return{
+            is_open:false,
             app_color:app_color,
             new_class:{
                 student_class:[]
@@ -200,7 +197,14 @@ export default {
         }
     },
     methods:{
+        admod_attendance(){
+            this.is_open = true;
+        },
+        toType(obj) {
+            return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+        },
         cancelEdit(idx){
+            this.is_open = false;
             this.classList[idx].admod = {};
         },
         // getPrefTime(ind){
@@ -227,7 +231,7 @@ export default {
         //     }
         // },
         edit(row,idx){
-            
+            this.is_open = true;
             row.date_taken = moment(row.date_taken)._d;
             
             this.classList[idx].admod = row;
@@ -365,6 +369,7 @@ export default {
                                 );
                                 // this.$modal.hide("edit-attendance-sheet");
                                 this.getStudentAttendance();
+                                this.is_open = false;
                             }
                             }
                         ).catch(
@@ -397,7 +402,7 @@ export default {
                             title: "Data is saved successfully",
                             background: "#DCEDC8"
                             });
-                            
+                            this.is_open = false;
                             this.getStudentAttendance();
                         }
                     }

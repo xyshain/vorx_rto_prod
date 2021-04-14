@@ -13,7 +13,7 @@
               <span>
                 ( {{ student_id }} - {{ student_info.firstname }}
                 {{ student_info.middlename }} {{ student_info.lastname }} )
-                <!-- <a
+                <a
                   :href="this.completion_url"
                   :class="
                     'btn btn-' +
@@ -25,7 +25,7 @@
                   style="padding: 0px 6px"
                 >
                   <i class="fas fa-award fa-sm"></i>
-                </a> -->
+                </a>
               </span>
             </h6>
           </div>
