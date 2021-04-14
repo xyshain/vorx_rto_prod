@@ -10,7 +10,6 @@ use App\Models\FundedStudentCourse;
 use App\Models\Holiday;
 use App\Models\StudentClass;
 use App\Models\StudentCompletion;
-use App\Models\Unit;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use DB;
@@ -143,7 +142,7 @@ class TimeTableController extends Controller
             $time_table = $class->time_table;
             $is_save = 1;
         }else{
-            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', $class->location)->first();
+            $prospectus = CourseProspectus::where('course_code', $class->course->code)->first();
             // dump($prospectus->unit_selected);
             if($prospectus && in_array($class->location, explode(',',$prospectus->location))){
                 // dd('in');
@@ -151,7 +150,6 @@ class TimeTableController extends Controller
                 foreach($prospectus->unit_selected as $k => $v){
                     $tt[] = [
                         'unit' => $v,
-                        'training_hours' => $v->scheduled_hours ? $v->scheduled_hours : 0,
                     ];
                 }
                 if($class->time_table_type == 'Rotating'){
@@ -320,38 +318,6 @@ class TimeTableController extends Controller
 
         // dd($tt);
 
-    }
-
-    public function new_generate_time_table($class_id = 3, $new = 1)
-    {
-        $class = StudentClass::with(['time_table', 'course.courseprospectus'])->where('id', $class_id)->first();
-
-        
-        if(!$class->time_table && $new == 1) {
-            
-            $course = $class->course;
-            $prospectus = [];
-            $units = [];
-
-            // get prospectus
-            foreach ($course->courseprospectus as $k => $v) {
-                if( $v->location == $class->location) {
-                    $prospectus = json_decode($v->course_units, true);
-                }
-            }
-
-            // get units
-            foreach($prospectus as $k => $v) {
-                $u = Unit::where('code', $v['code'])->first();
-                if($u) {
-                    $units[] = $u;
-                }
-            }
-
-            dd($units);
-        }
-
-        dd($class);
     }
 
     public function generate_time_table($start_date = '2020-10-23', $class_id = 4, $funded_course = null, $fetch_data = 1)
