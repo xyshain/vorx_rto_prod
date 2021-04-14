@@ -83,6 +83,13 @@ td{
 .row {
   padding: 1px;
 }
+
+@include media-breakpoint-up(md){
+  .table-responsive, 
+  .table-responsive .VueTables__table{
+    overflow: visible!important;
+  }
+}
 .VueTables__search-field,
 .VueTables__limit-field{
   display: flex;
