@@ -297,7 +297,7 @@
   </div>
 </template>
 <script>
-import courseDetails from "../payments/paymentDetailsCourseComponent.vue";
+import courseDetails from "../payments/newPaymentDetailCourseComponent.vue";
 import moment from "moment";
 export default {
   props: ["messageson", "updateHistory"],
