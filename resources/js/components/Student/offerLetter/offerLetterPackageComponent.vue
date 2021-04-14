@@ -540,7 +540,7 @@ export default {
     },
     compute_course_fee(){
       let vm = this.course_package_structure;
-      console.log(vm);
+      // console.log(vm);
       let amount =parseInt(vm.tuition_fee) + parseInt(vm.application_fee) + parseInt(vm.material_fee);
       // console.log(amount);
       vm.total_course_fee = Math.round(amount).toFixed(2);
@@ -685,14 +685,8 @@ export default {
         oshc: 0,
         total_course_fee_due: 0,
         downpayment: 0,
-        payment_due: null,
         balance_due: 0,
-        weekly_payment: 1,
-        discounted_amount: 0,
         initial_payment_amount: 0,
-        installment_start_date : '',
-        installment_amount : 0,
-        weekly_interval : 1,
       };
     },
     getPackage() {
@@ -1010,32 +1004,11 @@ export default {
       
     },
     "course_package_structure.weekly_interval": function(newVal,oldVal){
-      if(this.selected_package.length != 0){
-          if(newVal != 1){
-            let newLimit = this.selected_package[0].duration/newVal
-            this.maxInstallmentNumber = newLimit; 
-          }
+      if(newVal != 1){
+        let newLimit = this.selected_package[0].duration/newVal
+        this.maxInstallmentNumber = newLimit; 
       }
-      // if(this.selected_package[0].duration != undefined){
-      //   if(newVal != 1){
-      //     let newLimit = this.selected_package[0].duration/newVal
-      //     this.maxInstallmentNumber = newLimit; 
-      //   }
-      // }
-      
     },
-    selected_package : function ( newVal,oldVal){
-      if(newVal.length > 0){
-        this.course_package_structure.name = newVal[0].code_name;
-        this.course_package_structure.course_name = newVal[0].code_name;
-        this.course_package_structure.material_fee = newVal[0].material;
-        this.course_package_structure.application_fee = newVal[0].application_fee;
-        this.course_package_structure.tuition_fee = newVal[0].tuition;
-        this.compute_course_fee();
-      }
-     
-
-    }
     // compute_start_date(newVal){
     //   console.log(newVal);
     //   this.course_package_structure.installment_start_date = newVal;

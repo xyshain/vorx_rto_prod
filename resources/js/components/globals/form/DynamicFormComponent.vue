@@ -83,9 +83,6 @@
                 >{{ errors[itm['name']][0]}}</span>
               </div>
             </div>
-            <div v-else-if="itm['type'] === 'hr'">
-              <hr>
-            </div>
             <div v-else-if="itm['type'] === 'select'">
               <!-- selectbox -->
               <div v-if="itm['name'] === 'funding_type'" class="form-group">
@@ -464,10 +461,12 @@ export default {
     },
     verifyUsiData() {
       let vm = this;
+      console.log(vm.$parent.$refs);
 
       let studentInfo = vm.$parent.$parent;
       let avetmiss_info = vm.formValues;
-      console.log(vm.inputs.unique_student_id);
+      console.log(studentInfo.student_info);
+      console.log()
       let apiBaseUrl = "https://usiapi.vorx.com.au:8443/api/";
       let usiForm = {
         usi: "",
@@ -475,28 +474,46 @@ export default {
         orgCode: window.app_settings.training_organisation_id,
       };
       // console.log(avetmiss_info);
-      if (vm.inputs.unique_student_id == "" || vm.inputs.unique_student_id == null) {
-         swal.fire({
+
+      if (avetmiss_info.unique_student_id == "") {
+        swal.fire({
           title: "Opss.. Unique Student ID must not be empty",
           type: "error",
           timer: 3000,
           showConfirmButton: false,
         });
-      }else{
-        usiForm.usi = vm.inputs.unique_student_id;
-        if(vm.inputs.lastname == '' || vm.inputs.lastname == null){
-            usiForm.singleName = vm.inputs.firstname;
+      } else {
+        usiForm.usi = avetmiss_info.unique_student_id;
+        if(studentInfo.student_info == undefined){
+           if (studentInfo.student.lastname == null) {
+              usiForm.singleName = studentInfo.student.firstname;
+            } else {
+              usiForm.firstName = studentInfo.student.firstname;
+              usiForm.familyName = studentInfo.student.lastname;
+            }
+            usiForm.dateOfBirth = moment(
+              studentInfo.student.date_of_birth
+            ).format("YYYY-MM-DD");
         }else{
-          usiForm.firstName =  vm.inputs.firstname;
-          usiForm.familyName =  vm.inputs.lastname;
+          if (studentInfo.student_info.lastname == null) {
+            usiForm.singleName = studentInfo.student_info.firstname;
+          } else {
+            usiForm.firstName = studentInfo.student_info.firstname;
+            usiForm.familyName = studentInfo.student_info.lastname;
+          }
+          usiForm.dateOfBirth = moment(
+            studentInfo.student_info.date_of_birth
+          ).format("YYYY-MM-DD");
+
         }
-         usiForm.dateOfBirth = moment(vm.inputs.date_of_birth).format("YYYY-MM-DD");
-         let toast = swal.fire({
+
+        let toast = swal.fire({
           position: "top-end",
           title: "Please wait",
           showConfirmButton: false,
           timer: 30000,
         });
+
         axios
           .post(`${apiBaseUrl}verify`, usiForm, {
             baseURL: window.location.host,
@@ -537,7 +554,7 @@ export default {
                   response.data.dateOfBirth == "MATCH" &&
                   response.data.usistatus == "Valid")
               ) {
-                let sid = window.student_id
+                let sid = studentInfo.student_info == undefined ? studentInfo.student.student_id : studentInfo.student_id
                 axios
                   .get(
                     `/usi/verify/success/${sid}/${usiForm.usi}`

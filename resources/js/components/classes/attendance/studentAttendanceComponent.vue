@@ -34,19 +34,23 @@
         </h6>
       </div>
       <div class="card-body">
-      <div v-if="is_open == 0">
+      <div v-if="is_open == false">
+        <div class="col-md-12 pull-right text-right">
         <button class="btn btn-success" @click="admod_attendance">
           <i class="far fa-save"></i>
           <span>Add</span>
         </button>
+        </div>
       </div>
       <div v-else>
+        <div class="col-md-12 pull-right text-right">
         <button class="btn btn-success" @click="saveChanges()">
               <i class="far fa-save"></i> Save Changes
               </button>
               <button class="btn btn-danger" @click="cancelEdit()">
                   <i class="fa fa-window-close"></i> Cancel 
               </button>
+        </div>
               <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -146,7 +150,7 @@ export default {
   name: "app-modal",
   data() {
     return {
-      is_open:0,
+      is_open:false,
       app_color:app_color,
       attendance_sheet:[],
       student_attendance:window.student_attendance,
@@ -187,13 +191,13 @@ export default {
   },
   methods: {
     admod_attendance(){
-      this.is_open = 1;
+      this.is_open = true;
     },
     toType(obj) {
           return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
       },
     cancelEdit(){
-      this.is_open = 0;
+      this.is_open = false;
       this.admod = {};
       this.errors = {};
 
@@ -244,6 +248,7 @@ export default {
                                 this.getStudentAttendance();
                                 this.admod = {};
                                 this.errors ={};
+                                this.is_open = false;
                             }
                             }
                         ).catch(
@@ -279,6 +284,7 @@ export default {
                                 console.log(response.data.enrolment_pack);
                                 // this.updateEnrolment(response.data.enrolment_pack);
                                 this.getStudentAttendance();
+                                this.is_open = false;
                                 this.admod = {};
                                 this.errors ={};
                             }
@@ -316,6 +322,7 @@ export default {
         );  
     },
     edit(row){
+      this.is_open = true;
       row.date_taken = moment(row.date_taken)._d;
       console.log(row);
       this.admod = row;

@@ -19,7 +19,6 @@ use Illuminate\Validation\Rule;
 use App\Http\Resources\TrainerResource;
 use App\Models\Student\Party;
 use App\Models\Student\Person;
-use App\Models\TrainingOrganisation;
 use Validator;
 
 class TrainerController extends Controller
@@ -143,7 +142,6 @@ class TrainerController extends Controller
         $uoc = Unit::select(DB::raw('id,code,concat(code," - ",description) as name,extra_unit'))->where('extra_unit',1)->get();//unit of comp
         // dd($course_list[0],$uoc[0]);
         $course_list = array_merge($courses->toArray(),$uoc->toArray());
-        $org = TrainingOrganisation::all();
         // dd($course_list);
         \JavaScript::put([
             'trainer_id' => $id,
@@ -151,7 +149,6 @@ class TrainerController extends Controller
             'course_location' => AvtPostcode::all(),
             'course_list' => $course_list,
             'hasLogins' => isset($trainer->has_login->id) ? $trainer->has_login : false,
-            'hasPortal' => $org[0]->add_on('trainer-portal'),
         ]);
 
         return view('trainer.show');
@@ -265,10 +262,7 @@ class TrainerController extends Controller
             $trainer->fill($request->trainer);
             $trainer->update();
 
-            $uname = isset($request->user['username']) && !in_array($request->user['username'], ['', null]) ? $request->user['username'] : null;
-            $pword = isset($request->user['make_password']) && !in_array($request->user['make_password'], ['', null]) ? $request->user['make_password'] : null;
-
-            if($trainer->hasLogins == null && $uname && $pword){
+            if($trainer->hasLogins == null && !in_array($request->user['username'], ['', null]) && !in_array($request->user['make_password'], ['',null])){
                 $party = new Party;
                 // new instance of Person Model
                 $person = new Person;
@@ -304,7 +298,7 @@ class TrainerController extends Controller
                 
                 $trainer->has_login()->associate($user);
                 $trainer->update();
-            }elseif($trainer->hasLogins != null && $uname && !$pword){
+            }elseif($trainer->hasLogins != null && !in_array($request->user['username'], ['', null])){
                 
                 $trainer->has_login->username = $request->user['username'];
                 $trainer->has_login->is_active = isset($request->user['is_active']) && in_array($request->user['is_active'], [true, 1]) ? 1 : 0;

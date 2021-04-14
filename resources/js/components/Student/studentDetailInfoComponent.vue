@@ -57,37 +57,6 @@
           <div class="clearfix"></div>
           <div class="form-padding-left-right">
             <div class="row">
-              <!-- <div class="col-md-6">
-                <div class="form-group">
-                  <label for="student_type">Student Type</label>
-                  <select id="student_type" v-model="student.student_type_id" class="form-control">
-                    <option value="1">International</option>
-                    <option value="2">Domestic</option>
-                  </select>
-                </div>
-              </div> -->
-              <div class="col-md-6">
-                <div class="form-group">
-                 <label for="student_type">Unique Student ID</label>
-                <div class="input-group mb-3">
-                <input type="text" v-model="student.unique_student_id" class="form-control" placeholder="Unique Student ID">
-                <div class="input-group-append">
-                    <button
-                      v-if="student.verified"
-                      class="btn btn-success btn-outline-secondary"
-                      type="button"
-                      @click="verifyUsiData"
-                    >Verified</button>
-                    <button
-                      v-else
-                      class="btn btn-outline-secondary"
-                      type="button"
-                      @click="verifyUsiData"
-                    >Verify</button>
-                  </div>
-              </div>
-              </div>
-              </div>
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="prefix">Prefix</label>
@@ -256,13 +225,10 @@ export default {
   created() {
   
     this.student.prefix = this.$parent.student.prefix;
-    // this.student.student_type_id = this.$parent.student.student_type_id;
     this.student.firstname = this.$parent.student.firstname;
     this.student.middlename = this.$parent.student.middlename;
     this.student.lastname = this.$parent.student.lastname;
     this.student.gender = this.$parent.student.gender;
-    this.student.unique_student_id = this.$parent.student.unique_student_id;
-    this.student.verified = this.$parent.student.verified;
     this.student.date_of_birth = this.$parent.student.date_of_birth;
     if (window.englishData !== null) {
       this.englishTest = window.englishData.english_test_id;
@@ -287,141 +253,6 @@ export default {
     };
   },
   methods: {
-    getAuth() {
-      let apiUser = "admin";
-      let apiPass = "nimda321";
-      let basicAuth;
-      basicAuth = "Basic " + btoa(apiUser + ":" + apiPass);
-      return basicAuth;
-    },
-    verifyUsiData() {
-      let vm = this;
-      let apiBaseUrl = "https://usiapi.vorx.com.au:8443/api/";
-      let usiForm = {
-        usi: "",
-        dateOfBirth: "",
-        orgCode: window.app_settings.training_organisation_id,
-      };
-      console.log(vm.student);
-      if (vm.student.unique_student_id == "" || vm.student.unique_student_id == null) {
-         swal.fire({
-          title: "Opss.. Unique Student ID must not be empty",
-          type: "error",
-          timer: 3000,
-          showConfirmButton: false,
-        });
-      }else{
-        usiForm.usi = vm.student.unique_student_id;
-        if(vm.student.lastname == '' || vm.student.lastname == null){
-            usiForm.singleName = vm.student.firstname;
-        }else{
-          usiForm.firstName =  vm.student.firstname;
-          usiForm.familyName =  vm.student.lastname;
-        }
-         usiForm.dateOfBirth = moment(vm.student.date_of_birth).format("YYYY-MM-DD");
-         let toast = swal.fire({
-          position: "top-end",
-          title: "Please wait",
-          showConfirmButton: false,
-          timer: 30000,
-        });
-
-        axios
-          .post(`${apiBaseUrl}verify`, usiForm, {
-            baseURL: window.location.host,
-            headers: {
-              Authorization: vm.getAuth(),
-            },
-          })
-          .then((response) => {
-            toast.dismiss === swal.DismissReason.timer;
-            if (response.data.hasOwnProperty("errorInfo")) {
-              console.log(response.data.errorInfo);
-              let em = response.data.errorInfo;
-              let rmessage = "";
-              em.forEach((element) => {
-                rmessage += "<li>" + element.message + "</li>";
-              });
-
-              swal.fire({
-                type: "error",
-                title: "Oops...",
-                html: `<ul>${rmessage}</ul>`,
-              });
-            } else if (response.data.hasOwnProperty("code")) {
-              let em = response.data.message;
-              swal.fire({
-                type: "error",
-                title: "Oops...",
-                html: em,
-                footer: "<a href>Why do I have this issue?</a>",
-              });
-            } else {
-              if (
-                (response.data.firstName == "MATCH" &&
-                  response.data.familyName == "MATCH" &&
-                  response.data.dateOfBirth == "MATCH" &&
-                  response.data.usistatus == "Valid") ||
-                (response.data.singleName == "MATCH" &&
-                  response.data.dateOfBirth == "MATCH" &&
-                  response.data.usistatus == "Valid")
-              ) {
-                let sid = vm.student.student_id
-                axios
-                  .get(
-                    `/usi/verify/success/${sid}/${usiForm.usi}`
-                  )
-                  .then((response) => {
-                    vm.student.verified = 1;
-                    // console.log(response);
-                  })
-                  .catch((err) => {
-                    // console.log(err);
-                  });
-              }
-              // console.log(response.data);
-              swal.fire({
-                title: "<strong>USI Result</strong>",
-                type: "info",
-                html: `<div class="info-message-wrapper">
-              <div class="row">
-                <div class="col-md-6 offset-md-3 text-left">
-                  <span>First Name : ${response.data.firstName}</span>
-                  <div class="clearfix"></div>
-                  <span>Family Name : ${response.data.familyName}</span>
-                  <div class="clearfix"></div>
-                    <span>Single Name : ${response.data.singleName}</span>
-                  <div class="clearfix"></div>
-                    <span>Date of Birth : ${response.data.dateOfBirth}</span>
-                  <div class="clearfix"></div>
-                  <span>USI Status : ${response.data.usistatus}</span>
-                  <div class="clearfix"></div>
-                </div>
-              </div>
-            </div>`,
-                showCloseButton: false,
-                showCancelButton: false,
-                focusConfirm: false,
-                confirmButtonText: '<i class="fa fa-thumbs-up"></i> Great!',
-                confirmButtonAriaLabel: "Thumbs up, great!",
-              });
-            }
-            // console.log(response)
-          })
-          .catch((err) => {
-            // if (usiForm.dateOfBirth != "") {
-            //   usiForm.dateOfBirth = moment(vm.usiForm.dateOfBirth)._d;
-            // }
-            swal.fire({
-              type: "error",
-              title: "Oops...",
-              html: `<ul>${err.response.data.message}</ul>`,
-            });
-          });
-        
-        
-      }
-    },
     saveChanges() {
       const Toast = swal.mixin({
         toast: true,
@@ -444,7 +275,6 @@ export default {
           middlename: this.student.middlename,
           lastname: this.student.lastname,
           gender: this.student.gender,
-          // student_type_id: this.student.student_type_id,
           date_of_birth: moment(this.student.date_of_birth).format(
             "YYYY-MM-DD"
           ),

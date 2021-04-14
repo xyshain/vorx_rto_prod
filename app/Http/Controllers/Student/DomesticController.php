@@ -131,7 +131,7 @@ class DomesticController extends Controller
      */
     public function show($id)
     {
-        // 
+        //
 
         // dd('eeeee');
         $student = Student::with('party.person', 'type', 'offer_letter')->where('id', $id)->first();
@@ -405,8 +405,7 @@ class DomesticController extends Controller
 
         // dump($student_status);
         // dd(AgentDetail::all()->pluck('agent_name', 'id'));
-        $student_personal_info->student_type = $student->student_type_id;
-        $student_personal_info->unique_student_id = $student_details->unique_student_id;
+
         //WINDOW.DATA
         \JavaScript::put([
             'student' => $id,

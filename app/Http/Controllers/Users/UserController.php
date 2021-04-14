@@ -177,10 +177,7 @@ class UserController extends Controller
 
 
     public function user_list(){
-        // $userList = User::with(['party', 'party.person', 'roles'])->has('party')->where('id', '<>', 1)->orderBy('id', 'desc')->get();
-        $userList = User::with(['party', 'party.person', 'roles'])->has('party')->where('id', '<>', 1)->whereHas('roles', function ($q) {
-            $q->whereIn('name', ['Admin', 'Staff', 'Demo']);
-        })->orderBy('id', 'desc')->get();
+        $userList = User::with(['party', 'party.person', 'roles'])->has('party')->where('id', '<>', 1)->orderBy('id', 'desc')->get();
 
         return UserResource::collection($userList);
     }

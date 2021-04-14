@@ -595,7 +595,7 @@ class AgentController extends Controller
         $s = $send->send_automate('Representative/Education Agent Application Form', $content, [$org->training_organisation_name => $org->email_address], $emailsTo, $paths, $admin_emails);
 
         if ($s['status'] == 'success') {
-             return response()->json(['status' => 'success', 'message' => 'Verified Successfully']);
+            return response()->json(['status' => 'success', 'message' => 'Verified Successfully']);
         } else {
             return response()->json(['status' => 'error', 'message' => 'Something went wrong.']);
         }
