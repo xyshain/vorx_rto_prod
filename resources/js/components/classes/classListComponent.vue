@@ -95,7 +95,7 @@ export default {
       course_id: "",
       url: "course/show/",
       // Vue-Tables-2 Syntax
-      columns: ["id","desc","delivery_location.train_org_dlvr_loc_name","venue","course_code","start_date","end_date","time_table_type","actions"],
+      columns: ["id","desc","delivery_location.train_org_dlvr_loc_name","venue","course_code","start_date","end_date","actions"],
       options: {
         initialPage: 1,
         perPage: 10,

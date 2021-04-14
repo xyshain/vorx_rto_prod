@@ -26,7 +26,7 @@
                 <span>{{studentAttCount}}</span>                
               </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div :class="['form-group', errors.desc ? 'has-error' : '']" >
                   <label for="description">Description</label>
                   <input 
@@ -40,7 +40,7 @@
                   <span v-if="errors.desc" :class="['badge badge-danger']">{{ errors.desc[0] }}</span>
                 </div>
             </div>
-            <div class="col-md-6">
+            <!-- <div class="col-md-6">
                 <div :class="['form-group', errors.time_table_type ? 'has-error' : '']" >
                   <label for="time_table_type">Time Table Type</label>
                   <select name="time_table_type" id="time_table_type" class="form-control" v-model="student_class.time_table_type">
@@ -49,7 +49,7 @@
                   </select>
                   <span v-if="errors.time_table_type" :class="['badge badge-danger']">{{ errors.time_table_type[0] }}</span>
                 </div>
-            </div>
+            </div> -->
             <div class="col-md-12">
                 <div :class="['form-group', errors.trainer ? 'has-error' : '']" >
                 <label for="trainer">Trainer</label>

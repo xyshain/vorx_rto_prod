@@ -53,6 +53,7 @@ class TimeTableController extends Controller
     {
         // dd($request->tt['total_training_hours']);
         //
+        // dd(Carbon::parse($request->tt['duration_start_date'])->setTimezone('Australia/Melbourne')->format('Y-m-d'));
         if(isset($request->tt['time_table']) && count($request->tt['time_table']) > 0){
             try {
                 $class = StudentClass::where('id', $request->class['id'])->first();
@@ -62,22 +63,24 @@ class TimeTableController extends Controller
                 if(isset($request->tt['id'])){
                     $tt = ClassTimeTable::where('id', $request->tt['id'])->first();
                     $tt->fill($request->tt);
-                    $tt->duration_month = $request->class['time_table_type'] == 'Straight' ? $request->tt['duration_month'] : null;
+                    // $tt->duration_month = $request->class['time_table_type'] == 'Straight' ? $request->tt['duration_month'] : null;
+                    $tt->duration_start_date = Carbon::parse($request->tt['duration_start_date'])->setTimezone('Australia/Melbourne')->format('Y-m-d');
                     $tt->update();
                 }else{
                     $tt = new ClassTimeTable;
                     $tt->fill($request->tt);
-                    $tt->duration_month = $request->class['time_table_type'] == 'Straight' ? $request->tt['duration_month'] : null;
+                    // $tt->duration_month = $request->class['time_table_type'] == 'Straight' ? $request->tt['duration_month'] : null;
+                    $tt->duration_start_date = Carbon::parse($request->tt['duration_start_date'])->setTimezone('Australia/Melbourne')->format('Y-m-d');
                     $tt->class()->associate($class);
                     $tt->user()->associate(\Auth::user());
                     $tt->save();
                 }
 
-                if($request->class['time_table_type'] == 'Rotating'){
-                    $tt->total_training_hours = $request->tt['total_training_hours'] / 2;
-                    $tt->total_weeks = $request->tt['total_weeks'] / 2;
-                    $tt->update();
-                }
+                // if($request->class['time_table_type'] == 'Rotating'){
+                //     $tt->total_training_hours = $request->tt['total_training_hours'] / 2;
+                //     $tt->total_weeks = $request->tt['total_weeks'] / 2;
+                //     $tt->update();
+                // }
     
                 $start = $request->tt['time_table'][0];
                 $end = $request->tt['time_table'][count($request->tt['time_table']) - 1];
@@ -165,9 +168,16 @@ class TimeTableController extends Controller
                     'total_weeks' => 0,
                     // 'no_order' => 1,
                     // 'class_start_day' => 'Monday',
-                    'training_hours_daily' => 8,
+                    'duration_start_date' => $class->start_date,
+                    // 'training_hours_daily' => 8,
                     'training_hours_weekly' => 20,
-                    'training_days_weekly' => ['Mon'=>1, 'Tue'=>1, 'Wed'=>1, 'Thu'=>1, 'Fri'=>1, 'Sat'=> 0, 'Sun'=>0]
+                    'training_days_weekly' => [
+                        ['day'=>'Mon', 'value' => 'Monday', 'order' => 1, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                        ['day'=>'Tue', 'value' => 'Teusday', 'order' => 2, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                        ['day'=>'Wed', 'value' => 'Wednesday', 'order' => 3, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                        ['day'=>'Thu', 'value' => 'Thursday', 'order' => 4, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                        ['day'=>'Fri', 'value' => 'Friday', 'order' => 5, 'time_start' => null, 'time_end' => null, 'hours' => 0]
+                    ]
                 ];
             }
         }
@@ -182,6 +192,15 @@ class TimeTableController extends Controller
             'time_table' => $time_table,
             'is_save' => $is_save,
             'holidays' => $holidays,
+            'days' => [
+                ['day'=>'Mon', 'value' => 'Monday', 'order' => 1],
+                ['day'=>'Tue', 'value' => 'Teusday', 'order' => 2],
+                ['day'=>'Wed', 'value' => 'Wednesday', 'order' => 3],
+                ['day'=>'Thu', 'value' => 'Thursday', 'order' => 4],
+                ['day'=>'Fri', 'value' => 'Friday', 'order' => 5],
+                ['day'=>'Sat', 'value' => 'Saturday', 'order' => 6],
+                ['day'=>'Sun', 'value' => 'Sunday', 'order' => 7]
+            ]
         ]);
 
         if($class->time_table_type == 'Straight'){
@@ -236,7 +255,7 @@ class TimeTableController extends Controller
             $class = StudentClass::with(['delivery_location', 'course', 'time_table'])->where('id', $id)->first();
             $time_table = [];
 
-            $prospectus = CourseProspectus::where('course_code', $class->course->code)->first();
+            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', $class->location)->first();
             // dump($prospectus->unit_selected);
             
             if($prospectus && in_array($class->location, explode(',',$prospectus->location))){
@@ -245,6 +264,7 @@ class TimeTableController extends Controller
                 foreach($prospectus->unit_selected as $k => $v){
                     $tt[] = [
                         'unit' => $v,
+                        'training_hours' => $v->scheduled_hours ? $v->scheduled_hours : 0,
                     ];
                 }
                 if($class->time_table_type == 'Rotating'){
@@ -260,10 +280,17 @@ class TimeTableController extends Controller
                     'total_training_hours' => 0,
                     'total_weeks' => 0,
                     'reset' => 1,
+                    'duration_start_date' => $class->start_date,
                     // 'no_order' => 1,
                     // 'class_start_day' => 'Monday',
                     'training_hours_daily' => 4,
-                    'training_days_weekly' => ['Mon'=>1, 'Tue'=>1, 'Wed'=>1, 'Thu'=>1, 'Fri'=>1, 'Sat'=> 0, 'Sun'=>0]
+                    'training_days_weekly' => [
+                        ['day'=>'Mon', 'value' => 'Monday', 'order' => 1, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                        ['day'=>'Tue', 'value' => 'Teusday', 'order' => 2, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                        ['day'=>'Wed', 'value' => 'Wednesday', 'order' => 3, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                        ['day'=>'Thu', 'value' => 'Thursday', 'order' => 4, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                        ['day'=>'Fri', 'value' => 'Friday', 'order' => 5, 'time_start' => null, 'time_end' => null, 'hours' => 0]
+                    ]
                 ];
             }
 
@@ -275,7 +302,16 @@ class TimeTableController extends Controller
             'class' => $class,
             'time_table' => $time_table,
             'status' => 'success',
-            'is_save' => 0
+            'is_save' => 0,
+            'days' => [
+                ['day'=>'Mon', 'value' => 'Monday', 'order' => 1],
+                ['day'=>'Tue', 'value' => 'Teusday', 'order' => 2],
+                ['day'=>'Wed', 'value' => 'Wednesday', 'order' => 3],
+                ['day'=>'Thu', 'value' => 'Thursday', 'order' => 4],
+                ['day'=>'Fri', 'value' => 'Friday', 'order' => 5],
+                ['day'=>'Sat', 'value' => 'Saturday', 'order' => 6],
+                ['day'=>'Sun', 'value' => 'Sunday', 'order' => 7]
+            ]
         ];
 
         return $data;

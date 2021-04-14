@@ -20,7 +20,7 @@
       <h4 :class="'modal-header-'+app_color">Add Class</h4>
       <form @submit.prevent>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div :class="['form-group', errors.description ? 'has-error' : '']" >
                   <label for="description">Description</label>
                   <input 
@@ -34,7 +34,7 @@
                   <span v-if="errors.description" :class="['badge badge-danger']">{{ errors.description[0] }}</span>
                 </div>
             </div>
-            <div class="col-md-6">
+            <!-- <div class="col-md-6">
                 <div :class="['form-group', errors.time_table_type ? 'has-error' : '']" >
                   <label for="time_table_type">Time Table Type</label>
                   <select name="time_table_type" id="time_table_type" class="form-control" v-model="student_class.time_table_type">
@@ -43,7 +43,7 @@
                   </select>
                   <span v-if="errors.time_table_type" :class="['badge badge-danger']">{{ errors.time_table_type[0] }}</span>
                 </div>
-            </div>
+            </div> -->
             <div class="col-md-12">
                 <div :class="['form-group', errors.trainer ? 'has-error' : '']" >
                 <label for="trainer">Trainer</label>
