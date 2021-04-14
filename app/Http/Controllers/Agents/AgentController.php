@@ -467,7 +467,7 @@ class AgentController extends Controller
             // vorx theme and content
             // $pdf_template = 'agent-application.education-agent-agreement-pdf';
             // abort(403, 'File not found.');
-            return response()->json(['status' => 'error', 'message' => 'Please provide us template.']);
+            return response()->json(['status' => 'error', 'message' => 'Please provide template for Education Agent Agreement.']);
         }
 
         \PDF::loadView($pdf_template, compact('detail','org','dated','app_form','signed'))->setPaper(array(0, 0, 612, 870), 'portrait')->save($path.'/education-agent-agreement.pdf')->stream($detail->agent_name .' - Education Agent Agreement.pdf');
@@ -588,7 +588,10 @@ class AgentController extends Controller
             // removed reviewlink
             $content = 'Dear <b>'.$detail->agent_name.'</b>, <br><br>Greetings of the day. <br><br>We are pleased to inform you that we have received all the documents and reference checks in support of your application to become our representative to recruit students. Your agent/representative application has been approved. <br><br>Also, I have attached the fact sheets relevant to you as our representative, please go through them. We have to remain compliant to National code 2018 and Standards for Registered Training Organisations 2015 (SRTOs 2015).<br><br>Link for SRTOs 2015: <a href="https://www.asqa.gov.au/standards/marketing-recruitment">https://www.asqa.gov.au/standards/marketing-recruitment</a><br>Link for National code 2018: <a href="https://internationaleducation.gov.au/regulatory-information/Pages/National-Code-2018-Factsheets-.aspx">https://internationaleducation.gov.au/regulatory-information/Pages/National-Code-2018-Factsheets-.aspx</a><br><br>Please feel free to contact us if you have any questions in this regard.<br><br>Regards,<br><br><b>Admin Team</b><br>'.$org->training_organisation_name.'<br>RTO NO '.$org->training_organisation_id.' | CRICOS CODE '.$org->cricos_code.'';
         }
-
+        
+        if($org->email_address == null){
+            return response()->json(['status' => 'error', 'message' => 'Organisation email address is missing.']);
+        }
         $s = $send->send_automate('Representative/Education Agent Application Form', $content, [$org->training_organisation_name => $org->email_address], $emailsTo, $paths, $admin_emails);
 
         if ($s['status'] == 'success') {
