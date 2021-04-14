@@ -28,24 +28,6 @@
                 makeForm : [{
                     FormTitle : 'Personal Information',
                     FormBody : [
-                        //  {
-                        //     type : 'select',
-                        //     lable : 'Student Type',
-                        //     name : 'student_type',
-                        //     items :{ 
-                        //             '1' : 'International',
-                        //             '2' : 'Domestic',
-                        //     },
-                        //     value : ''
-                        // },
-                        {
-                            type: "text",
-                            lable: "Unique Student ID",
-                            name: "unique_student_id",
-                            value: "test",
-                            avetmiss: "required",
-                            verified: false,
-                        },
                         {
                             type : 'select',
                             lable : 'Prefix',

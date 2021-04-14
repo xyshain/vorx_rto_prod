@@ -409,9 +409,10 @@ class ReportsController extends Controller
             }
 
         }
+    }
 
-
-
+    public function attendance(){
+        return view('reports.attendance-list');
     }
 
 }

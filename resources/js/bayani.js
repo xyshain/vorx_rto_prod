@@ -64,4 +64,5 @@ Vue.component('external-form-edit', require('./components/external-forms/exForms
 Vue.component('menus', require('./components/menus/menuListComponent.vue').default);
 Vue.component('menu-edit', require('./components/menus/editMenuComponent.vue').default);
 
-
+// attendance list generator
+Vue.component('attendance-list-generator', require('./components/reports/attendanceListGenerator.vue').default);

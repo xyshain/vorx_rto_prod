@@ -8,51 +8,28 @@
         </div>
         <div class="col-md-6">
             <div class="float-right">
-
-                <ul class="list-group list-group-horizontal">
-                     <li class="list-group-item">
-                         <div class="form-group">
-                            <div class="custom-control custom-switch my-2">
-                            <label class="mr-5">International</label>
-                            <input
-                                type="checkbox"
-                                class="custom-control-input pre-apend"
-                                id="student_type"
-                            />
-                            <label class="custom-control-label" for="student_type" >Domestic</label>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="form-group pull-right">
-                            <a type="button" v-bind:class="'btn btn-'+app_color+' btn-sm'" v-if="this.add_on('student-details-pdf') == 1" @click="generateStudentDetails()"><i class="fas fa-file-pdf"></i> Generate Student Details</a>
-                            <div class="btn-group" role="group" v-if="warningLetterList.length > 0 && this.add_on('email-warning.fees') == 1">
-                                <button v-bind:class="'btn btn-'+app_color+' dropdown-toggle btn-sm'" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    Warning Letter
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-right multi-level" role="menu" aria-labelledby="dropdownMenu">
-                                    <li class="dropdown-submenu" v-for="(list, item) in warningLetterList" :key="item">
-                                        <a class="dropdown-item" tabindex="-1" href="#">
-                                            {{ list.info.name }}
-                                        </a>
-                                        <ul class="dropdown-menu dropdown-menu-right">
-                                            <li class="dropdown-item"><a href="javascript:void(0)" @click="viewEmail(item, list.info.id)" target="_blank">View</a></li>
-                                            <li class="dropdown-item" :class="{disabled: list.sent == true}">
-                                                <a href="javascript:void(0)" @click="sendEmail(item, list.info.id)">
-                                                    Send via Email
-                                                    <span v-if="list.sent == true" class="float-right"><i class="fas fa-check text-success"></i></span>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </li>
-                                </ul>
-                            </div>
-                            </div>
-                    </li>
-                </ul>
-
-                 
-                
+                <a type="button" v-bind:class="'btn btn-'+app_color+' btn-sm'" v-if="this.add_on('student-details-pdf') == 1" @click="generateStudentDetails()"><i class="fas fa-file-pdf"></i> Generate Student Details</a>
+                <div class="btn-group" role="group" v-if="warningLetterList.length > 0 && this.add_on('email-warning.fees') == 1">
+                    <button v-bind:class="'btn btn-'+app_color+' dropdown-toggle btn-sm'" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Warning Letter
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right multi-level" role="menu" aria-labelledby="dropdownMenu">
+                        <li class="dropdown-submenu" v-for="(list, item) in warningLetterList" :key="item">
+                            <a class="dropdown-item" tabindex="-1" href="#">
+                                {{ list.info.name }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-right">
+                                <li class="dropdown-item"><a href="javascript:void(0)" @click="viewEmail(item, list.info.id)" target="_blank">View</a></li>
+                                <li class="dropdown-item" :class="{disabled: list.sent == true}">
+                                    <a href="javascript:void(0)" @click="sendEmail(item, list.info.id)">
+                                        Send via Email
+                                        <span v-if="list.sent == true" class="float-right"><i class="fas fa-check text-success"></i></span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
                 <!-- <div class="btn-group" role="group">
                 <button v-bind:class="'btn btn-'+app_color+' dropdown-toggle btn-sm'" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Action
@@ -191,10 +168,6 @@ export default {
     }
 };
 </script>
-
-<style scoped>
-.list-group-item { border: none; }
-</style>
 
 <style>
 .dropdown-submenu {

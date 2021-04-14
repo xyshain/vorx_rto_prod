@@ -159,14 +159,14 @@ export default {
                 value : '',
                 col_size: 4,
             },
-            // {
-            //   type: "text",
-            //   lable: "Unique Student ID",
-            //   name: "unique_student_id",
-            //   value: "test",
-            //   avetmiss: "required",
-            //   verified: false,
-            // },
+            {
+              type: "text",
+              lable: "Unique Student ID",
+              name: "unique_student_id",
+              value: "test",
+              avetmiss: "required",
+              verified: false,
+            },
             {
               type: "select",
               lable: "Survey Contact Status",
