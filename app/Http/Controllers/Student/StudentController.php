@@ -1359,4 +1359,17 @@ class StudentController extends Controller
         }      
         return null;
     }
+
+    public function change_type($student_id,$type){
+        // dd('hi');
+        $student_type = $type =='true' ? 2 : 1 ;
+        $student = Student::where('student_id',$student_id)->first();
+        $student->student_type_id = $student_type ;
+        $student->save();
+        if($student_type == 2){
+            return ['status' => 'success' ,'type' => 'domestic' ,'student' => $student->id];
+        }else{
+            return ['status' => 'success' ,'type' => 'international' ,'student' => $student->id];
+        }
+    }
 }

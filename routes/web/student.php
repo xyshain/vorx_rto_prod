@@ -72,3 +72,7 @@ Route::prefix('test')->group(function () {
     Route::post('student/completion', 'NewStudent\StudentController@completion_storeupdate');
     Route::post('student/certcompletion', 'NewStudent\StudentController@certcompletion_storeupdate');
 });
+
+// change student type
+
+Route::get('student_type/change/{student_id}/{type}','Student\StudentController@change_type');

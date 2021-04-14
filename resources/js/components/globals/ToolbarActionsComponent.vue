@@ -17,6 +17,8 @@
                             <input
                                 type="checkbox"
                                 class="custom-control-input pre-apend"
+                                @click="changeStudent_type"
+                                v-model="student_type"
                                 id="student_type"
                             />
                             <label class="custom-control-label" for="student_type" >Domestic</label>
@@ -94,13 +96,51 @@ export default {
             emailTrail: [],
             app_color: app_color,
             app_settings: app_settings,
+            student_type : ''
         };
     },
     //   components: {},
     created() {
         this.getWarningLetters();
+        this.checkStudentType();
     },
+    
     methods: {
+        checkStudentType(){
+            if(window.student_type == 1){
+                this.student_type = false;
+            }else{
+                this.student_type = true;
+            }
+        },
+        changeStudent_type(){
+            console.log('changed');
+            console.log(this.student_type);
+            swal.fire({
+                title: 'Are you sure?',
+                text: "This will change student type.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes!'
+            }).then((result) => {
+                if (result.value) {
+                    axios.get(`/student_type/change/${window.student_id}/${this.student_type}`).then(res=>{
+                        let ress = res.data;
+                        if(ress.status == 'success'){
+                            if(ress.type == 'domestic'){
+                                location.replace(`/student/domestic/${ress.student}`);
+                            }else{
+                                location.replace(`/student/${ress.student}`);
+                            }
+                        }
+                    })
+                }else{
+                    this.student_type = !this.student_type;
+                }
+            })
+        },
         getWarningLetters() {
             axios({
                     method: "get",
