@@ -324,7 +324,7 @@ export default {
     this.tt = window.time_table;
     this.getClass = window.class;
     this.is_save = window.is_save
-    // this.autoFill();
+    this.autoFill();
   },
   methods: {
     TimeCalcTotalHours(key) {

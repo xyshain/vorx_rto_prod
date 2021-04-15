@@ -199,7 +199,15 @@ export default {
   },
   computed: {
     getLocationsFromCourse() {
-      
+      let locs = [];
+      if(this.selected_course.id) {
+        if(this.selected_course.courseprospectus[0]) {
+          let prospect = this.selected_course.courseprospectus;
+          for(let i = 0 ; i < prospect.length ; i++) {
+            console.log(prospect[i].location);
+          }
+        }
+      }
     }
   },
   watch: {
@@ -213,6 +221,9 @@ export default {
     }
   },
   methods: {
+    selectCourse(course) {
+        this.selected_course = course;
+    },
     trainerName({firstname,lastname}){
       return `${firstname} ${lastname}`
     },
