@@ -142,7 +142,7 @@ class TimeTableController extends Controller
             $time_table = $class->time_table;
             $is_save = 1;
         }else{
-            $prospectus = CourseProspectus::where('course_code', $class->course->code)->first();
+            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', $class->location)->first();
             // dump($prospectus->unit_selected);
             if($prospectus && in_array($class->location, explode(',',$prospectus->location))){
                 // dd('in');

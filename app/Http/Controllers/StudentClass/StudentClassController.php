@@ -45,7 +45,7 @@ class StudentClassController extends Controller
         $delivery_loc = TrainingDeliveryLoc::orderBy('train_org_dlvr_loc_name','asc')->get();
         $delivery_modes = AvtDeliveryMode::get();
         // dd($delivery_modes);
-        $courses = Course::orderBy('code','asc')->get();
+        $courses = Course::with(['courseprospectus'])->orderBy('code','asc')->get();
         \JavaScript::put([
             'trainers'=>$trainers,
             'delivery_loc'=>$delivery_loc,

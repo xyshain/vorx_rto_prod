@@ -69,6 +69,7 @@
                  :options="courses" 
                  :custom-label="courseCode"
                   placeholder="Select one" 
+                  @select="selectCourse"
                   label="code" 
                   track-by="id"></multiselect>
                   
@@ -175,6 +176,7 @@ export default {
       delivery_locations:window.delivery_loc?window.delivery_loc:[],
       delivery_modes:window.delivery_modes?window.delivery_modes:[],
       courses:window.courses?window.courses:[],
+      selected_course : {},
       app_color: app_color,
       student_class: {
           description:'',
@@ -194,6 +196,11 @@ export default {
       opt: [],
       isLoading: false
     };
+  },
+  computed: {
+    getLocationsFromCourse() {
+      
+    }
   },
   watch: {
     fields: function(value) {
