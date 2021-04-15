@@ -48,7 +48,7 @@
       v-bind:save-form="store_url"
     ></dynamic-form>
     <br />
-    <div class="subjects-wrapper" v-if="this.course == null ? isHidden_sw : true">
+    <div class="subjects-wrapper" v-if="this.course == null ? isHidden_sw : !isHidden_sw" >
       <div v-bind:class="'horizontal-line-wrapper-' + app_color + ' my-3'">
         <h6>
           Subject List
@@ -821,6 +821,9 @@ export default {
     this.prevReportCourseId = typeof this.course !== 'undefined' ? this.course.report_course_status_id : 1;
   },
   methods: {
+        toType(obj) {
+            return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+        },
     reportCourse() {
       let vm = this;
       if(vm.prevReportCourseId == 2 && vm.course.report_course_status_id == 3){
@@ -986,12 +989,14 @@ export default {
           );
         
         }
+
         //hide subject list if unit of competency
           if (vm.getValues.course_code == "@@@@") {
             vm.isHidden_sw = true;
           } else {
             vm.isHidden_sw = false;
           }
+
         // get  Funding Source State by location
         if (vm.getValues.location != null) {
           this.fundingSourceState(vm.getValues.location);
@@ -1649,14 +1654,14 @@ export default {
     },
     "getValues.course_code": function (newVal) {
       this.getValues.course_code = newVal;
-      this.getCourseFee();
-      // this.getOptionsbyCourse(newVal, this.getValues.location);
+      this.getOptionsbyCourse(newVal, this.getValues.location); // trigger show/hide level2 formbody etc..
+      this.getCourseFee(); // trigger show/hide level3 formbody and units.. etc.
     },
     "getValues.location": function (newVal) {
       this.getValues.location = newVal;
-      this.getCourseFee();
       this.fundingTypeChoose(newVal);
-      // this.getOptionsbyCourse(this.getValues.course_code, newVal);
+      this.getOptionsbyCourse(this.getValues.course_code, newVal); // trigger show/hide level2 formbody etc..
+      this.getCourseFee(); // trigger show/hide level3 formbody and units.. etc.
     },
     "getValues.course_fee_type": function (newVal) {
       this.getValues.course_fee_type = newVal;

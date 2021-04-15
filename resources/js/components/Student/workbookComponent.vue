@@ -213,7 +213,7 @@ export default {
             axios.get('/student/course/workbook/fetch/'+ vm.student_id)
             .then(function (res) {
                 // handle success
-                console.log(res)
+                // console.log(res)
                 vm.courses = res.data.student_courses
                 vm.automate = res.data.automate
                 if(typeof vm.courses !== 'undefined' && vm.courses.length > 0){
