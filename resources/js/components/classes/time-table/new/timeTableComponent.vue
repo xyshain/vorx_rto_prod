@@ -369,14 +369,14 @@ export default {
     },
     async autoFill(generate = 0) {
       
-      swal.fire({
-          title: 'Generating time table...',
-          // html: '',// add html attribute if you want or remove
-          allowOutsideClick: false,
-          onBeforeOpen: () => {
-              swal.showLoading()
-          },
-      });
+      // swal.fire({
+      //     title: 'Generating time table...',
+      //     // html: '',// add html attribute if you want or remove
+      //     allowOutsideClick: false,
+      //     onBeforeOpen: () => {
+      //         swal.showLoading()
+      //     },
+      // });
 
       if( this.training_hours_weekly == 0) {
         if(generate == 1) {
@@ -396,39 +396,41 @@ export default {
       let totalTrainHrs = 0;
     //   console.log(vm.tt);
       let tt = vm.tt.time_table;
-      console.log(vm.tt);
+      // console.log(vm.tt);
       let start = null;
       let run = null;
       let end = null;
-      console.log('Hours Weekly: '+vm.training_hours_weekly);
-      console.log(vm.tt);
+      // console.log('Hours Weekly: '+vm.training_hours_weekly);
+      // console.log(vm.tt);
       for (let index = 0; index < tt.length; index++) {
-            console.log('--------------------------------------------------------');
+            // console.log('--------------------------------------------------------');
             // check training hours
 
             if(start == null) {
               start = moment(vm.tt.duration_start_date);
-              console.log(`start : `+moment(start).format('DD/MM/YYYY'));
+              // console.log(`start : `+moment(start).format('DD/MM/YYYY'));
               run = start;
             }
             let trainHours = tt[index].training_hours;
-            console.log(`Training Hours : ${trainHours}`);
+            // console.log(`Training Hours : ${trainHours}`);
+
+            // console.log(vm.tt.training_days_weekly);
             
             /* must search days that have training. */
-            let unitWeeks = await this.getWeeksFromHours(trainHours, vm.training_hours_weekly);
+            let dayComput = await this.getWeeksFromHours(trainHours, vm.training_hours_weekly, vm.tt.training_days_weekly, moment(run).format('ddd'));
 
-            console.log('Total weeks for this unit: '+ unitWeeks);
-            tt[index].weeks = unitWeeks;
-            totalTrainHrs += unitWeeks;
+            // console.log('Total weeks for this unit: '+ dayComput);
+            tt[index].weeks = dayComput.weeks;
+            totalTrainHrs += dayComput.weeks;
             // assign dates per unit 
-            end = moment(run).add(unitWeeks, 'weeks');
+            end = moment(run).add(dayComput.days, 'days');
             let dates = {
               start : moment(run)._d,
               end : moment(end)._d,
             }
             tt[index].dates = dates;
             // console.log(tt[index]);
-            run = moment(end);
+            run = dayComput.left > 0 ? moment(end).subtract(1, 'day') : moment(end);
             // if(index == 0) {
             //     // console.log('first');
             //     if(tt[index].training_hours == 0) {
@@ -441,7 +443,7 @@ export default {
       this.tt.time_table = tt;
       this.tt.total_weeks = totalTrainHrs;
       // this.getDates();
-      console.log(tt)
+      // console.log(tt)
     //   vm.disabled_dates = disabled_dates;
     //   this.totalTrainingHours('th');
     //   this.totalTrainingHours('wk');
@@ -474,13 +476,69 @@ export default {
 
       
     },
-    async getWeeksFromHours(trainHrs,hrsPerWeek) {
+    async getWeeksFromHours(trainHrs,hrsPerWeek,dw,ds) {
       let weeks = 0;
+      let days = 0;
+      let isoWeek = [
+            'Mon',
+            'Tue',
+            'Wed',
+            'Thu',
+            'Fri',
+            'Sat',
+            'Sun',
+        ];
+      // console.log(ds);
       while(trainHrs > 0) {
           weeks++;
-          trainHrs = trainHrs - hrsPerWeek;
+
+          let daysOfWeekCounter = 0;
+
+          //get days of week counter 
+          while(daysOfWeekCounter < 7) {
+            if(trainHrs < 1) {
+                break;
+            }
+            for (let key = 0; key < isoWeek.length; key++) {
+              let iso = isoWeek[key];
+
+              if(daysOfWeekCounter == 7 || trainHrs < 1) {
+                  break;
+              }
+              
+              if(daysOfWeekCounter != 0) {
+                  days++;
+                  daysOfWeekCounter++;
+                  console.log('count '+iso+' - '+ daysOfWeekCounter);
+              }
+
+              if(iso == ds && daysOfWeekCounter == 0) {
+                  days++;
+                  daysOfWeekCounter++;
+                  console.log('first count '+iso+' - '+ daysOfWeekCounter);
+              }
+
+              if(daysOfWeekCounter != 0) {
+                  for (let k = 0; k < dw.length; k++) {
+                    const val = dw[k];
+                    if(val.day == iso && [0,null].indexOf(val.hours) == -1) {
+                        trainHrs = trainHrs - parseInt(val.hours);
+                        console.log(trainHrs);
+                    }
+                  }
+              }
+              
+            }
+          } 
       }
-      return weeks;
+      console.log('days - '+days);
+      console.log('weeks - '+weeks);
+      console.log(`training hours of that day left - ${trainHrs}`)
+      return {
+        days : days - 1,
+        weeks : weeks,
+        left : Math.abs(trainHrs)
+      };
     },
     toType(obj) {
         return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();

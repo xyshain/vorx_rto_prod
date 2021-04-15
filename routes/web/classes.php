@@ -54,6 +54,7 @@ Route::get('student/intl/get_package_units/{offer_letter_id}/{course_code}','Stu
 Route::get('classes/{id}/time-table', 'StudentClass\TimeTableController@show')->name('class.time-table');
 Route::post('classes/time-table', 'StudentClass\TimeTableController@store')->name('class.store');
 Route::get('classes/{id}/time-table/reset', 'StudentClass\TimeTableController@reset')->name('class.reset');
+Route::get('classes/time-table/test', 'StudentClass\TimeTableController@test');
 
 
 // generate time table from start date
