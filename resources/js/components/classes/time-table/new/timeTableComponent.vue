@@ -17,7 +17,6 @@
             <div class="col-md-6 text-right">
               <button class="btn btn-warning" v-if="is_save == 1" @click="resetTimeTable"><i class="fas fa-undo"></i> Reset</button>
               <!-- <button class="btn btn-warning" @click="autoFill(-1)"><i class="fas fa-list"></i> Generate</button> -->
-              <button class="btn btn-primary " @click="autoFill(1)"><i class="fas fa-calculator mr-1"></i> Calculate</button>
               <button class="btn btn-success" @click="saveTimeTable"><i class="fas fa-save"></i> Save</button>
             </div>
           </div>
@@ -216,12 +215,21 @@
                       </tr> -->
                   <!-- </tbody> -->
                   <tfoot>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
                     <!-- <td></td> -->
+                    <td colspan="5" class="text-left">
+                      <div class="row no-gutters">
+                        <div class="col-md-3">
+                          <button class="btn btn-info" style="width:100%" @click="autoFill(1)"><i class="far fa-calendar-alt mr-1"></i> Assign Dates</button>
+                        </div>
+                        <div class="col-md-9 pl-2">
+                          <span><i><b>Note:</b> <b>Start</b> and <b>End dates</b> will be automatically assigned based on the inputs applied.</i></span>
+                        </div>
+                      </div>
+                    </td>
+                    <!-- <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="text-right"></td> -->
                     <td class="text-right">{{time_table_totals.total_training_hours}}</td>
                     <td class="text-right">{{time_table_totals.total_weeks}}</td>
                     <td></td>
@@ -255,6 +263,7 @@ export default {
       getClass: {},
       trainers: window.trainers,
       is_save: 0,
+      auto_if_update: 0,
       days : window.days,
       holidays: window.holidays,
       // year_duration: [], 
@@ -321,12 +330,33 @@ export default {
     }
   },
   created() {
+    // console.log(window.time_table);
+    if(window.time_table.id) {
+        // console.log('suloders?');
+        let e = window.time_table.time_table;
+        // console.log(e);
+        for(let i = 0 ; e.length > i ; i++) {
+          if(e[i].dates) {
+            e[i].dates.start = e[i].dates.start ? moment(e[i].dates.start)._d : null;
+            e[i].dates.end = e[i].dates.end ? moment(e[i].dates.end)._d : null;
+          }
+        }
+        window.time_table.time_table = e;
+        // console.log(window.time_table);
+    }
+
     this.tt = window.time_table;
     this.getClass = window.class;
     this.is_save = window.is_save
+    // if(this.tt.time_table) {
+      // this.formatDates(this.tt.time_table);
+    // }
     // this.autoFill();
   },
   methods: {
+    formatDates(data) {
+      console.log(data);
+    },
     TimeCalcTotalHours(key) {
       let day = this.tt.training_days_weekly[key];
       if(typeof day.time_start && ['', null].indexOf(day.time_start) == -1 && typeof day.time_end && ['', null].indexOf(day.time_end) == -1) {
@@ -339,14 +369,14 @@ export default {
     },
     async autoFill(generate = 0) {
       
-      swal.fire({
-          title: 'Generating time table...',
-          // html: '',// add html attribute if you want or remove
-          allowOutsideClick: false,
-          onBeforeOpen: () => {
-              swal.showLoading()
-          },
-      });
+      // swal.fire({
+      //     title: 'Generating time table...',
+      //     // html: '',// add html attribute if you want or remove
+      //     allowOutsideClick: false,
+      //     onBeforeOpen: () => {
+      //         swal.showLoading()
+      //     },
+      // });
 
       if( this.training_hours_weekly == 0) {
         if(generate == 1) {
@@ -355,8 +385,9 @@ export default {
             'Must have timings to calculate time table.',
             'error'
           )
+          return false;
         }
-        return false;
+        swal.close()
       }
 
     //   console.log('test');
@@ -365,39 +396,41 @@ export default {
       let totalTrainHrs = 0;
     //   console.log(vm.tt);
       let tt = vm.tt.time_table;
-
+      // console.log(vm.tt);
       let start = null;
       let run = null;
       let end = null;
+      // console.log('Hours Weekly: '+vm.training_hours_weekly);
       // console.log(vm.tt);
-      console.log('Hours Weekly: '+vm.training_hours_weekly);
       for (let index = 0; index < tt.length; index++) {
-            console.log('--------------------------------------------------------');
+            // console.log('--------------------------------------------------------');
             // check training hours
 
             if(start == null) {
               start = moment(vm.tt.duration_start_date);
-              console.log(`start : `+moment(start).format('DD/MM/YYYY'));
+              // console.log(`start : `+moment(start).format('DD/MM/YYYY'));
               run = start;
             }
             let trainHours = tt[index].training_hours;
-            console.log(`Training Hours : ${trainHours}`);
+            // console.log(`Training Hours : ${trainHours}`);
+
+            // console.log(vm.tt.training_days_weekly);
             
             /* must search days that have training. */
-            let unitWeeks = await this.getWeeksFromHours(trainHours, vm.training_hours_weekly);
+            let dayComput = await this.getWeeksFromHours(trainHours, vm.training_hours_weekly, vm.tt.training_days_weekly, moment(run).format('ddd'));
 
-            console.log('Total weeks for this unit: '+ unitWeeks);
-            tt[index].weeks = unitWeeks;
-            totalTrainHrs += unitWeeks;
+            // console.log('Total weeks for this unit: '+ dayComput);
+            tt[index].weeks = dayComput.weeks;
+            totalTrainHrs += dayComput.weeks;
             // assign dates per unit 
-            end = moment(run).add(unitWeeks, 'weeks');
+            end = moment(run).add(dayComput.days, 'days');
             let dates = {
               start : moment(run)._d,
               end : moment(end)._d,
             }
             tt[index].dates = dates;
             // console.log(tt[index]);
-            run = moment(end);
+            run = dayComput.left > 0 ? moment(end).subtract(1, 'day') : moment(end);
             // if(index == 0) {
             //     // console.log('first');
             //     if(tt[index].training_hours == 0) {
@@ -410,21 +443,102 @@ export default {
       this.tt.time_table = tt;
       this.tt.total_weeks = totalTrainHrs;
       // this.getDates();
-      console.log(tt)
+      // console.log(tt)
     //   vm.disabled_dates = disabled_dates;
     //   this.totalTrainingHours('th');
     //   this.totalTrainingHours('wk');
     //   this.fixDates(table)
-      swal.close()
+
+      if(generate != 0) {
+        
+        let content = ''
+
+        switch (generate) {
+          case 1:
+            content = 'Start / End dates assigned successfully'
+            break;
+          case 2:
+            content = 'Time Table is now reset.'
+            break;
+        
+          default:
+            content = 'Start / End dates assigned successfully'
+            break;
+        }
+
+        Toast.fire({
+            position: 'bottom-end',
+            type: 'success', title: content,
+        })
+      }else{
+        swal.close()
+      }
+
       
     },
-    async getWeeksFromHours(trainHrs,hrsPerWeek) {
+    async getWeeksFromHours(trainHrs,hrsPerWeek,dw,ds) {
       let weeks = 0;
+      let days = 0;
+      let isoWeek = [
+            'Mon',
+            'Tue',
+            'Wed',
+            'Thu',
+            'Fri',
+            'Sat',
+            'Sun',
+        ];
+      // console.log(ds);
       while(trainHrs > 0) {
           weeks++;
-          trainHrs = trainHrs - hrsPerWeek;
+
+          let daysOfWeekCounter = 0;
+
+          //get days of week counter 
+          while(daysOfWeekCounter < 7) {
+            if(trainHrs < 1) {
+                break;
+            }
+            for (let key = 0; key < isoWeek.length; key++) {
+              let iso = isoWeek[key];
+
+              if(daysOfWeekCounter == 7 || trainHrs < 1) {
+                  break;
+              }
+              
+              if(daysOfWeekCounter != 0) {
+                  days++;
+                  daysOfWeekCounter++;
+                  console.log('count '+iso+' - '+ daysOfWeekCounter);
+              }
+
+              if(iso == ds && daysOfWeekCounter == 0) {
+                  days++;
+                  daysOfWeekCounter++;
+                  console.log('first count '+iso+' - '+ daysOfWeekCounter);
+              }
+
+              if(daysOfWeekCounter != 0) {
+                  for (let k = 0; k < dw.length; k++) {
+                    const val = dw[k];
+                    if(val.day == iso && [0,null].indexOf(val.hours) == -1) {
+                        trainHrs = trainHrs - parseInt(val.hours);
+                        console.log(trainHrs);
+                    }
+                  }
+              }
+              
+            }
+          } 
       }
-      return weeks;
+      console.log('days - '+days);
+      console.log('weeks - '+weeks);
+      console.log(`training hours of that day left - ${trainHrs}`)
+      return {
+        days : days - 1,
+        weeks : weeks,
+        left : Math.abs(trainHrs)
+      };
     },
     toType(obj) {
         return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
@@ -474,9 +588,10 @@ export default {
             if(res.data.status == 'success'){
               vm.tt = {};
               vm.getClass = res.data.class; 
+              console.log(res.data);
               vm.tt = res.data.time_table;
               vm.is_save = 0
-              vm.autoFill();
+              vm.autoFill(2);
               swal.fire(
                 'Success!',
                 'Time table reset successfully',
@@ -601,7 +716,8 @@ export default {
   },
   watch: {
         'tt.training_days_weekly' : function (newitem, olditem) {
-          if(olditem && newitem.length != olditem.length) {
+
+          if(olditem && newitem && newitem.length != olditem.length) {
             let sorted = newitem.slice().sort(function(a, b) {
               return a.order - b.order;
             });
@@ -611,45 +727,57 @@ export default {
         tt : function (item){
           this.tt.duration_start_date = moment(item.duration_start_date)._d;
           // let data = [];
+          // if(this.auto_if_update == 0) {
+          //   if(item.id) {
+          //     console.log('suloders?');
+          //     let e = item.time_table;
+          //     console.log(e.dates);
+          //     for(let i = 0 ; e.length > i ; i++) {
+          //       if(e.dates) {
+          //         e.dates.start = e.dates.start ? moment(e.dates.start)._d : null;
+          //         e.dates.end = e.dates.end ? moment(e.dates.end)._d : null;
+
+          //       }
+          //     }
+          //     this.auto_if_update = 1;
+          //   }else{
+          //     this.auto_if_update = 1;
+          //   }
+          // }
           // item.time_table.forEach(e => {
-          //   let th = 0;
-          //   // if(typeof e.dates !== 'undefined'){
-          //   //   if(typeof e.dates.start !== 'undefined'){
-          //   //     e.dates.start = moment(e.dates.start)._d;
-          //   //   }
-          //   //   if(typeof e.dates.end !== 'undefined'){
-          //   //     e.dates.end = moment(e.dates.end)._d;
-          //   //   }
-          //   // }
-          //   // if(typeof e.end_date !== 'undefined'){
-          //   //   e.end_date = moment(e.end_date)._d;
-          //   // }
+            // let th = 0;
+            // if(typeof e.dates !== 'undefined'){
+                
+            // }
+            // if(typeof e.end_date !== 'undefined'){
+            //   e.end_date = moment(e.end_date)._d;
+            // }
 
-          //   // if(typeof e.dates !== 'undefined' && typeof e.dates.start !== 'undefined' && typeof e.dates.end !== 'undefined'){
-          //   //   disabled_dates.push({dates:{start:moment(e.dates.start)._d, end:moment(e.dates.end)._d}})
-          //   // }
+            // if(typeof e.dates !== 'undefined' && typeof e.dates.start !== 'undefined' && typeof e.dates.end !== 'undefined'){
+            //   disabled_dates.push({dates:{start:moment(e.dates.start)._d, end:moment(e.dates.end)._d}})
+            // }
 
 
-          //   if(typeof e.unit !== 'undefined' && typeof e.training_hours === 'undefined'){
-          //     th = e.unit.scheduled_hours
-          //   }else if(typeof e.training_hours !== 'undefined'){
-          //     th = e.training_hours
-          //   }
+            // if(typeof e.unit !== 'undefined' && typeof e.training_hours === 'undefined'){
+            //   th = e.unit.scheduled_hours
+            // }else if(typeof e.training_hours !== 'undefined'){
+            //   th = e.training_hours
+            // }
 
-          //   if(typeof e.weeks === 'undefined'){
-          //     e.weeks = 0;
-          //   }
-          //   // e.totalTrainingHours;
-          //   e.training_hours = th;
-          //   data.push(e);
+            // if(typeof e.weeks === 'undefined'){
+            //   e.weeks = 0;
+            // }
+            // e.totalTrainingHours;
+            // e.training_hours = th;
+            // data.push(e);
           // })
           // console.log(data);
           // this.tt.time_table = data;
 
-        },
+        // },
 
 
-        getClass: function(i) {
+        // getClass: function(i) {
           // console.log(i)
           // let d = moment(i.start_date)._d;
           
