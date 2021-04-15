@@ -42,7 +42,7 @@ class StudentClassController extends Controller
         // dd(Auth::user()->id);
         
         $trainers = Trainer::orderBy('firstname','asc')->get();
-        $delivery_loc = TrainingDeliveryLoc::orderBy('train_org_dlvr_loc_name','asc')->get();
+        $delivery_loc = TrainingDeliveryLoc::with(['state'])->orderBy('train_org_dlvr_loc_name','asc')->get();
         $delivery_modes = AvtDeliveryMode::get();
         // dd($delivery_modes);
         $courses = Course::with(['courseprospectus'])->orderBy('code','asc')->get();
@@ -75,7 +75,7 @@ class StudentClassController extends Controller
         if(isset($request->delivery_loc['id'])){
             $dl = TrainingDeliveryLoc::where('id', $request->delivery_loc['id'])->first()->state?TrainingDeliveryLoc::where('id', $request->delivery_loc['id'])->first()->state->state_key:null;
         }else{
-            $dl=null;
+            $dl = $request->location;
         }
 
         try{
@@ -101,7 +101,8 @@ class StudentClassController extends Controller
     }
 
     public function get_class_fields($class_id){
-        $class_fields = StudentClass::with('course','delivery_location','attendance')->find($class_id);
+
+        $class_fields = StudentClass::with('course.courseprospectus','delivery_location','attendance')->find($class_id);
         // dd($class_fields);
         $class_fields->trainer_selected = $class_fields->trainer_selected;
         return $class_fields;
@@ -349,7 +350,7 @@ class StudentClassController extends Controller
         if(isset($request->delivery_location['id'])){
             $dl = TrainingDeliveryLoc::where('id', $request->delivery_location['id'])->first()->state?TrainingDeliveryLoc::where('id', $request->delivery_location['id'])->first()->state->state_key:null;
         }else{
-            $dl=null;
+            $dl= $request->location;
         }
         // dd($dl);
         try{

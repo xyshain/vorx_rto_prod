@@ -140,9 +140,10 @@ class TimeTableController extends Controller
         if($class->time_table){
             // dd($class->time_table);
             $time_table = $class->time_table;
+            // dd($time_table->time_table);
             $is_save = 1;
         }else{
-            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', $class->location)->first();
+            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', 'like', '%'.$class->location.'%')->first();
             // dump($prospectus->unit_selected);
             if($prospectus && in_array($class->location, explode(',',$prospectus->location))){
                 // dd('in');
@@ -250,10 +251,10 @@ class TimeTableController extends Controller
         if($tt){
             $tt->delete();
 
-            $class = StudentClass::with(['delivery_location', 'course', 'time_table'])->where('id', $id)->first();
+            $class = StudentClass::with(['course', 'time_table'])->where('id', $id)->first();
             $time_table = [];
 
-            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', $class->location)->first();
+            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', 'like', '%'.$class->location.'%')->first();
             // dump($prospectus->unit_selected);
             
             if($prospectus && in_array($class->location, explode(',',$prospectus->location))){

@@ -22,7 +22,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div :class="['form-group', errors.description ? 'has-error' : '']" >
-                  <label for="description">Description</label>
+                  <label for="description">Class Name</label>
                   <input 
                     id="description" 
                     name="description" 
@@ -45,24 +45,6 @@
                 </div>
             </div> -->
             <div class="col-md-12">
-                <div :class="['form-group', errors.trainer ? 'has-error' : '']" >
-                <label for="trainer">Trainer</label>
-                <multiselect 
-                v-model="student_class.trainer" 
-                :options="trainers" 
-                :custom-label="trainerName" 
-                :multiple="true"
-                :close-on-select="false"
-                placeholder="Select Trainer(s)" 
-                label="firstname" 
-                track-by="id">
-                 </multiselect>
-                  <span v-if="errors.trainer" :class="['badge badge-danger']">{{ errors.trainer[0] }}</span>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12">
                 <div :class="['form-group', errors.course_code ? 'has-error' : '']" >
                 <label for="course_code">Course</label>
                  <multiselect v-model="student_class.course_code" 
@@ -78,12 +60,29 @@
             </div>
         </div>
         <div class="row">
+          <div class="col-md-6">
+              <div :class="['form-group', errors.trainer ? 'has-error' : '']" >
+              <label for="trainer">Trainer</label>
+              <multiselect 
+              v-model="student_class.trainer" 
+              :options="trainers" 
+              :custom-label="trainerName" 
+              :multiple="true"
+              :close-on-select="false"
+              placeholder="Select Trainer(s)" 
+              label="firstname" 
+              track-by="id">
+                </multiselect>
+                <span v-if="errors.trainer" :class="['badge badge-danger']">{{ errors.trainer[0] }}</span>
+              </div>
+          </div>
             <div class="col-md-6">
                 <div :class="['form-group', errors.delivery_loc ? 'has-error' : '']" >
                 <label for="deliver_loc">Delivery Location</label>
                  <multiselect v-model="student_class.delivery_loc" 
                  :options="delivery_locations" 
                  :custom-label="deliveryLocations"
+                 @select="selectDelLoc"
                   placeholder="Select one" 
                   label="deliveryLocation" 
                   track-by="id"></multiselect>
@@ -91,7 +90,21 @@
                   <span v-if="errors.delivery_loc" :class="['badge badge-danger']">{{ errors.delivery_loc[0] }}</span>
                 </div>
             </div>
-            
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+              <div :class="['form-group', errors.location ? 'has-error' : '']" >
+                <label for="state">State</label>
+                <select v-model="student_class.location" class="form-control" v-if="lockState == 0">
+                  <option v-for="(i,k) in getLocationsFromCourse" :key="k" :value="i">{{i}}</option>
+                </select>
+                <select v-model="student_class.location" class="form-control" disabled v-else>
+                  <option v-for="(i,k) in getLocationsFromCourse" :key="k" :value="i">{{i}}</option>
+                </select>
+
+                <span v-if="errors.location" :class="['badge badge-danger']">{{ errors.location[0] }}</span>
+              </div>
+            </div>
             <div class="col-md-6">
               <div :class="['form-group', errors.venue ? 'has-error' : '']" >
                 <label for="venue">Venue</label>
@@ -177,6 +190,7 @@ export default {
       delivery_modes:window.delivery_modes?window.delivery_modes:[],
       courses:window.courses?window.courses:[],
       selected_course : {},
+      // lockState: 0,
       app_color: app_color,
       student_class: {
           description:'',
@@ -199,15 +213,25 @@ export default {
   },
   computed: {
     getLocationsFromCourse() {
-      let locs = [];
+      let ex = '';
       if(this.selected_course.id) {
+        // console.log('in?');
         if(this.selected_course.courseprospectus[0]) {
           let prospect = this.selected_course.courseprospectus;
           for(let i = 0 ; i < prospect.length ; i++) {
-            console.log(prospect[i].location);
+            ex += i != 0 ? ',' : '';
+            ex += prospect[i].location;
+
           }
         }
       }
+      return ex.split(',');
+    },
+    lockState () {
+      if(this.student_class.delivery_loc) {
+        return 1;
+      }
+      return 0;
     }
   },
   watch: {
@@ -218,11 +242,24 @@ export default {
       if (value.name != null) {
         this.errors.name = "";
       }
-    }
+    },
+    // 'student_course.delivery_loc' : function (newval) {
+    //   if(newval) {
+    //     this.lockState =  1;
+    //   }else {
+    //     this.lockState =  0;
+    //   }
+    // }
   },
   methods: {
     selectCourse(course) {
         this.selected_course = course;
+    },
+    selectDelLoc(delLoc) {
+      console.log(delLoc);
+      if(delLoc.state) {
+        this.student_class.location = delLoc.state.state_key;
+      }
     },
     trainerName({firstname,lastname}){
       return `${firstname} ${lastname}`
@@ -264,6 +301,7 @@ export default {
         trainer:this.student_class.trainer,
         delivery_loc:this.student_class.delivery_loc,
         delivery_mode:this.student_class.delivery_mode,
+        location:this.student_class.location,
         course_code:this.student_class.course_code,
         start_date:this.student_class.start_date?moment(this.student_class.start_date).format('YYYY-MM-DD'):'',
         end_date:this.student_class.end_date?moment(this.student_class.end_date).format('YYYY-MM-DD'):'',
