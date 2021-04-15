@@ -83,6 +83,9 @@
                 >{{ errors[itm['name']][0]}}</span>
               </div>
             </div>
+            <div v-else-if="itm['type'] === 'hr'">
+              <hr>
+            </div>
             <div v-else-if="itm['type'] === 'select'">
               <!-- selectbox -->
               <div v-if="itm['name'] === 'funding_type'" class="form-group">
