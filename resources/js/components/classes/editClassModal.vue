@@ -26,7 +26,7 @@
                 <span>{{studentAttCount}}</span>                
               </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div :class="['form-group', errors.desc ? 'has-error' : '']" >
                   <label for="description">Description</label>
                   <input 
@@ -40,7 +40,7 @@
                   <span v-if="errors.desc" :class="['badge badge-danger']">{{ errors.desc[0] }}</span>
                 </div>
             </div>
-            <div class="col-md-6">
+            <!-- <div class="col-md-6">
                 <div :class="['form-group', errors.time_table_type ? 'has-error' : '']" >
                   <label for="time_table_type">Time Table Type</label>
                   <select name="time_table_type" id="time_table_type" class="form-control" v-model="student_class.time_table_type">
@@ -49,26 +49,8 @@
                   </select>
                   <span v-if="errors.time_table_type" :class="['badge badge-danger']">{{ errors.time_table_type[0] }}</span>
                 </div>
-            </div>
+            </div> -->
             <div class="col-md-12">
-                <div :class="['form-group', errors.trainer ? 'has-error' : '']" >
-                <label for="trainer">Trainer</label>
-                <multiselect 
-                v-model="student_class.trainer_selected" 
-                :options="trainers" 
-                :custom-label="trainerName" 
-                :multiple="true"
-                :close-on-select="false"
-                placeholder="Select Trainer(s)" 
-                label="firstname" 
-                track-by="id">
-                 </multiselect>
-                  <span v-if="errors.trainer" :class="['badge badge-danger']">{{ errors.trainer[0] }}</span>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12">
                 <div :class="['form-group', errors.course ? 'has-error' : '']" >
                 <label for="course_code">Course</label>
                  <multiselect v-model="student_class.course" 
@@ -84,17 +66,48 @@
         </div>
         <div class="row">
             <div class="col-md-6">
+                <div :class="['form-group', errors.trainer ? 'has-error' : '']" >
+                <label for="trainer">Trainer</label>
+                <multiselect 
+                v-model="student_class.trainer_selected" 
+                :options="trainers" 
+                :custom-label="trainerName" 
+                :multiple="true"
+                :close-on-select="false"
+                placeholder="Select Trainer(s)" 
+                label="firstname" 
+                track-by="id">
+                 </multiselect>
+                  <span v-if="errors.trainer" :class="['badge badge-danger']">{{ errors.trainer[0] }}</span>
+                </div>
+            </div>
+            <div class="col-md-6">
                 <div :class="['form-group', errors.delivery_loc ? 'has-error' : '']" >
                 <label for="deliver_loc">Delivery Location</label>
                  <multiselect v-model="student_class.delivery_location" 
                  :options="delivery_locations" 
                  :custom-label="deliveryLocations"
+                 @select="selectDelLoc"
                   placeholder="Select one" 
                   label="deliveryLocation" 
                   track-by="id"></multiselect>
                   
                   <span v-if="errors.delivery_loc" :class="['badge badge-danger']">{{ errors.delivery_loc[0] }}</span>
                 </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+              <div :class="['form-group', errors.location ? 'has-error' : '']" >
+                <label for="state">State</label>
+                <select v-model="student_class.location" class="form-control" v-if="lockState == 0">
+                  <option v-for="(i,k) in getLocationsFromCourse" :key="k" :value="i">{{i}}</option>
+                </select>
+                <select v-model="student_class.location" class="form-control" disabled v-else>
+                  <option v-for="(i,k) in getLocationsFromCourse" :key="k" :value="i">{{i}}</option>
+                </select>
+                <span v-if="errors.location" :class="['badge badge-danger']">{{ errors.location[0] }}</span>
+              </div>
             </div>
             <div class="col-md-6">
               <div :class="['form-group', errors.venue ? 'has-error' : '']" >
@@ -179,6 +192,7 @@ export default {
       delivery_locations:window.delivery_loc?window.delivery_loc:[],
       delivery_modes:window.delivery_modes?window.delivery_modes:[],
       courses:window.courses?window.courses:[],
+      selected_course : {},
       app_color: app_color,
       student_class: {
           attendance:[],
@@ -199,10 +213,32 @@ export default {
       isLoading: false
     };
   },
-  
   computed:{
     studentAttCount(){
       return Object.keys(this.student_class.attendance).length;
+    },
+    getLocationsFromCourse() {
+      let ex = '';
+      if(this.selected_course.id) {
+        // console.log('in?');
+        if(this.selected_course.courseprospectus[0]) {
+          let prospect = this.selected_course.courseprospectus;
+          for(let i = 0 ; i < prospect.length ; i++) {
+            ex += i != 0 ? ',' : '';
+            ex += prospect[i].location;
+          }
+        }
+      }
+      // ex.join(',');
+
+      return ex.split(',');
+    },
+    lockState () {
+      console.log(this.student_class.delivery_location)
+      if(this.student_class.delivery_location) {
+        return 1;
+      }
+      return 0;
     }
   },
   watch: {
@@ -229,6 +265,14 @@ export default {
     }
   },
   methods: {
+    selectCourse(course) {
+        this.selected_course = course;
+    },
+    selectDelLoc(delLoc) {
+      if(delLoc.state) {
+        this.student_class.location = delLoc.state.state_key;
+      }
+    },
     trainerName({firstname,lastname}){
       return `${firstname} ${lastname}`
     },
@@ -243,6 +287,7 @@ export default {
     },
     beforeOpen(e) {
       this.student_class = e.params;
+      this.selected_course = this.student_class.course;
     },
     beforeClose(e) {
         this.student_class={};

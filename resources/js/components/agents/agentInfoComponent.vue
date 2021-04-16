@@ -267,12 +267,12 @@
                         if (res.data.status == "success") {
                             swal.fire({
                             type: "success",
-                            title: "Update Successfuly",
+                            title: "Created Successfuly",
                             });
                         } else {
                             swal.fire({
                             type: "error",
-                            title: "Failed to create agent agreement pdf",
+                            title: res.data.message,
                             });
                         }
                         // console.log(res);
@@ -280,7 +280,7 @@
                         .catch((err) => {
                         swal.fire({
                             type: "error",
-                            title: "Failed to create agent agreement pdf",
+                            title: res.data.message,
                         });
                         });
                     }
@@ -331,7 +331,10 @@
                         }
                     })
                     .catch((error) => {
-                        console.log(error);
+                        swal.fire({
+                            type: "error",
+                            title: response.data.message,
+                        });
                     });
                 }
                 });

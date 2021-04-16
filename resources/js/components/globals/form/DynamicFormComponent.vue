@@ -7,8 +7,8 @@
         </button>
       </div>
     </div>
-    <div v-for="(form, key) in this.formSettings" :key="key">
-      <div v-bind:class="'horizontal-line-wrapper-'+app_color+' mb-2'">
+    <div v-for="(form, key) in this.formSettings" :key="key" :class="toType(form.FormWrapper) !== 'undefined' ? form.FormWrapper : ''" :hidden="toType(form.isHidden) !== 'undefined' ? form.isHidden : false">
+      <div v-if="form.FormTitle !== 'none'" v-bind:class="'horizontal-line-wrapper-'+app_color+' mb-2'">
         <h6>{{form.FormTitle}}</h6>
       </div>
       <div class="clearfix"></div>
@@ -82,6 +82,9 @@
                   :class="['badge badge-danger']"
                 >{{ errors[itm['name']][0]}}</span>
               </div>
+            </div>
+            <div v-else-if="itm['type'] === 'hr'">
+              <hr>
             </div>
             <div v-else-if="itm['type'] === 'select'">
               <!-- selectbox -->

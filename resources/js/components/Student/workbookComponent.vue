@@ -5,23 +5,26 @@
                 <div class="card-header" :id="'heading'+key">
                     <h5 class="mb-0">
                         <button class="btn btn-link" data-toggle="collapse" :data-target="'#collapse'+key" aria-expanded="true" :aria-controls="'collapse'+key">
-                        {{itm.course.code}} - {{itm.course.name}}
+                            <span v-if="itm.course_code == '@@@@'">Unit of Competency <span v-if="itm.uc_description != null"> - {{ itm.uc_description }}</span></span>
+                            <span v-else>{{itm.course.code}} - {{itm.course.name}}</span>
                         </button>
                     </h5>
                 </div>
                 <div :id="'collapse'+key" :class="['collapse', key == 0 ? 'show' : '']" :aria-labelledby="'heading'+key" data-parent="#accordion">
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-6 pl-5" v-if="typeof workbook[itm.course.code] !== 'undefined'">
-                                <h4><i class="far fa-file fa-1x"></i> {{workbook[itm.course.code].name}}</h4>
+                            <div class="col-md-6 pl-5" v-if="toType(workbook[itm.course_code]) !== 'undefined'">
+                                <h4><i class="far fa-file fa-1x"></i>
+                                    <span>{{workbook[itm.course_code].name}}</span>
+                                </h4>
                             </div>
                             <div class="col-md-6" v-else>
                                 <input type="file" @change="processFile" :StudentCourse="itm.id" class="" name="" id="">
                             </div>
-                            <div class="col-md-6 text-right" v-if="typeof workbook[itm.course.code] !== 'undefined'">
-                                <button class="btn btn-success" title="Download workbook" @click="download(workbook[itm.course.code].id)"><i class="fas fa-download"></i></button>
+                            <div class="col-md-6 text-right" v-if="toType(workbook[itm.course_code]) !== 'undefined'">
+                                <button class="btn btn-success" title="Download workbook" @click="download(workbook[itm.course_code].id)"><i class="fas fa-download"></i></button>
                                 <!-- <button class="btn btn-warning" title="Notify Assigned Person (Email)" v-if="automate.length > 0"><i class="fas fa-paper-plane"></i></button> -->
-                                <button class="btn btn-danger" @click="remove(workbook[itm.course.code])" title="Remove workbook"><i class="fas fa-trash"></i></button>
+                                <button class="btn btn-danger" @click="remove(workbook[itm.course_code])" title="Remove workbook"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
                     </div>
@@ -46,6 +49,9 @@ export default {
     this.fetchData();
   },
   methods : {
+        toType(obj) {
+            return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+        },
       remove(data) {
           let vm = this;
           swal.fire({

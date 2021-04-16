@@ -26,7 +26,7 @@ use App\Models\TrainingOrganisation AS TO;
 use App\Models\Course as C;
 use App\Models\CourseAvtDetail as CAD;
 use App\Models\AvtUnitEducationField;
-use App\Models\Course\Course;
+use App\Models\Course;
 use App\Models\OfferLetterStatus;
 use App\Models\StudentCertificateIssuance;
 use App\Models\TrainingOrganisation;

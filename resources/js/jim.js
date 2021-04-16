@@ -16,7 +16,7 @@ Vue.component('automation-details', require('./components/automation/automationD
 // Course Setup
 Vue.component('course-setup', require('./components/Program/course/setup/courseSetupComponent.vue').default);
 // Class Time Table
-Vue.component('time-table', require('./components/classes/time-table/timeTableComponent.vue').default);
+Vue.component('time-table', require('./components/classes/time-table/new/timeTableComponent.vue').default);
 Vue.component('rotating-time-table', require('./components/classes/time-table/timeTableRotatingComponent.vue').default);
 // Site Inspection Checklist Form
 Vue.component('site-inspection-checklist-form', require('./components/forms/siteInspectionChecklistComponent.vue').default);
