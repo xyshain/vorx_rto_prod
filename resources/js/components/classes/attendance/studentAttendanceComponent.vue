@@ -100,6 +100,7 @@
           </div>
       </div>
       <br>
+      <br>
       <div v-bind:class="'horizontal-line-wrapper-'+app_color+' mb-2'">
           <h6>Attendance</h6>
       </div>

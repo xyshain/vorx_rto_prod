@@ -27,6 +27,15 @@
                                         </multiselect>
                                         <!-- <input type="number" class="form-control" id="year" placeholder=""> -->
                                     </div>
+                                    <div class="form-group col-md-5">
+                                        <label for="year">Student Type:</label>
+                                        <select name="" id="" v-model="student_type" class="form-control">
+                                            <option value="*">All</option>
+                                            <option value="2">Domestic</option>
+                                            <option value="1">International</option>
+                                        </select>
+                                        <!-- <input type="number" class="form-control" id="year" placeholder=""> -->
+                                    </div>
                                     <div class="form-group col-md-2">
                                         <div class="clearfix" style="height: 22px;"></div>
                                         <button @click="resetFields" :class="'btn btn-warning'" title="Reset Fields"><i class="fa fa-rotate-left"></i></button>
@@ -34,8 +43,8 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group col-md-5">
-                                        <label for="month">Start Month: <span class="badge"></span></label>
-                                        <input type="month" class="form-control" v-model="from" value="">
+                                        <label for="month">Start date: <span class="badge"></span></label>
+                                        <date-picker :masks="{ L: 'DD/MM/YYYY' }" locale="en" v-model="from" ></date-picker>
                                         <!-- <select id="month" class="form-control">
                                             <option value="01-03">Jan - Mar</option>
                                             <option value="01-06">Jan - Jun</option>
@@ -44,8 +53,8 @@
                                         </select> -->
                                     </div>
                                     <div class="form-group col-md-5">
-                                        <label for="year">End Month: <span class="badge"></span></label>
-                                        <input type="month" class="form-control" v-model="to" value="">
+                                        <label for="year">End date: <span class="badge"></span></label>
+                                        <date-picker :masks="{ L: 'DD/MM/YYYY' }" locale="en" v-model="to" ></date-picker>
                                         <!-- <input type="number" class="form-control" id="year" placeholder=""> -->
                                     </div>
                                     <div class="form-group col-md-2">
@@ -68,6 +77,7 @@
                                 <div class="dropdown-menu dropdown-menu-right">
                                     <!-- <a class="dropdown-item" href="#"><i class="far fa-file-pdf text-danger"></i>&nbsp; PDF</a> -->
                                     <a class="dropdown-item" href="#" @click="exportExcel"><i class="far fa-file-excel text-success"></i>&nbsp; Excel</a>
+                                    <a class="dropdown-item" href="#" @click="exportPdf"><i class="far fa-file-pdf text-danger"></i>&nbsp; Pdf</a>
                                 </div>
                             </div>
                         </div>
@@ -78,14 +88,14 @@
                         <div slot="hours" slot-scope="{row}">
                             <div class="progress" v-if="toType(row.percent_actual_hours)!='undefined'">
                                 <template v-if="row.percent_actual_hours == 0">
-                                    <div class="progress-bar bg-danger" role="progressbar" style="width:100%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" :title="'0/'+row.pref_hours+' hours'"></div>
+                                    <div :class="'progress-bar bg-'+progress_color(row.percent_actual_hours)" role="progressbar" style="width:100%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" :title="'0/'+row.pref_hours+' hours'"></div>
                                 </template>
                                 <template v-else-if="row.percent_actual_hours>100">
-                                    <div class="progress-bar" role="progressbar" :style="'width:'+row.percent_actual_hours+'%'" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100" :title="row.actual_hours+'/'+row.pref_hours+' hours'">{{row.percent_actual_hours.toFixed(1)}}%</div>
+                                    <div :class="'progress-bar bg-'+progress_color(row.percent_actual_hours)" role="progressbar" :style="'width:'+row.percent_actual_hours+'%'" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100" :title="row.actual_hours+'/'+row.pref_hours+' hours'">{{row.percent_actual_hours.toFixed(1)}}%</div>
                                 </template>
                                 <template v-else>
-                                    <div class="progress-bar" role="progressbar" :style="'width:'+row.percent_actual_hours+'%'" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100" :title="row.actual_hours+'/'+row.pref_hours+' hours'">{{row.percent_actual_hours.toFixed(1)}}%</div>
-                                    <div class="progress-bar bg-danger" role="progressbar" :style="'width:'+ (100 - row.percent_actual_hours)+'%'" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" :title="row.actual_hours+'/'+row.pref_hours+' hours'"></div>
+                                    <div :class="'progress-bar bg-'+progress_color(row.percent_actual_hours)" role="progressbar" :style="'width:'+row.percent_actual_hours+'%'" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100" :title="row.actual_hours+'/'+row.pref_hours+' hours'">{{row.percent_actual_hours.toFixed(1)}}%</div>
+                                    <div class="progress-bar bg-gray" role="progressbar" :style="'width:'+ (100 - row.percent_actual_hours)+'%'" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" :title="row.actual_hours+'/'+row.pref_hours+' hours'"></div>
                                 </template>
                             </div>
                             <div v-else>
@@ -99,6 +109,7 @@
   </div>
 </template>
 <script>
+import moment from 'moment'
 // import CreateOfferLetter from "./createOfferLetterComponent.vue";
 export default {
   name: "app-modal",
@@ -153,6 +164,15 @@ export default {
     // this.fetchStudents();
   },
   methods: {
+      progress_color(percent){
+          if(percent>=100){
+              return 'success';
+          }else if(percent>80 && percent<100){
+              return 'warning';
+          }else{
+              return 'danger';
+          }
+      },
       toType(obj) {
             return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
         },
@@ -187,7 +207,7 @@ export default {
                     type:"error",
                     title:"Class field must be filled"
                 });
-                // return false;
+                return false;
             }
 
             if(this.from > this.to){
@@ -209,8 +229,9 @@ export default {
 
             axios.post('/reports/generate-attendance',{
                 class_id:this.selected_class.id,
-                from:this.from,
-                to:this.to
+                from:this.from!==null?moment(this.from).format('YYYY-MM-DD'):null,
+                to:this.to!==null?moment(this.to).format('YYYY-MM-DD'):null,
+                student_type:this.student_type
             }).then(
                 response=>{
                     console.log(response.data);
@@ -235,25 +256,118 @@ export default {
                 }
             );
       },
+      exportPdf(){
+          if(this.attendances.length>0){
+              swal.fire({
+                title: 'Exporting to Pdf...',
+                // html: '',// add html attribute if you want or remove
+                allowOutsideClick: false,
+                onBeforeOpen: () => {
+                    swal.showLoading()
+                },
+                });
+              axios.post('/reports/attendance/export-pdf',{
+                class_id:this.selected_class.id,
+                attendances:this.attendances,
+                from:this.from!==null?moment(this.from).format('YYYY-MM-DD'):null,
+                to:this.to!==null?moment(this.to).format('YYYY-MM-DD'):null,
+              }).then(
+                  response=>{
+                      if(response.data.status=='success'){
+                        //   window.location.href = "/reports/download/excel/"+response.data.file+"/"+response.data.rename;
+                        //   swal.close();
+                      }else{
+                            swal.fire({
+                            type: "error",
+                            title: 'Something went wrong',
+                            html:response.data.message
+                            });
+                      }
+                  }
+              ).catch(
+                  err=>{
+                      swal.fire({
+                        type: "error",
+                        title: 'Something went wrong',
+                        html:err
+                        });
+                  }
+              );
+          }else{
+              swal.fire({
+                    type: "error",
+                    title: 'Data not found.',
+                });
+          }
+      },
       exportExcel(){
-          console.log('export excel');
+          if(this.attendances.length>0){  
+              swal.fire({
+                title: 'Exporting to Excel...',
+                // html: '',// add html attribute if you want or remove
+                allowOutsideClick: false,
+                onBeforeOpen: () => {
+                    swal.showLoading()
+                },
+                });
+              axios.post('/reports/attendance/export-excel',{
+                class_id:this.selected_class.id,
+                attendances:this.attendances,
+                from:this.from!==null?moment(this.from).format('YYYY-MM-DD'):null,
+                to:this.to!==null?moment(this.to).format('YYYY-MM-DD'):null,
+              }).then(
+                  response=>{
+                      if(response.data.status=='success'){
+                          window.location.href = "/reports/download/excel/"+response.data.file+"/"+response.data.rename;
+                          swal.close();
+                      }else{
+                            swal.fire({
+                            type: "error",
+                            title: 'Something went wrong',
+                            html:response.data.message
+                            });
+                      }
+                  }
+              ).catch(
+                  err=>{
+                      swal.fire({
+                        type: "error",
+                        title: 'Something went wrong',
+                        html:err
+                        });
+                  }
+              );
+          }else{
+              swal.fire({
+                    type: "error",
+                    title: 'Data not found.',
+                });
+          }
       },
       resetFields(){
           this.selected_class = '';
+          this.student_type = '*';
           this.from = null;
           this.to = null;
       }
-  }
+  },
 };
 </script>
 <style>
 #VueTables_th--profile_image{
-    width:15% !important;
+    width:12% !important;
 }
 #VueTables_th--student\.party\.name{
     width:15% !important;
 }
 #VueTables_th--student_id{
     width:15% !important;
+}
+.vc-text-base{
+    height: 70% !important;
+
+}
+.table-bordered th, .table-bordered td {
+    vertical-align: middle;
 }
 </style>

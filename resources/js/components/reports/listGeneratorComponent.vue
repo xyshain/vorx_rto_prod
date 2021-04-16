@@ -69,6 +69,15 @@
                                         <!-- <input type="number" class="form-control" id="year" placeholder=""> -->
                                     </div>
                                     <div class="form-group col-md-2">
+                                        <label for="year">Avetmiss Report:</label>
+                                        <select name="" id="" class="form-control" v-model="avetmiss_report">
+                                            <option value="1">Yes</option>
+                                            <option value="0">No</option>
+                                            <option value="*">All</option>
+                                        </select>
+                                        <!-- <input type="number" class="form-control" id="year" placeholder=""> -->
+                                    </div>
+                                    <div class="form-group col-md-2">
                                         <div class="clearfix" style="height: 22px;"></div>
                                         <button type="submit" @click="generateList" :class="'btn btn-'+app_color">Generate</button>
                                     </div>
@@ -123,6 +132,7 @@ export default {
       get_course: '*',
       get_status: '*',
       get_agent: '*',
+      avetmiss_report:'*',
       statuses: [],
       agents: window.agents,
       courses: window.courses,
@@ -231,6 +241,7 @@ export default {
             get_course: this.get_course,
             get_status: this.get_status,
             get_agent: this.get_agent,
+            avetmiss_report:this.avetmiss_report
         })
         .then(function (response) {
             // console.log(response);

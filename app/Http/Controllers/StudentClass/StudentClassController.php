@@ -410,13 +410,9 @@ class StudentClassController extends Controller
                 $attendance->total_hours += $ad->actual_hours;
             }
         }
-        // dd($attendance);
-        // dd($attendance);
-        // dd($attendance);
-        // return json_encode($attendance);
-        // return view('classes.attendance-sheet.attendance-sheet-landscape',compact('attendance'));
+        
         $app_settings = TrainingOrganisation::first();
-        // dd($app_settings);
+        
         $pdf = PDF::loadView('classes.attendance-sheet.attendance-sheet-landscape',compact('attendance','app_settings'));
         return $pdf->setPaper('A4','landscape')->stream();
     }
