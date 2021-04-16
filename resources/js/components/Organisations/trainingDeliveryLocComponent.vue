@@ -2,9 +2,17 @@
   <form @submit.prevent>
     <div>
       <div class="row mb-3">
-        <div class="col-md-12 pull-right text-right">
-          <button class="btn btn-success" @click="saveTrainingDlvrLoc">
+        <div class="col-md-6 pull-left text-left">
+          <button v-if="setup == 1" class="btn btn-primary" @click="goBack">
+            <i class="fas fa-angle-left mr-1"></i> Training Organisation
+          </button>
+        </div>
+        <div class="col-md-6 pull-right text-right">
+          <button v-if="setup != 1" class="btn btn-success" @click="saveTrainingDlvrLoc">
             <i class="far fa-save"></i> Save
+          </button>
+          <button v-else class="btn btn-info" @click="finishSetup">
+            <i class="fas fa-flag-checkered mr-1"></i> Finish Configuration
           </button>
         </div>
       </div>
@@ -222,6 +230,14 @@
               >{{ errors.country_id[0] }}</span>
             </div>
           </div>
+          <div class="col-md-12 text-right" v-if="setup == 1">
+            <button v-if="training_dlvr_location.id" class="btn btn-primary" @click="saveTrainingDlvrLoc">
+                <i class="far fa-edit"></i> Update Delivery Location
+            </button>
+            <button v-else class="btn btn-success" @click="saveTrainingDlvrLoc">
+                <i class="fas fa-plus"></i> Add Delivery Location
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -231,6 +247,7 @@
 export default {
   data() {
     return {
+      setup: window.setup ? 1 : null,
       training_dlvr_location: {
         training_organisation_id: window.training_organisation_id,
         train_org_dlvr_loc_id: "",
@@ -238,7 +255,7 @@ export default {
         postcode: "",
         state_id: "",
         addr_location: "",
-        country_id: "",
+        country_id: "1101",
         edit: 0,
         addr_flat_unit_detail: '',
         addr_building_property_name: '',
@@ -265,12 +282,61 @@ export default {
     }
   },
   methods: {
+    finishSetup() {
+      let loading = swal.fire({
+          title: 'Finishing configuration...',
+          // html: '',// add html attribute if you want or remove
+          allowOutsideClick: false,
+          onBeforeOpen: () => {
+              swal.showLoading()
+          },
+      });
+      if(!this.$parent.deliveryLocList[0]) {
+        swal.fire(
+          'Opss...',
+          'Must add training delivery location',
+          'error'
+        )
+      }else{
+        axios.post('/rto-configuration/finish', {is_done:1})
+        .then(res => {
+          if(res.data.status == 'success') {
+            swal.fire({
+                title: "Good job!",
+                text: "You are now ready to use VORX!",
+                type: "success",
+                showCancelButton: false,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes!'
+            }).then((result) => {
+                if (result.value) {
+                    window.location.href = '/dashboard';
+                }
+            });
+          }else {
+            swal.fire(
+              'Opss...',
+              'There seems to be a problem.',
+              'error'
+            )
+          }
+        })
+
+      }
+    },
+    goBack() {
+      document.getElementById("nav-organization-tab").classList.remove('disabled')
+      document.getElementById("nav-location-tab").classList.add('disabled')
+      // this.$parent.$children[1].formOpen();
+      $('a[href="#nav-organization"]').tab('show')
+      console.log($('a[href="#nav-organization"]'));
+    },
     refill() {
       axios.get("training-delivery-location/generate").then((res) => {
         this.training_dlvr_location.train_org_dlvr_loc_id = res.data;
       });
     },
-
     saveTrainingDlvrLoc() {
       swal.fire({
         title: "Please wait...",
@@ -300,13 +366,14 @@ export default {
             (this.training_dlvr_location.train_org_dlvr_loc_id = ""),
               (this.training_dlvr_location.train_org_dlvr_loc_name = ""),
               (this.training_dlvr_location.postcode = ""),
-              (this.training_dlvr_location.country_id = ""),
+              (this.training_dlvr_location.country_id = "1101"),
               (this.postcode_val = []),
               (this.training_dlvr_location.addr_flat_unit_detail = ""),
               (this.training_dlvr_location.addr_building_property_name = ""),
               (this.training_dlvr_location.addr_street_name = ""),
               (this.training_dlvr_location.addr_street_num = "");
             this.country_val = [];
+            delete this.training_dlvr_location.id;
             this.success = true;
             Toast.fire({
               position: "top-end",
@@ -341,6 +408,20 @@ export default {
       // this.options.push(tag)
       // this.value.push(tag)
     },
+    clearFields() {
+        this.errors = [];
+        (this.training_dlvr_location.train_org_dlvr_loc_id = ""),
+        (this.training_dlvr_location.train_org_dlvr_loc_name = ""),
+        (this.training_dlvr_location.postcode = ""),
+        (this.training_dlvr_location.country_id = "1101"),
+        (this.postcode_val = []),
+        (this.training_dlvr_location.addr_flat_unit_detail = ""),
+        (this.training_dlvr_location.addr_building_property_name = ""),
+        (this.training_dlvr_location.addr_street_name = ""),
+        (this.training_dlvr_location.addr_street_num = "");
+      this.country_val = [];
+      delete this.training_dlvr_location.id;
+    }
   },
 };
 </script>
