@@ -16,6 +16,8 @@
 			$app_color = '#F26522';
 		}else if($app_settings->student_id_prefix == 'CEA'){
 			$app_color = '#024B67';
+		}else{
+			$app_color = 'primary';
 		}
 	?>
 @foreach($attendance->attendance_details->chunk(18) as $ads)
@@ -30,7 +32,11 @@
 						<tr>
 							<td width="20%">
 								<div class="logo-wrapper">
-									<img src="{{public_path()}}/images/logo/{{$app_settings->logo_img}}" alt="">
+									@if(isset($app_settings->logo_img)&&$app_settings->logo_img!=null)
+										<img src="{{public_path()}}/images/logo/{{$app_settings->logo_img}}" alt="">
+									@else
+										<img src="{{public_path()}}/images/logo/vorx_logo.png" alt="" style="width:100px">
+									@endif
 								</div>
 							</td>
 							<td width="80%">

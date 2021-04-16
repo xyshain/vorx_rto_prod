@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\HomeController;
 use App\Models\Menu;
+use App\Models\TrainingDeliveryLoc;
 use App\Models\TrainingOrganisation;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
