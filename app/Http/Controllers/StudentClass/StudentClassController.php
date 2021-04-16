@@ -167,6 +167,7 @@ class StudentClassController extends Controller
     }
 
     public function new_student_attendance(Request $request){
+        // dd($request->all());
         $class = StudentClass::find($request->class_id);
         $validator = Validator::make($request->all(),[
             'student'=>'required',
@@ -174,14 +175,31 @@ class StudentClassController extends Controller
         if($validator->fails()){
             return response()->json(['status' => 'error', 'errors' => $validator->messages()]);
         }
-
+        $errors = [];
         try{
             foreach($request->student as $rs){
-                $attendance = new Attendance;
-                $attendance->class_id = $request->class_id;
-                $attendance->student_id = $rs['student_id'];
-                $attendance->course_code = $class->course_code;//la pa unod
-                $attendance->save();
+                $attendance = Attendance::where('student_id',$rs['student_id'])->where('course_code',$class->course_code)->first();
+                if(isset($attendance)){
+                    // dd($rs);
+                    $existing_student = $rs['party']['name'];
+                    array_push($errors,$existing_student);
+                }
+            }
+
+            if(count($errors)>0){
+                // dd('error');
+                return response()->json(['status'=>'validation_error','errors'=>$errors]);
+            }else{
+                // dd('not error');
+                foreach($request->student as $req){
+                    $attendance = new Attendance;
+                    $attendance->class_id = $request->class_id;
+                    $attendance->student_id = $req['student_id'];
+                    $attendance->course_code = $class->course_code;//la pa unod
+                    $attendance->save();
+                }
+
+                return response()->json(['status'=>'success']);
             }
         }catch(Exception $e){
             return response()->json(['status'=>'error','errors'=>$e]);

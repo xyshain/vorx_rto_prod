@@ -31,6 +31,9 @@ use App\Models\OfferLetterStatus;
 use App\Models\StudentCertificateIssuance;
 use App\Models\TrainingOrganisation;
 use App\Models\Unit;
+use App\Models\StudentClass;
+use App\Models\User;
+use App\Models\Attendance;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -412,7 +415,61 @@ class ReportsController extends Controller
     }
 
     public function attendance(){
+        $classes = StudentClass::orderBy('desc','asc')->get();
+        // dd($classes);
+        \JavaScript::put([
+            'classes'=>$classes
+        ]);
         return view('reports.attendance-list');
     }
+
+    public function generate_attendance(Request $request){
+        $class_id = $request->class_id;
+        $from = $request->from;
+        $to = $request->to;
+
+        if($from==null && $to == null){
+            try{
+                $attendances = Attendance::with('student.party','attendance_details')->where('class_id',$class_id)->get();
+                // return $attendances;
+                $students = [];
+                $pref_hours = 0;
+                $actu_hours = 0;
+                foreach($attendances as $att){
+                    if(isset($att->student)&&$att->student!=null){
+                        // dd($att,'naay unod ble');
+                        $_user = User::where('username',$att->student_id)->first();
+                        if(isset($_user)){
+                            $att->user = $_user;
+                        }else{
+                            $att->user = null;
+                        }
+                        if(isset($att->attendance_details)){
+                            foreach($att->attendance_details as $ad){
+                                $pref_hours += $ad->preferred_hours;
+                                $actu_hours += $ad->actual_hours;
+                            }
+                            $att->pref_hours = $pref_hours;
+                            $att->actual_hours = $actu_hours;
+                            if($pref_hours!=0){
+                                $att->percent_actual_hours = $actu_hours / $pref_hours * 100;
+                            }
+                            // $att->percent_actual_hours = $pref_hours / $actu_hours *100;
+                        }
+                        array_push($students,$att);
+                    }
+                }
+                // dd();
+                // dd($attendances);
+                // return $attendances;
+                return response()->json(['status'=>'success','attendances'=>$students]);
+            }catch(Exception $e){
+                return response()->json(['status'=>'error','message'=>$e->getMessage()]);
+            }
+        }
+    }
+    // public function class_list(){
+    //     $classes = 
+    // }
 
 }

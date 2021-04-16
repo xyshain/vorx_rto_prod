@@ -65,6 +65,7 @@ const Toast = swal.mixin({
 export default {
   data() {
     return {
+      error_html:'',
       app_color: app_color,
       errors: {},
       new_attendance:{
@@ -143,11 +144,25 @@ export default {
           response=>{
             if(response.data.status=='error'){
               this.errors = response.data.errors;
-              Toast.fire({
-                type: "error",
-                title: "Opss.. something went wrong",
-                background: "#ffcdd2"
+              console.log('status erros');
+              swal.fire({
+                  type: "error",
+                  title: 'Opss. something went wrong.',
+                  html:response.data.errors
+                  });
+            }else if(response.data.status=='validation_error'){
+              console.log(response.data.errors);
+              let html = '<h3>Students with existing cannot class in this course be added;</h3>';
+              
+              html += '<ul style="margin-left: 10% !important;">';
+              response.data.errors.forEach(er=>{
+                html+='<li style="text-align:left !important; font-size: 16px; color: #ff5757 !important;"><a href="javascript:void(0)" id="'+er+'" title="Remove from selection">'+er+'</a></li>'
               });
+              this.error_html = html;
+                swal.fire({
+                  type: "error",
+                  html:this.error_html
+                  });
             }else{
                 Toast.fire({
                   // position: 'top-end',
@@ -162,14 +177,16 @@ export default {
           }
       ).catch(
         e=>{
-          console.log(e);
-          Toast.fire({
+          console.log('catch error');
+          swal.fire({
             type: "error",
-            title: "Opss.. something went wrong",
-            background: "#ffcdd2"
+            title: 'Opss. something went wrong.'
             });
         }
       );
+    },
+    test(){
+      console.log('fycj');
     }
   }
 };
