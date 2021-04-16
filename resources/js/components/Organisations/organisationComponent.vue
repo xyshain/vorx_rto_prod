@@ -1,61 +1,59 @@
-<template lang="">
+<template>
     <div>
         <div class="card shadow mb-4">
-            <div class="card-header py-3">
+            <div v-if="setup != 1" class="card-header py-3">
                 <h6 :class="'m-0 font-weight-bold text-'+app_color">Organisation Details</h6>
             </div>
+            <div v-else class="card-header p-3 pr-4">
+                <h4 :class="'m-0 font-weight-bold text-left text-primary'"><i class="fas fa-cogs mr-1"></i> RTO Configuration</h4>
+            </div>
             <div class="card-body">
-                <div>
-                    <nav>
-                        <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                            <a v-bind:class="'nav-item nav-link-'+app_color+' active'" id="nav-organization-tab" data-toggle="tab" href="#nav-organization" role="tab" aria-controls="nav-organization" aria-selected="true">Training Organisation</a>
-                            <!-- <a v-bind:class="'nav-item nav-link-'+app_color" id="nav-location-tab" data-toggle="tab" href="#nav-location" role="tab" aria-controls="nav-location" aria-selected="true">Training Delivery Location</a> -->
-                            <a v-bind:class="'nav-item nav-link-'+app_color" id="nav-bank-tab" data-toggle="tab" href="#nav-bank" role="tab" aria-controls="nav-bank" aria-selected="true">Bank Details</a>
-                            <a v-bind:class="'nav-item nav-link-'+app_color" id="nav-location-tab" data-toggle="tab" href="#nav-location" role="tab" aria-controls="nav-training_org" aria-selected="true">Training Delivery Location</a>
-                            
-                          
-                        </div>
-                    </nav>
-                    <div class="tab-content" id="nav-tabContent">
-                        <div class="tab-pane fade show active" id="nav-organization" role="tabpanel" aria-labelledby="nav-organization-tab">
-                            <training-org></training-org>
-                        </div>
-                        <div class="tab-pane fade show" id="nav-location" role="tabpanel" aria-labelledby="nav-location-tab">
-                            <training-delivery-loc></training-delivery-loc>
-                            <hr>
-                            <v-client-table :class="'header-'+app_color" :data="deliveryLocList" :columns="columns" :options="options" ref="trainerTable">
-
-                                    <div slot="afterLimit" class="ml-2">
-
-                                        <!-- <div class="btn-group">
-                                            <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Export to
-                                                <span class="sr-only">Toggle Dropdown</span>
-                                            </button>
-                                            <div class="dropdown-menu dropdown-menu-right">
-                                                <a class="dropdown-item" href="#"><i class="far fa-file-pdf text-danger"></i>&nbsp; PDF</a>
-                                                <a class="dropdown-item" href="#"><i class="far fa-file-excel text-success"></i>&nbsp; Excel (CSV)</a>
-                                            </div>
-                                        </div> -->
-
-                                    </div>
-
-                                    <div class="btn-group" slot="actions" slot-scope="{row}">
-                                        <a href="#formsection" class="btn btn-primary btn-sm" @click="edit(row.id)"> <i class="fas fa-edit"> </i></a>
-                                        <a href="javascript:void(0)" class="btn btn-danger btn-sm text-white" @click="remove(row.id)"> <i class="fas fa-trash"> </i></a>
-                                    </div>
-
-                            </v-client-table>
-                        </div>
-                        <div class="tab-pane fade show" id="nav-bank" role="tabpanel" aria-labelledby="nav-bank-tab">
-                            <training-bank-details></training-bank-details>
-                        </div>
-                        <div class="tab-pane fade show" id="nav-training_org" role="tabpanel" aria-labelledby="nav-training_org-tab">
-                            <delivery-location></delivery-location>
-                        </div>
-                          
-                    </div>
+              <nav>
+                <div v-if="setup != 1" class="nav nav-tabs" id="nav-tab" role="tablist">
+                  <a :class="`nav-item nav-link-${app_color}`" class="active" id="nav-organization-tab" data-toggle="tab" href="#nav-organization" role="tab" aria-controls="nav-organization" aria-selected="true">Training Organisation</a>
+                  <a :class="`nav-item nav-link-${app_color}`" id="nav-location-tab" data-toggle="tab" href="#nav-location" role="tab" aria-controls="nav-location" aria-selected="false">Training Delivery Location</a>
+                  <a :class="`nav-item nav-link-${app_color}`" id="nav-bank-tab" data-toggle="tab" href="#nav-bank" role="tab" aria-controls="nav-bank" aria-selected="false">Bank Details</a>
                 </div>
+                <div v-else class="nav nav-tabs" id="nav-tab" role="tablist">
+                  <a :class="`nav-item nav-link-${app_color}`" class="active" id="nav-organization-tab" data-toggle="tab" href="#nav-organization" role="tab" aria-controls="nav-organization" aria-selected="true">Training Organisation</a>
+                  <a :class="`nav-item nav-link-${app_color}`" class="disabled" id="nav-location-tab" data-toggle="tab" href="#nav-location" role="tab" aria-controls="nav-location" aria-selected="false">Training Delivery Location</a>
+                </div>
+              </nav>
+              <div class="tab-content" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-organization" role="tabpanel" aria-labelledby="nav-organization-tab">
+                  <training-org></training-org>
+                </div>
+                <div class="tab-pane fade" id="nav-location" role="tabpanel" aria-labelledby="nav-location-tab">
+                  <training-delivery-loc></training-delivery-loc>
+                  <hr>
+                  <v-client-table :class="'header-'+app_color" :data="deliveryLocList" :columns="columns" :options="options" ref="trainerTable">
+
+                          <div slot="afterLimit" class="ml-2">
+
+                              <!-- <div class="btn-group">
+                                  <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                      Export to
+                                      <span class="sr-only">Toggle Dropdown</span>
+                                  </button>
+                                  <div class="dropdown-menu dropdown-menu-right">
+                                      <a class="dropdown-item" href="#"><i class="far fa-file-pdf text-danger"></i>&nbsp; PDF</a>
+                                      <a class="dropdown-item" href="#"><i class="far fa-file-excel text-success"></i>&nbsp; Excel (CSV)</a>
+                                  </div>
+                              </div> -->
+
+                          </div>
+
+                          <div class="btn-group" slot="actions" slot-scope="{row}">
+                              <a href="#formsection" class="btn btn-primary btn-sm" @click="edit(row.id)"> <i class="fas fa-edit"> </i></a>
+                              <a href="javascript:void(0)" class="btn btn-danger btn-sm text-white" @click="remove(row.id)"> <i class="fas fa-trash"> </i></a>
+                          </div>
+
+                  </v-client-table>
+                </div>
+                <div class="tab-pane fade" id="nav-bank" role="tabpanel" aria-labelledby="nav-bank-tab">
+                  <training-bank-details></training-bank-details>
+                </div>
+              </div>
             </div>
         </div>
     </div>
@@ -73,6 +71,7 @@ export default {
   },
   data() {
     return {
+      setup: window.setup ? 1 : null,
       deliveryLocList: [],
       // Vue-Tables-2 Syntax
       columns: [
@@ -192,18 +191,26 @@ export default {
               url: `/organisation/${this.organisation_id}/delivery-location/delete/${id}`,
             })
               .then((res) => {
-                console.log(res);
-                let i = vm.deliveryLocList.map((item) => item.id).indexOf(id); // find index of your object
-                vm.deliveryLocList.splice(i, 1); // remove it from array
+                // console.log(res);
                 if (res.data.status == "success") {
+                  let i = vm.deliveryLocList.map((item) => item.id).indexOf(id); // find index of your object
+                  vm.deliveryLocList.splice(i, 1); // remove it from array
                   Toast.fire({
-                    position: "top-end",
+                    position: "bottom-end",
                     type: "success",
                     title: "Data is deleted successfully",
                   });
-                } else {
+                  this.$parent.$children[0].$children[1].clearFields();
+                } else if (res.data.status == 'denied') {
                   Toast.fire({
-                    position: "top-end",
+                    position: "bottom-end",
+                    type: "error",
+                    title: res.data.msg,
+                  });
+                }
+                else {
+                  Toast.fire({
+                    position: "bottom-end",
                     type: "error",
                     title: "Opss.. data was not deleted",
                   });

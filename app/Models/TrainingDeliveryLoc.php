@@ -68,6 +68,11 @@ class TrainingDeliveryLoc extends Model implements AuditableContract
         return $this->hasMany(StudentCompletionDetail::class, 'train_org_loc_id', 'train_org_dlvr_loc_id');
     }
 
+    public function classes()
+    {
+        return $this->hasMany(StudentClass::class, 'delivery_loc', 'id');
+    }
+
     public function training_org()
     {
         return $this->belongsTo(TrainingOrganisation::class, 'training_organisation_id', 'training_organisation_id');

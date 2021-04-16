@@ -136,7 +136,9 @@ class OfferLetterController extends Controller
                 'total_course_fee_due' => $package_structure['total_course_fee_due'],
                 'payment_required' => $package_structure['downpayment'],
                 'initial_payment_amount' => $package_structure['initial_payment_amount'],
-                'balance_due' => $package_structure['balance_due'],
+                'installment_desired_amount' => $package_structure['installment_amount'],
+                'installment_interval' => $package_structure['weekly_interval'],
+                'installment_start_date' => $package_structure['installment_start_date'] != ''  ? Carbon::parse($package_structure['installment_start_date'])->timezone('Australia/Melbourne')->format('Y-m-d') : null,
             ]);
 
             $ol_fee->offer_letter()->associate($offerLetter);
@@ -232,6 +234,7 @@ class OfferLetterController extends Controller
 
             if ($package_structure['balance_due'] != '0.00') {
                 $this->createPayment($offerLetter);
+                // $this->updatePayment($course, $package_structure, $package_structure['weekly_payment']);
             }
 
             if($request->agent != ''){
@@ -257,7 +260,8 @@ class OfferLetterController extends Controller
         // 
         // dd($id);
 
-        $offerLetter = OfferLetter::with('student_details', 'course_details.payments.attachment', 'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
+        $offerLetter = OfferLetter::with('student_details','course_details.payment_template', 'course_details.payments.attachment', 'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
+
         \JavaScript::put([
             'student_id' => $id,
         ]);
@@ -330,7 +334,7 @@ class OfferLetterController extends Controller
                 'discounted_amount' => $package_structure['discounted_amount'],
                 'balance_due' => $package_structure['balance_due'],
                 'installment_desired_amount' => $package_structure['installment_amount'],
-                'weekly_interval' => $package_structure['weekly_interval'],
+                'installment_interval' => $package_structure['weekly_interval'],
                 'installment_start_date' => $package_structure['installment_start_date'] != ''  ? Carbon::parse($package_structure['installment_start_date'])->timezone('Australia/Melbourne')->format('Y-m-d') : null,
             ]);
             // dd($offer_letter->fees->wasChanged('initial_payment_amount'));

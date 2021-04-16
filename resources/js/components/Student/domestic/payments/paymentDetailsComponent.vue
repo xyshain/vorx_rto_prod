@@ -39,7 +39,12 @@
           ff.course_code == '@@@@' ? 'unit-competency' : ff.course_code,
         ]}-tab`"
       >
-        <course-details :detail="ff"></course-details>
+        <course-details 
+          :payment_sched="ff.payment_sched" 
+          :payment_details="ff.payment_details" 
+          :course_fee="ff.course_fee" 
+          :detail="ff">
+        </course-details>
         <!-- <h2 class="float-right">Balance: <b>$<span>{{ ff.course_fee }}</span>.00</b></h2> -->
         <!-- <h4 class="float-left"><b>Payment History</b></h4> -->
         <!-- <h4 class="float-right">
@@ -297,7 +302,7 @@
   </div>
 </template>
 <script>
-import courseDetails from "../payments/paymentDetailsCourseComponent.vue";
+import courseDetails from "../payments/newPaymentDetailCourseComponent.vue";
 import moment from "moment";
 export default {
   props: ["messageson", "updateHistory"],
@@ -568,6 +573,7 @@ export default {
         },
       });
       let vm = this;
+      
       vm.payment_details.course_id = course_id;
       if (vm.payment_details.payment_date != null) {
         vm.payment_details.payment_date = moment(

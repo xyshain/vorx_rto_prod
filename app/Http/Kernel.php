@@ -73,7 +73,10 @@ class Kernel extends HttpKernel
         'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
         'checkModule' => \App\Http\Middleware\CheckModule::class,
-        'roleAccess' => \App\Http\Middleware\roleAccess::class
+        'roleAccess' => \App\Http\Middleware\roleAccess::class,
+
+        // RTO Configuration
+        'rto'=> \App\Http\Middleware\RtoSetup::class 
     ];
 
     /**

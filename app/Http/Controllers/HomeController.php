@@ -21,7 +21,11 @@ use App\Models\FundedStudentCourse;
 use App\Models\Notification;
 use App\Models\Party;
 use App\Models\Attendance;
+use App\Models\AvtCountryIdentifier;
+use App\Models\AvtOrgType;
+use App\Models\AvtPostcode;
 use App\Models\StudentClass;
+use App\Models\TrainingDeliveryLoc;
 use App\Models\TrainingOrganisation;
 use Hamcrest\Arrays\IsArray;
 use Spatie\Permission\Models\Role;
@@ -47,6 +51,12 @@ class HomeController extends Controller
      */
     public function index()
     {
+        // $tdl = TrainingDeliveryLoc::all();
+
+        // if(!$tdl) {
+        //     return $this->rto_config();
+        // }
+
         switch (\Auth::user()->roles[0]->name) {
             case 'Student':
                 return $this->student_dashboard();
@@ -549,5 +559,53 @@ class HomeController extends Controller
         $e = EnrolmentPack::where('status', 'complete')->orderBy('created_at', 'desc')->get();
 
         return $e ? $e->toArray() : [];
+    }
+
+    public function rto_config()
+    {
+
+        $to = TrainingOrganisation::all();
+
+        if($to[0]->is_setup == 1) {
+            return redirect('/dashboard');
+        }
+
+        $org_id = TrainingOrganisation::first();
+        $postcode = AvtPostcode::orderBy('suburb')->get();
+        $country_id = AvtCountryIdentifier::orderBy('full_name')->get();
+
+        $arr_postcode = [];
+        foreach ($postcode as $key => $value) {
+            $arr_postcode[] = [
+                'id' => $value->id,
+                'postcode' => $value->postcode,
+                'suburb' => $value->suburb,
+                'state' => $value->state,
+                'postcode_name' => $value->suburb . ', ' . $value->state . ' ' . $value->postcode
+            ];
+        }
+
+        \JavaScript::put([
+            'training_organisation_id' => $org_id->training_organisation_id,
+            'organisation_id' => $org_id->id,
+            'slct_country_identifier' => $country_id,
+            'slct_postcode' => $arr_postcode,
+            'organisation_types' => AvtOrgType::all(),
+            'setup' => 1,
+        ]);
+
+        return view('organisation.configuration');
+    }
+
+    public function rto_config_finish(Request $request)
+    {
+        if($request->is_done == 1) {
+            $to = TrainingOrganisation::first();
+            $to->is_setup = 1;
+            $to->update();
+            return ['status' => 'success'];
+        }else{
+            return ['status' => 'error'];
+        }
     }
 }

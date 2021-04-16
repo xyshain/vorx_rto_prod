@@ -519,8 +519,11 @@ class OrganisationController extends Controller
 
     public function delivery_location_delete($id, $dl_id)
     {
-        $dl = TrainingDeliveryLoc::find($dl_id);
+        $dl = TrainingDeliveryLoc::with(['student_completion_detail','classes'])->where('id',$dl_id)->first();
         if ($dl != null) {
+            if(isset($dl->student_completion_detail[0]) || isset($dl->classes[0])){
+                return ['id'=> $dl_id, 'status' => 'denied', 'msg' => 'Delivery Location is in use.'];
+            }
             $dl->delete();
             return json_encode(['id' => $dl_id, 'status' => 'success']);
         }

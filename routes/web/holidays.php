@@ -10,10 +10,12 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::post('holidays/store', 'Holidays\HolidayController@store');
-Route::get('holidays/list', 'Holidays\HolidayController@holiday_list');
-Route::get('holidays/info/{id}', 'Holidays\HolidayController@holiday_info');
-Route::delete('holidays/delete/{id}', 'Holidays\HolidayController@destroy');
-
-
-Route::resource('/holidays', 'Holidays\HolidayController');
+Route::middleware(['rto'])->group(function () {
+    Route::post('holidays/store', 'Holidays\HolidayController@store');
+    Route::get('holidays/list', 'Holidays\HolidayController@holiday_list');
+    Route::get('holidays/info/{id}', 'Holidays\HolidayController@holiday_info');
+    Route::delete('holidays/delete/{id}', 'Holidays\HolidayController@destroy');
+    
+    
+    Route::resource('/holidays', 'Holidays\HolidayController');
+});

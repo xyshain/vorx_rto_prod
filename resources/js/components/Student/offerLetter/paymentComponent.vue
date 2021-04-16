@@ -105,10 +105,12 @@
               :key="detail.id"
               :class="{ 'tab-pane fade mb-3': true, 'show active': index == 0 }"
               role="tabpanel"
-              :details="detail.payments"
               :course="detail.course_code"
-              :balance_due="balanceddue"
               :id="`${detail.course_code}-${detail.id}`"
+              :payment_details="detail.payments"
+              :payment_sched="detail.payment_template" 
+              :course_fee="detail.tuition_fees" 
+              :detail="detail" 
             ></payment-detail>
           </div>
         </div>
@@ -119,7 +121,8 @@
 <script>
 import { mapState, mapActions, mapGetters } from "vuex";
 import moment from "moment";
-import paymentDetail from "./paymentDetailComponent.vue";
+import paymentDetail from "./../domestic/payments/newPaymentDetailCourseComponent";
+// import paymentDetail from "./paymentDetailComponent.vue";
 export default {
   components: {
     paymentDetail,

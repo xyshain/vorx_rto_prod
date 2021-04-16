@@ -21,3 +21,6 @@ Vue.component('rotating-time-table', require('./components/classes/time-table/ti
 // Site Inspection Checklist Form
 Vue.component('site-inspection-checklist-form', require('./components/forms/siteInspectionChecklistComponent.vue').default);
 Vue.component('site-inspection-checklist-list', require('./components/forms/siteInspectionChecklistListComponent.vue').default);
+
+// RTO SETUP
+Vue.component('training-org-config', require('./components/Organisations/rtoSetupComponent.vue').default);

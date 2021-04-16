@@ -436,8 +436,8 @@ class PaymentController extends Controller
     public function changeDate(Request $request)
     {
         $payment = PaymentScheduleTemplate::find($request->template_id);
-        $change_date = Carbon::parse($request->due_date)->format('Y-m-d');
-        $payment->due_date = $change_date;
+        $change_date = Carbon::parse($request->due_date)->timezone('Australia/Melbourne')->format('Y-m-d');
+        $payment->adjusted_date = $change_date;
         $payment->update();
         return response()->json(['status' => 'success']);
     }
@@ -937,5 +937,11 @@ class PaymentController extends Controller
             $pd = FundedStudentPaymentDetails::with('student.party.person','funded_student_course.course','offer_detail.course')->wherein('sent_receipt', ['0', '1'])->orderBy($sortBy, $dir)->paginate($request->limit);
             return $pd;
         }
+    }
+
+    public function Delete(Request $request,$id){
+        $payment = PaymentScheduleTemplate::find($id);
+        $payment->delete();
+        return ['status'=> 'success'];
     }
 }
