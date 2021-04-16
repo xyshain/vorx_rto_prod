@@ -50,6 +50,7 @@ class TrainingOrganisation extends Model implements AuditableContract
         'incharge_position',
         'incharge_signature',
         'student_id_prefix',
+        'is_setup',
     ];
 
     /**
