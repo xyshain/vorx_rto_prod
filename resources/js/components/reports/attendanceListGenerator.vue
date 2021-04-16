@@ -15,20 +15,26 @@
                         <div class="col-md-12">
                             <form @submit.prevent>
                                 <div class="form-row">
-                                    <div class="form-group col-md-2">
-                                        <label for="year">Course:</label>
-                                        <select name="" id="" class="form-control" v-model="get_course">
-                                            <option :value="key" v-for="(itm,key) in courses" :key="key">
-                                                <span v-if="key != '*'">{{key}} - {{itm}}</span>
-                                                <span v-else>{{itm}}</span>
-                                            </option>
-                                        </select>
+                                    <div class="form-group col-md-5">
+                                        <label for="year">Class:</label>
+                                        <multiselect
+                                            :options="class_list"
+                                            v-model="selected_class"
+                                            trackBy="id"
+                                            :custom-label="className"
+                                        >
+                                            
+                                        </multiselect>
                                         <!-- <input type="number" class="form-control" id="year" placeholder=""> -->
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <div class="clearfix" style="height: 22px;"></div>
+                                        <button @click="resetFields" :class="'btn btn-warning'" title="Reset Fields"><i class="fa fa-rotate-left"></i></button>
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group col-md-5">
-                                        <label for="month">Start Month: <span class="badge"><i>( Course start month )</i></span></label>
+                                        <label for="month">Start Month: <span class="badge"></span></label>
                                         <input type="month" class="form-control" v-model="from" value="">
                                         <!-- <select id="month" class="form-control">
                                             <option value="01-03">Jan - Mar</option>
@@ -38,7 +44,7 @@
                                         </select> -->
                                     </div>
                                     <div class="form-group col-md-5">
-                                        <label for="year">End Month: <span class="badge"><i>(Course end month)</i></span></label>
+                                        <label for="year">End Month: <span class="badge"></span></label>
                                         <input type="month" class="form-control" v-model="to" value="">
                                         <!-- <input type="number" class="form-control" id="year" placeholder=""> -->
                                     </div>
@@ -51,9 +57,7 @@
                         </div>  
                     </div>
                 </div>
-
-                <!-- <v-client-table :data="courseList" :columns="columns" :options="options" ref="courseTable"></v-client-table> -->
-                <v-client-table :class="'header-'+app_color" :data="student_list" :columns="columns" :options="options" ref="courseTable">
+                <v-client-table :class="'header-'+app_color" :data="attendances" :columns="columns" :options="options" ref="courseTable"> 
                         <div slot="afterLimit" class="ml-2">
                             <div class="btn-group">
                                 <!-- <a href="javascript:void(0)"  @click="showCreateCourse" class="btn btn-success" slot="afterLimit"><i class="fas fa-plus"></i> Add Course</a> -->
@@ -67,10 +71,27 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- <div class="btn-group" slot="actions" slot-scope="{row}">
-                            <a href="javascript:void(0)" class="btn btn-primary btn-sm" @click="edit(row.id)"> <i class="fas fa-edit"> </i></a>
-                            <a href="javascript:void(0)" class="btn btn-danger btn-sm text-white" @click="remove(row.id)"> <i class="fas fa-trash"> </i></a>
-                        </div> -->
+                        <div slot="profile_image" slot-scope="{row}">
+                            <img class="img-fluid" :src="'/storage/user/avatars/'+getImage(row.user)" alt="Preview not avail">
+                            <!-- <img class="rounded-circle img-fluid" :src="'/storage/user/avatars/'+getImage(sl.user)" alt="Preview not avail" style="width:100%;"> -->
+                        </div>
+                        <div slot="hours" slot-scope="{row}">
+                            <div class="progress" v-if="toType(row.percent_actual_hours)!='undefined'">
+                                <template v-if="row.percent_actual_hours == 0">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width:100%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" :title="'0/'+row.pref_hours+' hours'"></div>
+                                </template>
+                                <template v-else-if="row.percent_actual_hours>100">
+                                    <div class="progress-bar" role="progressbar" :style="'width:'+row.percent_actual_hours+'%'" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100" :title="row.actual_hours+'/'+row.pref_hours+' hours'">{{row.percent_actual_hours.toFixed(1)}}%</div>
+                                </template>
+                                <template v-else>
+                                    <div class="progress-bar" role="progressbar" :style="'width:'+row.percent_actual_hours+'%'" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100" :title="row.actual_hours+'/'+row.pref_hours+' hours'">{{row.percent_actual_hours.toFixed(1)}}%</div>
+                                    <div class="progress-bar bg-danger" role="progressbar" :style="'width:'+ (100 - row.percent_actual_hours)+'%'" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" :title="row.actual_hours+'/'+row.pref_hours+' hours'"></div>
+                                </template>
+                            </div>
+                            <div v-else>
+                                No Attendance yet
+                            </div>
+                        </div>
                 </v-client-table>
             </div>
         </div>
@@ -89,10 +110,13 @@ export default {
   },
   data() {
     return {
+      class_list:classes?classes:[],
       student_list: [],
+      attendances:[],
       app_color: app_color,
       from: null,
       to: null,
+      selected_class:'',
       student_type: '*',
       get_course: '*',
       get_status: '*',
@@ -100,19 +124,20 @@ export default {
       statuses: [],
       agents: window.agents,
       courses: window.courses,
-      columns: ["Student ID", "Given Name", "Last Name", "Date of Birth","USI","Course Code", "Course Name","Start Date", "End Date"],
+      columns: ["profile_image","student.party.name","student_id","hours"],
       options: {
+            orderBy:{
+                column:'student.party.name',
+                ascending:true
+            },
             initialPage:1,
             perPage:10,
             highlightMatches:true,
             sortIcon: { base:'fas', up:'fa-sort-amount-up', down:'fa-sort-amount-down', is:'fa-sort' },
-            // headings: {
-            //     id: '#',
-            //     code: 'Course Code',
-            //     name: 'Course Name',
-            //     actions: 'Actions'
-            // },
-            sortable: ["Student ID", "Given Name", "Last Name", "Date of Birth","USI","Course Code", "Course Name","Start Date", "End Date"],
+            headings: {
+                'student.party.name':'Student Name',
+            },
+            // sortable: ["Student ID", "Given Name", "Last Name", "Date of Birth","USI","Course Code", "Course Name","Start Date", "End Date"],
             rowClassCallback(row) {
                 return row.id = row.id;
             },
@@ -126,10 +151,109 @@ export default {
   },
   created() {
     // this.fetchStudents();
-    this.filter_status();
   },
   methods: {
-    
+      toType(obj) {
+            return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+        },
+      getImage(user){
+            if(user!=''&&user!=null&&typeof user!='undefined'){
+                if(user.profile_image!=''&&user.profile_image!=null&&typeof user.profile_image!='undefined'){
+                    return user.profile_image;
+                }else{
+                    return 'default-profile.png';
+                }
+            }else{
+                return 'default-profile.png';
+            }
+        },
+      className({desc}){
+          return `${desc}`
+      },
+      generateList(){
+            let vm = this;
+            let loading = null
+
+            // if(this.from == null || this.to == null){
+            //     swal.fire({
+            //     type: "error",
+            //     title: 'Start and End Month must be filled.',
+            //     });
+            //     return false;
+            // }
+
+            if(this.selected_class==null||this.selected_class==''){
+                swal.fire({
+                    type:"error",
+                    title:"Class field must be filled"
+                });
+                // return false;
+            }
+
+            if(this.from > this.to){
+                swal.fire({
+                type: "error",
+                title: 'Start Month must be less than End Month.',
+                });
+                // return false;
+            }
+
+            loading = swal.fire({
+                title: 'Processing Student List...',
+                // html: '',// add html attribute if you want or remove
+                allowOutsideClick: false,
+                onBeforeOpen: () => {
+                    swal.showLoading()
+                },
+            });
+
+            axios.post('/reports/generate-attendance',{
+                class_id:this.selected_class.id,
+                from:this.from,
+                to:this.to
+            }).then(
+                response=>{
+                    console.log(response.data);
+                    if(response.data.status=='success'){
+                        vm.attendances = response.data.attendances
+                        swal.close();
+                    }else{
+                        swal.fire({
+                        type: "error",
+                        title: 'Something went wrong',
+                        html:response.data.message
+                        });
+                    }
+                }
+            ).catch(
+                err=>{
+                    swal.fire({
+                        type: "error",
+                        title: 'Something went wrong',
+                        html:err
+                    });
+                }
+            );
+      },
+      exportExcel(){
+          console.log('export excel');
+      },
+      resetFields(){
+          this.selected_class = '';
+          this.from = null;
+          this.to = null;
+      }
   }
 };
 </script>
+<style>
+#VueTables_th--profile_image{
+    width:15% !important;
+}
+#VueTables_th--student\.party\.name{
+    width:15% !important;
+}
+#VueTables_th--student_id{
+    width:15% !important;
+}
+</style>

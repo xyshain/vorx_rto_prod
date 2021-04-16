@@ -24,6 +24,7 @@ Route::get('reports/student-list', 'Reports\ReportsController@student_list');
 
 //for generate attendance module
 Route::get('/reports/attendance-list-generator','Reports\ReportsController@attendance');
+Route::post('/reports/generate-attendance', 'Reports\ReportsController@generate_attendance');
 
 // send progress report
 Route::post('/report/send/course-progress', 'Reports\ReportsController@send_course_progress');
