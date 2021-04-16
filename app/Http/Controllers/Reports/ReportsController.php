@@ -637,20 +637,140 @@ class ReportsController extends Controller
         
     }
 
-    public function attendance_pdf(Request $request){
-        $attendance = $request->attendances;
+    public function attendance_pdf($json_text){
+        $json = explode(',',$json_text);
+        $class_id = $json[0];
+        $from = $json[2];
+        $to = $json[3];
+        // dd($from,$to);
+        $student_class = StudentClass::where('id',$class_id)->first();
+        // dd($student_class);
+        $class_start = $student_class->start_date;
+        $class_end = $student_class->end_date;
+        $student_type = $json[1];
+        // dd($class_id,$from,$to,$student_type);
+        if($from==null && $to == null){
+            try{
+                if($student_type=='*'){
+                    $attendances = Attendance::with('student.party','attendance_details')->where('class_id',$class_id)->get();
+                }else{
+                    $attendances = Attendance::with(['student'=>function($q)use($student_type){
+                        $q->where('student_type_id',$student_type);
+                    },'student.party','attendance_details'])->where('class_id',$class_id)->get();
+                }
+                // return $attendances;
+                $students = [];
+                
+                foreach($attendances as $att){
+                    $pref_hours = 0;
+                    $actu_hours = 0;
+                    if(isset($att->student)){
+                        if(isset($att->student)&&$att->student!=null){
+                            // dd($att,'naay unod ble');
+                            $_user = User::where('username',$att->student_id)->first();
+                            if(isset($_user)){
+                                $att->user = $_user;
+                            }else{
+                                $att->user = null;
+                            }
+                            if(isset($att->attendance_details)){
+                                foreach($att->attendance_details as $ad){
+                                    $pref_hours += $ad->preferred_hours;
+                                    $actu_hours += $ad->actual_hours;
+                                }
+                                $att->pref_hours = $pref_hours;
+                                $att->actual_hours = $actu_hours;
+                                if($pref_hours!=0){
+                                    $att->percent_actual_hours = $actu_hours / $pref_hours * 100;
+                                }
+                                // $att->percent_actual_hours = $pref_hours / $actu_hours *100;
+                            }
+                            array_push($students,$att);
+                        }
+                    }
+                }
+                $attendance = $students;
 
-        if(isset($attendance->attendance_details)){
-            foreach($attendance->attendance_details as $ad){
-                $attendance->total_hours += $ad->actual_hours;
+                if(isset($attendance->attendance_details)){
+                    foreach($attendance->attendance_details as $ad){
+                        $attendance->total_hours += $ad->actual_hours;
+                    }
+                }
+                
+                $app_settings = TrainingOrganisation::first();
+                $title = 'Attendance List ( '.Carbon::parse($class_start)->format('M d, Y'). ' - '.Carbon::parse($class_end)->format('M d, Y'). ' )'; 
+                $pdf = PDF::loadView('reports.pdf.attendance',compact('attendance','app_settings','from','to','student_class','student_type'));
+                
+                return $pdf->download($title.'.pdf');
+            }catch(Exception $e){
+                return response()->json(['status'=>'error','message'=>$e->getMessage()]);
+            }
+        }else{
+            $from = $from != 'null' ? $from : $class_start;
+            $to = $to != 'null' ? $to : $class_end;
+            try{
+                if($student_type=='*'){
+                    $attendances = Attendance::with(['student.party','attendance_details'=>function($q)use($from,$to){
+                        $q->whereBetween('date_taken',[$from,$to])->get();
+                    }])->where('class_id',$class_id)->get();
+                }else{
+                    $attendances = Attendance::with(['student'=>function($q)use($student_type){
+                        $q->where('student_type_id',$student_type);
+                    },'student.party','attendance_details'=>function($q)use($from,$to){
+                        $q->whereBetween('date_taken',[$from,$to])->get();
+                    }])->where('class_id',$class_id)->get();
+                }
+                // return $attendances;
+                $students = [];
+                $pref_hours = 0;
+                $actu_hours = 0;
+                foreach($attendances as $att){
+                    if(isset($att->student)&&$att->student!=null){
+                        // dd($att,'naay unod ble');
+                        $_user = User::where('username',$att->student_id)->first();
+                        if(isset($_user)){
+                            $att->user = $_user;
+                        }else{
+                            $att->user = null;
+                        }
+                        if(isset($att->attendance_details)){
+                            foreach($att->attendance_details as $ad){
+                                $pref_hours += $ad->preferred_hours;
+                                $actu_hours += $ad->actual_hours;
+                            }
+                            $att->pref_hours = $pref_hours;
+                            $att->actual_hours = $actu_hours;
+                            if($pref_hours!=0){
+                                $att->percent_actual_hours = $actu_hours / $pref_hours * 100;
+                            }
+                            // $att->percent_actual_hours = $pref_hours / $actu_hours *100;
+                        }
+                        array_push($students,$att);
+                    }
+                }
+                // dd($students);
+                // dd($attendances);
+                // return $attendances;
+                // return response()->json(['status'=>'success','attendances'=>$students]);
+                $attendance = $students;
+
+                if(isset($attendance->attendance_details)){
+                    foreach($attendance->attendance_details as $ad){
+                        $attendance->total_hours += $ad->actual_hours;
+                    }
+                }
+                
+                $app_settings = TrainingOrganisation::first();
+                $title = 'Attendance List ( '.Carbon::parse($from)->format('M d, Y'). ' - '.Carbon::parse($to)->format('M d, Y'). ' )'; 
+                $pdf = PDF::loadView('reports.pdf.attendance',compact('attendance','app_settings','from','to','student_class','student_type'));
+                
+                return $pdf->download($title.'.pdf');
+            }catch(Exception $e){
+                return response()->json(['status'=>'error','message'=>$e->getMessage()]);
             }
         }
-        
-        $app_settings = TrainingOrganisation::first();
-        
-        $pdf = PDF::loadView('reports.pdf.attendance',compact('attendance','app_settings'));
-        return $pdf->setPaper('A4','landscape')->stream();
-    }
+
+    }   
     // public function class_list(){
     //     $classes = 
     // }

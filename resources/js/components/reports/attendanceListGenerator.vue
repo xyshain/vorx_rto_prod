@@ -75,9 +75,11 @@
                                     <span class="sr-only">Toggle Dropdown</span>
                                 </button>
                                 <div class="dropdown-menu dropdown-menu-right">
-                                    <!-- <a class="dropdown-item" href="#"><i class="far fa-file-pdf text-danger"></i>&nbsp; PDF</a> -->
                                     <a class="dropdown-item" href="#" @click="exportExcel"><i class="far fa-file-excel text-success"></i>&nbsp; Excel</a>
-                                    <a class="dropdown-item" href="#" @click="exportPdf"><i class="far fa-file-pdf text-danger"></i>&nbsp; Pdf</a>
+                                    <!-- <form method="post" action="/reports/attendance/export-pdf" target="_blank" id="form">
+                                        <input type="hidden" v-model="attendances"> -->
+                                        <a class="dropdown-item" href="#" @click="exportPdf"><i class="far fa-file-pdf text-danger"></i>&nbsp; Pdf</a>
+                                    <!-- </form> -->
                                 </div>
                             </div>
                         </div>
@@ -257,42 +259,19 @@ export default {
             );
       },
       exportPdf(){
+        //   window.open('','_blank');
+        //   document.getElementById('form').submit();
           if(this.attendances.length>0){
-              swal.fire({
-                title: 'Exporting to Pdf...',
-                // html: '',// add html attribute if you want or remove
-                allowOutsideClick: false,
-                onBeforeOpen: () => {
-                    swal.showLoading()
-                },
-                });
-              axios.post('/reports/attendance/export-pdf',{
-                class_id:this.selected_class.id,
-                attendances:this.attendances,
-                from:this.from!==null?moment(this.from).format('YYYY-MM-DD'):null,
-                to:this.to!==null?moment(this.to).format('YYYY-MM-DD'):null,
-              }).then(
-                  response=>{
-                      if(response.data.status=='success'){
-                        //   window.location.href = "/reports/download/excel/"+response.data.file+"/"+response.data.rename;
-                        //   swal.close();
-                      }else{
-                            swal.fire({
-                            type: "error",
-                            title: 'Something went wrong',
-                            html:response.data.message
-                            });
-                      }
-                  }
-              ).catch(
-                  err=>{
-                      swal.fire({
-                        type: "error",
-                        title: 'Something went wrong',
-                        html:err
-                        });
-                  }
-              );
+            //   swal.fire({
+            //     title: 'Exporting to Pdf...',
+            //     // html: '',// add html attribute if you want or remove
+            //     allowOutsideClick: false,
+            //     onBeforeOpen: () => {
+            //         swal.showLoading()
+            //     },
+            //     });
+                var link = this.selected_class.id+','+this.student_type+','+this.from+','+this.to
+                window.open('/reports/attendance/export-pdf/'+link);
           }else{
               swal.fire({
                     type: "error",
@@ -355,7 +334,7 @@ export default {
 </script>
 <style>
 #VueTables_th--profile_image{
-    width:12% !important;
+    width:50px !important;
 }
 #VueTables_th--student\.party\.name{
     width:15% !important;

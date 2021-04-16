@@ -20,13 +20,12 @@
 			$app_color = 'primary';
 		}
 	?>
-@foreach($attendance as $att)
+
 <body class="exo2-regular position-relative">
 	<div>
 		<div class="col-xs-12 no-padding position-relative">
 			<div class="pdf-wrapper">
 			
-		@if($loop->first)
 				<div style="padding-bottom: 10px;  margin: 0 10px;">
 					<table width="100%" cellpadding="0" cellspacing="0" border="0">
 						<tr>
@@ -54,22 +53,30 @@
 						<table width="100%" class="form-table">
 							<tr>
 								<td width="50%">
-                                    <label class="label label-textbox">Class: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2"></span></div></label> 
+                                    <label class="label label-textbox">Class: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$student_class->desc}}</span></div></label> 
 								</td>
 								<td width="50%">
-									<label class="label label-textbox">Student Type: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2"></span></div></label>
+									<label class="label label-textbox">Student Type: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">
+                                        @if($student_type==1)
+                                            International
+                                        @elseif($student_type==2)
+                                            Domestic
+                                        @else
+                                            All
+                                        @endif
+                                
+                                    </span></div></label>
 								</td>
 							</tr>
                             <tr>
 								<td width="50%">
-                                    <label class="label label-textbox">Start Date: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2"></span></div></label> 
+                                    <label class="label label-textbox">Start Date: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$from}}</span></div></label> 
 								</td>
 								<td width="50%">
-									<label class="label label-textbox">End Date: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2"></span></div></label>
+									<label class="label label-textbox">End Date: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$to}}</span></div></label>
 								</td>
 							</tr>
 						</table>
-						@endif
 						<br>
 						<table class="table default-bordered-table" cellspacing="0" cellpadding="0" width="85%" style="margin:0 auto !important">
 							<thead>
@@ -84,12 +91,19 @@
 								</tr>
 							</thead>
 							<tbody>
+                                @foreach($attendance as $att)
                                 <tr>
-                                    <td>test</td>
-                                    <td>test</td>
-                                    <td>test</td>
-                                    <td>test</td>
+                                    <td><img src="{{public_path()}}/storage/user/avatar/{{$att->profile_image}}" alt=""></td>
+                                    <td>{{$att->student->party->name}}</td>
+                                    <td>{{$att->student_id}}</td>
+                                    <td>
+                                    <div class="progress">
+                                            <div class="'progress-bar bg-danger" role="progressbar" style="width:100%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" title="fsda"></div>
+                                        
+    </div>
+                                    </td>
                                 </tr>
+                                @endforeach
 							</tbody>
 							<tfoot>
 								<tr>
@@ -108,7 +122,7 @@
 	</div>
 </body>
 
-@endforeach
+
 <!-- End Page 1 of 1 -->
 
 </html>
