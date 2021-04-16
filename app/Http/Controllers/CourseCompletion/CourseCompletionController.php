@@ -57,15 +57,15 @@ class CourseCompletionController extends Controller
                 $completion = CompletionStudentCourse::where('student_course_id',$fundedCourse->id)->where('student_type',$fundedCourse->student->student_type_id)->first();
 
             }else{
-                $completion = CompletionStudentCourse::where('student_course_id', $fundedCourse->offer_letter_course_detail_id)->first();
+                $completion = CompletionStudentCourse::where('student_course_id', $fundedCourse->offer_letter_course_detail_id)->where('student_type',$details->student_type_id)->first();
 
             }
+            // dd($completion);
             $course_completion = CourseCompletion::with('certificate.details', 'details', 'status')
             ->where('id', $completion->completion_id)
             ->first();
             $course_detail = [];
             
-
             // if ($fundedCourse->course->courseprospectus->isEmpty()) {
             $unitsing = [];
             // dd($course_completion->details->sortBy('order'));

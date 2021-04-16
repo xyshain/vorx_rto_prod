@@ -162,18 +162,33 @@ class DomesticPaymentController extends Controller
                 DB::beginTransaction();
 
                 $payment_details = new FundedStudentPaymentDetails;
-                $payment_details->fill([
-                    'student_id'            => $info->student_id,
-                    'student_course_id'     => $request->course_id,
-                    'note'                 =>  $inputs['note'],
-                    'payment_date'          => $inputs['payment_date'],
-                    'amount'                => $inputs['amount'],
-                    'pre_deduc_comm'        => $inputs['pre_deduc_comm'],
-                    'comm_release_status'   => $inputs['comm_release_status'],
-                    'user_id'               => Auth::user()->id
-                ]);
+                if($request->student_type == 2){
+                    $payment_details->fill([
+                        'student_id'            => $info->student_id,
+                        'student_course_id'     => $request->course_id,
+                        'note'                 =>  $inputs['note'],
+                        'payment_date'          => $inputs['payment_date'],
+                        'amount'                => $inputs['amount'],
+                        'pre_deduc_comm'        => $inputs['pre_deduc_comm'],
+                        'comm_release_status'   => $inputs['comm_release_status'],
+                        'user_id'               => Auth::user()->id
+                    ]);
+                    
+                }else{
+                    $payment_details->fill([
+                        'student_id'            => $info->student_id,
+                        'offer_letter_course_detail_id'=> $request->course_id,
+                        'student_course_id'     => $request->funded_id,
+                        'note'                  =>  $inputs['note'],
+                        'payment_date'          => $inputs['payment_date'],
+                        'amount'                => $inputs['amount'],
+                        'pre_deduc_comm'        => $inputs['pre_deduc_comm'],
+                        'comm_release_status'   => $inputs['comm_release_status'],
+                        'user_id'               => Auth::user()->id
+                    ]);
+                }
+                
                 $payment_details->save();
-
                 // Update status when  $expected_bal > $actual_bal
                 $this->updateWarningTrail($payment_details);
 

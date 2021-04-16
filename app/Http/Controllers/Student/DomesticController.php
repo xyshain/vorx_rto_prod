@@ -1108,7 +1108,10 @@ class DomesticController extends Controller
                 // ADD/UPDATE ATTENDANCE
                 $this->storeUpdate_attendance($request['class'], $funded_student_course);
 
-                $this->createPaymentSchedule($funded_student_course);
+                if($funded_student_course->wasChanged('course_fee')){
+                    $this->createPaymentSchedule($funded_student_course);
+                }
+
                 //resched payment schedule (fullfee course only)
                 // if ($funded_student_course->course_fee_type == 'FF') {
                 //     $old_ps = PaymentScheduleTemplate::where('funded_student_course_id', $funded_student_course->id)->get();

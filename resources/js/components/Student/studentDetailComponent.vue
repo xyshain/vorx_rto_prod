@@ -294,12 +294,14 @@
               <!-- <course-info></course-info> -->
               <div id="accordionExample" v-if="offerletterData.length > 0">
                 <!-- <online-cash></online-cash> -->
+                
                 <payment
                   v-for="data in offerletterData"
                   :refs="reference"
                   :offerid="data.id"
                   :fees="data.fees"
                   :offerData="data.course_details"
+                  :detail="data"
                   :key="data.id"
                   :updateHistory="updateHistory"
                 ></payment>

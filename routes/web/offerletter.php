@@ -3,6 +3,7 @@ Route::post('offer-letter/payment/trnx', 'Student\PaymentController@store_cash')
 Route::post('offer-letter/payment/trnx/online', 'Student\PaymentController@store_online');
 Route::get('offer-letter/payment/trnx', 'Student\PaymentController@generate_string');
 Route::post('offer-letter/payment/change_date', 'Student\PaymentController@changeDate');
+Route::delete('offer-letter/payment/delete/{id}', 'Student\PaymentController@Delete');
 Route::get('offer-letter/paymenthistory/{student_id}', 'Student\PaymentController@payment_history');
 Route::delete('offer-letter/payment/reset/{id}', 'Student\PaymentController@paymentResched');
 Route::get('offer-letter/package/{package_type}/{shore_type}', 'Student\OfferLetterController@getPackage');

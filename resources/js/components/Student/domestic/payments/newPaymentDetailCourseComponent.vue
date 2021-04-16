@@ -1,5 +1,6 @@
 <template>
     <div>
+        <adjust-date-modal />
         <div class="float-left">
         <p>
                 <a class="collapse-menu active p-1 pl-2 pr-2 m-1 paymentPlanH" type="button" data-toggle="collapse" @click="closeOther('paymentPlan','paymentPlanH')" href=".paymentPlan" aria-expanded="false" aria-controls="collapseExample">
@@ -16,7 +17,7 @@
                 Remaining Balance: $ <span>{{ balance.toFixed(2) }}</span>
             </h5>
             <h5 v-show="menuchoicer == 'paymentPlanH'">
-                Total Paid: $ <span>{{ paid.toFixed(2) }}</span>
+                Total Paid: $ <span>{{ paid }}</span>
             </h5>
         </div>
         <div class="clearfix"></div>
@@ -42,7 +43,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(sched,index) in detail.payment_sched" :key="index"> 
+                <tr v-for="(sched,index) in payment_sched" :key="index"> 
                     <td class='text-center'>
                       <div v-if=" remainingBalance[index] == 'danger'" >
                           <i class="fas fa-check-circle"></i>
@@ -59,12 +60,15 @@
                     </td>
                     <td class='text-center'>{{ index + 1 }}</td>
                     <td class='text-center'>{{ sched.payable_amount }}</td>
-                    <td class='text-center'>{{ sched.due_date | dateFormat }}</td>
+                    <td class='text-center'>
+                      <span v-if="sched.adjusted_date == null"> {{ sched.due_date | dateFormat }} </span>
+                      <span v-else data-toggle="tooltip" data-placement="top" title="adjusted due date" class="mark" >{{ sched.adjusted_date | dateFormat}}</span>
+                    </td>
                     <td class='text-center'><div class="form-group mt-3">
-                            <select class="form-control" id="exampleFormControlSelect1">
-                            <option>Actions</option>
-                            <option>Edit</option>
-                            <option>Delete</option>
+                            <select @change="passActionPayment(index,$event)" class="form-control custominput" id="exampleFormControlSelect1">
+                            <option value="">Actions</option>
+                            <option value="Edit">Edit</option>
+                            <option value="Delete">Delete</option>
                             </select>
                         </div>
                     </td>
@@ -79,12 +83,12 @@
                 <div class="col-md">
                     <div class="form-group">
                         <label for="exampleInputEmail1">Amount:</label>
-                        <input type="number"  v-model="payment_details.amount" min="0" class="form-control input-custom" id="amount" aria-describedby="emailHelp">
+                        <input type="number"  v-model="payment_detail.amount" min="0" class="form-control input-custom" id="amount" aria-describedby="emailHelp">
                     </div>
                 </div>
                 <div class="col-md">
                     <date-picker
-                            v-model="payment_details.payment_date"
+                            v-model="payment_detail.payment_date"
                             :masks="{L:'DD/MM/YYYY'}"
                             :max-date="new Date()"
                     >
@@ -100,17 +104,17 @@
                 <div class="col-md">
                     <div class="form-group">
                         <label for="exampleInputEmail1">Notes:</label>
-                        <input type="text" v-model="payment_details.note" class="form-control input-custom" id="notes" aria-describedby="emailHelp">
+                        <input type="text" v-model="payment_detail.note" class="form-control input-custom" id="notes" aria-describedby="emailHelp">
                     </div>
                 </div>
-                <div  v-if="payment_details.edit == true" class="col-md text-center ">
+                <div  v-if="payment_detail.edit == true" class="col-md text-center ">
                     <div  class="form-group mt-4">
                         <button  @click="savePayment(detail.id)" class="btn btn-warning btn-square align-middle" style="width:100%"> <i class="fas fa-pen"></i> Update Payment </button>
                     </div>
                 </div>
                 <div  class="col-md text-center ">
                     <div  class="form-group mt-4">
-                        <button v-if="payment_details.edit == false" @click="savePayment(detail.id)" class="btn btn-success btn-square align-middle" style="width:100%"> <i class="fas fa-plus"></i> Add Payment </button>
+                        <button v-if="payment_detail.edit == false" @click="savePayment(detail.id)" class="btn btn-success btn-square align-middle" style="width:100%"> <i class="fas fa-plus"></i> Add Payment </button>
                         <button v-else @click="cancelUpdate" class="btn btn-danger btn-square align-middle" style="width:100%"> <i class="fas fa-plus"></i> Cancel Changes </button>
                     </div>
                 </div>
@@ -135,13 +139,13 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(sched,index) in detail.payment_details" :key="index"> 
+                <tr v-for="(sched,index) in payment_details" :key="index"> 
                     <td class='text-center'>{{ sched.amount }}</td>
                     <td class='text-center'>{{ sched.payment_date | dateFormat }}</td>
                     <td class='text-center'>{{ sched.note}}</td>
                     <td class='text-center'>
                         <div class="form-group mt-3">
-                            <select class="form-control"  @change="passAction(index,$event)" id="exampleFormControlSelect1">
+                            <select class="form-control custominput"  @change="passAction(index,$event)" id="exampleFormControlSelect1">
                             <option value="">Actions</option>
                             <option value="Edit">Edit</option>
                             <option value="Delete">Delete</option>
@@ -161,10 +165,13 @@
     </div>
 </template>
 <script>
-
+import adjustDateModal from "./adjustDateModalComponent";
 import moment from "moment";
 export default {
-  props: ["detail"],
+  props: ["detail","payment_sched","payment_details","course_fee"],
+  components: {
+    adjustDateModal,
+  },
   data() {
     return {
       demoUser: window.demoUser,
@@ -172,7 +179,7 @@ export default {
       course_payments: [],
       // course_invoice: [],
       edit_due_date : {},
-      payment_details: {
+      payment_detail: {
         id: "",
         note: "",
         payment_date: "",
@@ -180,6 +187,7 @@ export default {
         course_id: "",
         errors: [],
         edit: false,
+        student_type: window.student_type
       },
       invoice: {
         course_code: "",
@@ -192,6 +200,7 @@ export default {
       app_settings: window.app_settings,
       roles : null,
       menuchoicer : 'paymentPlanH',
+      paid : 0,
       // totalAmount: '',
       // balanceFee: '',
     };
@@ -200,23 +209,30 @@ export default {
       balance : function (){
             let balance = 0
             if(this.detail != undefined){
-                balance  =  this.detail.course_fee
+                if(this.payment_sched.length < 0){
+                  balance  =  this.course_fee
+                }else{
+                  let temp_balance = this.payment_sched.map(function(item){
+                      return item.payable_amount;
+                    });
+                  balance =  temp_balance.reduce((a,b)=> parseFloat(a)+ parseFloat(b));
+                }
 
-                if(this.detail.payment_details.length > 0){
-                    let payment_details = this.detail.payment_details;
+                if(this.payment_details.length > 0){
+                    let payment_details = this.payment_details;
                     let paid = payment_details.map(function(item){
 
                       return item.amount;
                     });
-                    this.paid =  paid.reduce((a,b)=> parseInt(a)+ parseInt(b));
-                    balance = balance - paid.reduce((a,b)=> parseInt(a)+ parseInt(b));
+                    this.paid =  paid.reduce((a,b)=> parseFloat(a)+ parseFloat(b));
+                    balance = balance - paid.reduce((a,b)=> parseFloat(a)+ parseFloat(b));
                 }
             }
-            return balance
+            return parseFloat(balance)
       },
        remainingBalance: function () {
         var tempBalance = this.paid
-        return this.detail.payment_sched.map((sched) => {
+        return this.payment_sched.map((sched) => {
           tempBalance -= sched.payable_amount
           if(tempBalance >= 0){
             return 'complete';
@@ -224,8 +240,6 @@ export default {
              if(Math.abs(tempBalance) > sched.payable_amount){
                return 'danger'
              }else{
-                console.log(tempBalance);
-                console.log(sched.payable_amount);
                 let perHolder = (Math.abs(tempBalance) /  sched.payable_amount )* 100 ;
                 perHolder = 100 - perHolder 
                 if(perHolder < 50){
@@ -243,6 +257,69 @@ export default {
       
   },
   methods: {
+    passActionPayment(index,event){
+      let action = event.target.value
+      let vm = this;
+      if(action == 'Edit'){
+        let adjustduedate =  vm.payment_sched[index];
+        this.showModal(adjustduedate);
+        event.target.value = ''
+      }
+      else if(action == 'Delete'){
+        this.deletePaymentTemplate(this.payment_sched[index].id)
+        event.target.value = ''
+      }
+    },
+    deletePaymentTemplate(id){
+       swal
+        .fire({
+          title: "Are you sure?",
+          text: "You won't be able to revert this!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Yes!",
+        })
+        .then((result) => {
+          if (result.value) {
+            swal.fire({
+              title: "Deleting Template...",
+              // html: '',// add html attribute if you want or remove
+              allowOutsideClick: false,
+              onBeforeOpen: () => {
+                swal.showLoading();
+              },
+            });
+            axios.delete(`/offer-letter/payment/delete/${id}`).then(response=>{
+              let res = response.data;
+              if(res.status == 'success'){
+                Toast.fire({
+                        type: "success",
+                        title: "Template deleted successfully",
+                        position: "top-end",
+                    });
+                    this.$parent.fetchData();
+              }else{
+                 Toast.fire({
+                    type: "error",
+                    title: "Opss.. something went wrong",
+                    position: "top-end",
+                  });
+              }
+            }).catch(err=>{
+               Toast.fire({
+                  type: "error",
+                  title: "Opss.. something went wrong",
+                  position: "top-end",
+                });
+            })
+          }
+        });
+    },
+    showModal(data){
+       this.$modal.show("adjust-due-modal",data);
+    },
     passAction(data,event){
       let action = event.target.value
       let vm = this;
@@ -251,7 +328,7 @@ export default {
         event.target.value = ''
       }
       else if(action == 'Delete'){
-        this.remove(data,this.detail.payment_details[data].id)
+        this.remove(data,this.payment_details[data].id)
         event.target.value = ''
       }
     },
@@ -297,24 +374,27 @@ export default {
         },
       });
       let vm = this;
-      if (vm.payment_details.amount > parseInt(this.balance)) {
+      if (vm.payment_detail.amount > parseInt(this.balance)) {
         Toast.fire({
           type: "error",
           title: "Opss.. failed to add payment",
           position: "top-end",
         });
       } else {
-        vm.payment_details.course_id = course_id;
-        if (vm.payment_details.payment_date != null) {
-          vm.payment_details.payment_date = moment(
-            vm.payment_details.payment_date
+        if(vm.detail.funded_course != undefined){
+          vm.payment_detail.funded_id =  vm.detail.funded_course.id;
+        }
+        vm.payment_detail.course_id = course_id;
+        if (vm.payment_detail.payment_date != null) {
+          vm.payment_detail.payment_date = moment(
+            vm.payment_detail.payment_date
           ).format("YYYY-MM-DD");
         }
         // console.log(vm.payment_details.payment_date);
         axios
           .post(
             `/student/domestic/${window.student}/payment-store`,
-            this.payment_details
+            this.payment_detail
           )
           .then((response) => {
             if (response.data.status == "errors") {
@@ -325,20 +405,24 @@ export default {
                 position: "top-end",
               });
             } else if (response.data.status == "success") {
-              this.payment_details.errors = [];
-              this.payment_details.id = "";
-              this.payment_details.note = "";
-              this.payment_details.payment_date = "";
-              this.payment_details.amount = "";
-              this.payment_details.course_id = "";
-              this.payment_details.edit = false;
+              this.payment_detail.errors = [];
+              this.payment_detail.id = "";
+              this.payment_detail.note = "";
+              this.payment_detail.payment_date = "";
+              this.payment_detail.amount = "";
+              this.payment_detail.course_id = "";
+              this.payment_detail.edit = false;
               this.success = true;
               Toast.fire({
                 type: "success",
                 title: "Data is saved successfully",
                 position: "top-end",
               });
-              this.$parent.fetchData();
+              if(window.student_type == 2){
+                this.$parent.fetchData();
+              }else{
+                this.$parent.$parent.fetchStudent();
+              }
             }
             console.log(response);
           })
@@ -349,14 +433,14 @@ export default {
     },
     editPayment(item) {
       let vm = this;
-      vm.payment_details.id = this.detail.payment_details[item].id;
-      vm.payment_details.note = this.detail.payment_details[item].note;
-      vm.payment_details.payment_date = moment(
-        this.detail.payment_details[item].payment_date,
+      vm.payment_detail.id = this.payment_details[item].id;
+      vm.payment_detail.note = this.payment_details[item].note;
+      vm.payment_detail.payment_date = moment(
+        this.payment_details[item].payment_date,
         "YYYY-MM-DD"
       )._d;
-      vm.payment_details.amount = this.detail.payment_details[item].amount;
-      vm.payment_details.edit = true;
+      vm.payment_detail.amount = this.payment_details[item].amount;
+      vm.payment_detail.edit = true;
     },
     remove(item, payment_detail_id) {
       swal
@@ -378,7 +462,7 @@ export default {
             })
               .then((res) => {
                 // let i = this.course_payments[index].payment_details.map(item => item).indexOf(payment_detail_id) // find index of your object
-                this.detail.payment_details.splice(item, 1);
+                this.payment_details.splice(item, 1);
                 if (res.data.status == "success") {
                   Toast.fire({
                     type: "success",
@@ -417,14 +501,19 @@ export default {
 <style scoped>
 table.custom-table  th { background-color: transparent!important; color:gray!important; border: none!important;}
 a.collapse-menu.active {
-    background-color: #024b67;
-    color: white;
+  background-color: #024b67;
+  color: white;
 }
 .btn-square { border-radius: 0; }
-.input-custom  {
-    background-color: #7573731f;
-    border:none;
-    border-radius: 0;
+.input-custom{
+  background-color: #7573731f;
+  border:none;
+  border-radius: 0;
+}
+.custominput {
+  border:none;
+  border-radius: 0;
+  text-align-last: center;
 }
 .pie {
   width: 25px; height: 25px;
