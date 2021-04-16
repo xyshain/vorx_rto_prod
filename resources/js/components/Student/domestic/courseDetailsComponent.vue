@@ -527,6 +527,8 @@ export default {
       slct_units: window.slct_units,
       slct_units_val: this.extraUnitsval,
       timetable: [],
+      courseSubjects_old: [],
+      subjectList_old: [],
 
       train_org_dlvr_loc_id: "",
       csrfToken: "",
@@ -819,6 +821,7 @@ export default {
   created() {
     this.fetchData();
     this.prevReportCourseId = typeof this.course !== 'undefined' ? this.course.report_course_status_id : 1;
+    this.courseSubjects_old = typeof this.course !== 'undefined' ? this.course.courseSubjects : [];
   },
   methods: {
         toType(obj) {
@@ -1195,12 +1198,7 @@ export default {
         class: vm.getValues.class,
         course_fee_type: vm.getValues.course_fee_type,
       };
-      //Hide/show subjectList
-            // if (vm.getValues.course_code == "@@@@") {
-            //   vm.isHidden_sw = true;
-            // } else {
-            //   vm.isHidden_sw = false;
-            // }
+      
       vm.isHidden_sw = false;
       if (
         filters.course_code != null &&
@@ -1218,14 +1216,10 @@ export default {
             },
           });
         }
-        
-        //get class and location by course
-        this.getOptionsbyCourse(filters.course_code, filters.location);
-        //get Funding Source State by location
-        this.fundingSourceState(filters.location);
-        
 
-        if (
+        //show/hide only formbody if course is null/undefined (create)
+        if(typeof vm.course === 'undefined'){
+          if (
             filters.course_code != "" &&
             filters.location != "" &&
             filters.course_fee_type != ""
@@ -1244,6 +1238,19 @@ export default {
             //hide level3 form
             this.showHideFormBody('level3', true);
           }
+        }else{
+           //Hide/show subjectList
+            if (vm.getValues.course_code == "@@@@") {
+              vm.isHidden_sw = true;
+            }else{
+              vm.isHidden_sw = false;
+            }
+        }
+
+        //get class and location by course
+        this.getOptionsbyCourse(filters.course_code, filters.location);
+        //get Funding Source State by location
+        this.fundingSourceState(filters.location);
         
         // get course subjects and fees
         let str = JSON.stringify(filters);
@@ -1253,7 +1260,7 @@ export default {
           .then((res) => {
             let vm = this;
             this.class_details = res.class_details;
-
+            // console.log(res);
             // Get Course Fees
             if (res.data != null) {
               if (filters.course_fee_type == "C") {
@@ -1321,12 +1328,17 @@ export default {
                 );
               }
               this.getValues.courseSubjects = this.subjectList;
-            }
 
+              if (res.student_course.location == filters.location) {
+                vm.subjectList = vm.courseSubjects_old;
+              }
+            }
+            // console.log(this.subjects);
+            // console.log(this.subjectList);
             // get start/end date if the selected class is 'straight'
             if (res.class_details != null && res.student_course == null) {
               // let oldD = this.getValues.start_date;
-              // console.log(res.class_details);
+              // console.log('ye');
               if (
                 filters.course_code == res.class_details.course_code &&
                 res.class_details.time_table_type == "Straight"
@@ -1356,6 +1368,37 @@ export default {
                   this.makeForm[2].FormBody[3].disabled = "";
                 }
               }
+            }else if(res.class_details !== null && res.student_course !== null){
+              if (
+                filters.course_code == res.class_details.course_code &&
+                res.class_details.time_table_type == "Straight"
+              ) {
+                // console.log('yea, get dates');
+                if (
+                  res.class_details.start_date != null &&
+                  res.class_details.end_date != null
+                ) {
+                  // console.log('yo');
+                  this.getValues.start_date = moment(
+                    res.class_details.start_date
+                  )._d;
+                  this.getValues.end_date = moment(
+                    res.class_details.end_date
+                  )._d;
+                  // set disabled dates
+                  this.makeForm[2].FormBody[2].disabled = "disabled";
+                  this.makeForm[2].FormBody[3].disabled = "disabled";
+                }
+              } else {
+                // console.log('no, remove dates');
+                if (this.getValues.class != 0) {
+                  this.getValues.start_date = "Invalid Date";
+                  this.getValues.end_date = null;
+                  this.makeForm[2].FormBody[2].disabled = "";
+                  this.makeForm[2].FormBody[3].disabled = "";
+                }
+              }
+
             } else {
               if (this.getValues.class != 0) {
                 this.getValues.start_date = "Invalid Date";
@@ -1542,7 +1585,7 @@ export default {
         funding = 'all'
       }
       axios.get(`/student/fundingType/ilis/${funding}`).then((response)=>{
-        console.log(funding);
+        // console.log(funding);
         vm.makeForm[3].FormBody[0].items = response.data;
       })
     },

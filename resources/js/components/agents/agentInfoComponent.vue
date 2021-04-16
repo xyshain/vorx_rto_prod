@@ -15,11 +15,20 @@
         <div class="clearfix"></div>
         <div class="form-padding-left-right">
             <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-6">
                     <div class="form-group">
                         <label for="company_name">Company Name</label>
                         <input class="form-control" name="company_name" type="text" v-model="agent.detail.company_name" id="company_name">
                     </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                            <label for="is_active">Active</label>
+                            <div class="custom-control custom-switch my-2">
+                                <input type="checkbox" class="custom-control-input" id="is_active" v-model="agent.detail.is_active">
+                                <label class="custom-control-label" for="is_active"></label> 
+                            </div>
+                        </div>
                 </div>
                 <!-- <div class="col-md-6">
                     <div class="form-group">
@@ -195,6 +204,7 @@
         },
         created() {
             this.fetchData();
+            this.agent.detai.is_active = typeof this.agent.detail.is_active !== 'undefined'  && this.agent.detail.is_active == 1 ? true : false;
             // console.log(this);
         },
         methods: {
@@ -205,6 +215,7 @@
                     url: '/agent/show/info/'+ this.agent_id
                 })
                 .then(res => {
+                    console.log(res.data);
                     this.agent = {
                         detail: res.data
                     };
