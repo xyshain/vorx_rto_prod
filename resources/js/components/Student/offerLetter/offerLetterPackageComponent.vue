@@ -685,8 +685,15 @@ export default {
         oshc: 0,
         total_course_fee_due: 0,
         downpayment: 0,
+        payment_due: null,
         balance_due: 0,
+        weekly_payment: 1,
+        discounted_amount: 0,
         initial_payment_amount: 0,
+        installment_start_date : '',
+        installment_amount : 0,
+        weekly_interval : 1,
+        
       };
     },
     getPackage() {
@@ -766,8 +773,10 @@ export default {
         data.push(p);
         this.selected_package = data;
         this.compute_package_duration();
+        this.compute_package_structure();
       }
     },
+
     compute_package_duration(index) {
       var data = this.selected_package;
       var vm = this;
@@ -806,7 +815,7 @@ export default {
             ).add(val.duration, "w");
           }
         });
-        // vm.compute_package_structure(0);
+        vm.compute_package_structure(0);
       } else {
         for (let i = index; i < data.length; i++) {
           if (data[i].duration > data[i].max_duration) {
@@ -859,22 +868,23 @@ export default {
     },
     compute_package_structure(e) {
       // if (e == 0) {
-      //   var data = this.selected_package[0];
-      //   this.course_package_structure.course_name = data.code_name;
-      //   this.course_package_structure.tuition_fee = Math.round(
-      //     data.tuition
-      //   ).toFixed(2);
-      //   this.course_package_structure.material_fee = Math.round(
-      //     data.material
-      //   ).toFixed(2);
-      //   this.course_package_structure.application_fee = Math.round(
-      //     data.application_fee
-      //   ).toFixed(2);
-      //   this.course_package_structure.total_course_fee = Math.round(
-      //     parseInt(data.material) +
-      //       parseInt(data.tuition) +
-      //       parseInt(data.application_fee)
-      //   ).toFixed(2);
+        var data = this.selected_package[0];
+        this.course_package_structure.course_name = data.code_name;
+        this.course_package_structure.tuition_fee = Math.round(
+          data.tuition
+        ).toFixed(2);
+        this.course_package_structure.material_fee = Math.round(
+          data.material
+        ).toFixed(2);
+        this.course_package_structure.application_fee = Math.round(
+          data.application_fee
+        ).toFixed(2);
+        this.course_package_structure.downpayment = Math.round(parseInt(data.material) + parseInt(data.application_fee)).toFixed(2);
+        this.course_package_structure.total_course_fee = Math.round(
+          parseInt(data.material) +
+            parseInt(data.tuition) +
+            parseInt(data.application_fee)
+        ).toFixed(2);
       // }
     },
   },
@@ -1004,10 +1014,14 @@ export default {
       
     },
     "course_package_structure.weekly_interval": function(newVal,oldVal){
-      if(newVal != 1){
-        let newLimit = this.selected_package[0].duration/newVal
-        this.maxInstallmentNumber = newLimit; 
+      console.log(newVal);
+      if(this.selected_package.length > 0){
+         if(newVal != 1){
+          let newLimit = this.selected_package[0].duration/newVal
+          this.maxInstallmentNumber = newLimit; 
+        }
       }
+     
     },
     // compute_start_date(newVal){
     //   console.log(newVal);

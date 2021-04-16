@@ -15,8 +15,8 @@ class PaymentScheduleTemplate extends Model implements AuditableContract
     use SoftDeletes;
     use Auditable;
 
-    protected $dates =  ['created_at', 'updated_at', 'deleted_at', 'due_date'];
-    protected $fillable = ['due_date', 'payable_amount', 'invoice_no'];
+    protected $dates =  ['created_at', 'updated_at', 'deleted_at', 'due_date','adjusted_date'];
+    protected $fillable = ['due_date', 'payable_amount', 'invoice_no','adjusted_date'];
 
     public function offerLetter()
     {
