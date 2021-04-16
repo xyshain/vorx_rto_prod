@@ -140,9 +140,10 @@ class TimeTableController extends Controller
         if($class->time_table){
             // dd($class->time_table);
             $time_table = $class->time_table;
+            // dd($time_table->time_table);
             $is_save = 1;
         }else{
-            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', $class->location)->first();
+            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', 'like', '%'.$class->location.'%')->first();
             // dump($prospectus->unit_selected);
             if($prospectus && in_array($class->location, explode(',',$prospectus->location))){
                 // dd('in');
@@ -150,6 +151,7 @@ class TimeTableController extends Controller
                 foreach($prospectus->unit_selected as $k => $v){
                     $tt[] = [
                         'unit' => $v,
+                        'training_hours' => $v->scheduled_hours, 
                     ];
                 }
                 if($class->time_table_type == 'Rotating'){
@@ -172,9 +174,12 @@ class TimeTableController extends Controller
                     'training_days_weekly' => [
                         ['day'=>'Mon', 'value' => 'Monday', 'order' => 1, 'time_start' => null, 'time_end' => null, 'hours' => 0],
                         ['day'=>'Tue', 'value' => 'Teusday', 'order' => 2, 'time_start' => null, 'time_end' => null, 'hours' => 0],
-                        ['day'=>'Wed', 'value' => 'Wednesday', 'order' => 3, 'time_start' => null, 'time_end' => null, 'hours' => 0],
-                        ['day'=>'Thu', 'value' => 'Thursday', 'order' => 4, 'time_start' => null, 'time_end' => null, 'hours' => 0],
-                        ['day'=>'Fri', 'value' => 'Friday', 'order' => 5, 'time_start' => null, 'time_end' => null, 'hours' => 0]
+                        // ['day'=>'Wed', 'value' => 'Wednesday', 'order' => 3, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                        ['day'=>'Wed', 'value' => 'Wednesday', 'order' => 3, 'time_start' => '09:00', 'time_end' => '17:00', 'hours' => 8],
+                        // ['day'=>'Thu', 'value' => 'Thursday', 'order' => 4, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                        ['day'=>'Thu', 'value' => 'Thursday', 'order' => 4, 'time_start' => '09:00', 'time_end' => '17:00', 'hours' => 8],
+                        // ['day'=>'Fri', 'value' => 'Friday', 'order' => 5, 'time_start' => null, 'time_end' => null, 'hours' => 0]
+                        ['day'=>'Fri', 'value' => 'Friday', 'order' => 5, 'time_start' => '09:00', 'time_end' => '13:00', 'hours' => 4]
                     ]
                 ];
             }
@@ -250,10 +255,10 @@ class TimeTableController extends Controller
         if($tt){
             $tt->delete();
 
-            $class = StudentClass::with(['delivery_location', 'course', 'time_table'])->where('id', $id)->first();
+            $class = StudentClass::with(['course', 'time_table'])->where('id', $id)->first();
             $time_table = [];
 
-            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', $class->location)->first();
+            $prospectus = CourseProspectus::where('course_code', $class->course->code)->where('location', 'like', '%'.$class->location.'%')->first();
             // dump($prospectus->unit_selected);
             
             if($prospectus && in_array($class->location, explode(',',$prospectus->location))){
@@ -531,5 +536,110 @@ class TimeTableController extends Controller
         // dd($course_id);
         $course_id = $course_id == 0 ? null : $course_id;
         return $this->generate_time_table($start_date, $class_id = 4, $course_id, 1);
+    }
+
+    public function test()
+    {
+        $time_table = [
+            'time_table' => 'test',
+            'total_training_hours' => 0,
+            'total_weeks' => 0,
+            // 'no_order' => 1,
+            // 'class_start_day' => 'Monday',
+            'duration_start_date' => null,
+            // 'training_hours_daily' => 8,
+            'training_hours_weekly' => 20,
+            'training_days_weekly' => [
+                ['day'=>'Mon', 'value' => 'Monday', 'order' => 1, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                ['day'=>'Tue', 'value' => 'Teusday', 'order' => 2, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                // ['day'=>'Wed', 'value' => 'Wednesday', 'order' => 3, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                ['day'=>'Wed', 'value' => 'Wednesday', 'order' => 3, 'time_start' => '09:00', 'time_end' => '17:00', 'hours' => 8],
+                // ['day'=>'Thu', 'value' => 'Thursday', 'order' => 4, 'time_start' => null, 'time_end' => null, 'hours' => 0],
+                ['day'=>'Thu', 'value' => 'Thursday', 'order' => 4, 'time_start' => '09:00', 'time_end' => '17:00', 'hours' => 8],
+                // ['day'=>'Fri', 'value' => 'Friday', 'order' => 5, 'time_start' => null, 'time_end' => null, 'hours' => 0]
+                ['day'=>'Fri', 'value' => 'Friday', 'order' => 5, 'time_start' => '09:00', 'time_end' => '13:00', 'hours' => 4]
+            ]
+        ];
+
+
+        // parameters
+        $trainHrs = 40;
+        $hrsPerWeek = 20;
+        $dw = $time_table['training_days_weekly'];
+        $dayStart = 'Mon';
+
+        $days = 0;
+        $weeks = 0;
+        $isoWeek = [
+            'Mon',
+            'Tue',
+            'Wed',
+            'Thu',
+            'Fri',
+            'Sat',
+            'Sun',
+        ];
+
+        while($trainHrs > 0) {
+            $weeks++;
+            // $trainHrs = $trainHrs - $hrsPerWeek;
+            $daysOfWeekCounter = 0;
+            
+            //get days of week counter 
+            while($daysOfWeekCounter < 7){
+
+                if($trainHrs < 1) {
+                    break;
+                }
+
+                foreach ($isoWeek as $iso) {
+                    # code...
+
+                    if($daysOfWeekCounter == 7 || $trainHrs < 1) {
+                        break;
+                    }
+
+                    if($daysOfWeekCounter != 0) {
+                        $days++;
+                        $daysOfWeekCounter++;
+                        dump('count '.$iso.' - '. $daysOfWeekCounter);
+                    }
+
+                    if($iso == $dayStart && $daysOfWeekCounter == 0) {
+                        $days++;
+                        $daysOfWeekCounter++;
+                        dump('first count '.$iso.' - '. $daysOfWeekCounter);
+                    }
+
+                    if($daysOfWeekCounter != 0) {
+                        foreach($dw as $k => $v) {
+                            if($v['day'] == $iso && !in_array($v['hours'], [0,null])) {
+                                $trainHrs = $trainHrs - $v['hours'];
+                            }
+                        }
+                    }
+                    // dump('traini g hours left - '. $trainHrs);
+                    
+                }
+                
+                // $weeks++;
+
+                // dump('daysOfWeekCounter - '. $daysOfWeekCounter);
+            }
+
+            dump('DAYS COUNT - '. $days);
+            // dump('days - '. $days);
+            // dump('weeks - '. $weeks);
+            // dd($trainHrs);
+            // insert dw
+            
+
+            // dd($trainHrs);
+        }
+
+        dump('days - '. $days);
+        dump('weeks - '. $weeks);
+        dump('training hours of that day left - '. abs($trainHrs));
+        dd('end');
     }
 }

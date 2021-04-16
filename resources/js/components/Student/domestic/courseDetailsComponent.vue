@@ -48,7 +48,7 @@
       v-bind:save-form="store_url"
     ></dynamic-form>
     <br />
-    <div class="subjects-wrapper" v-if="this.course == null ? isHidden_sw : true">
+    <div class="subjects-wrapper" v-if="this.course == null ? isHidden_sw : !isHidden_sw" >
       <div v-bind:class="'horizontal-line-wrapper-' + app_color + ' my-3'">
         <h6>
           Subject List
@@ -607,7 +607,7 @@ export default {
                 NE: "Not Eligible",
               },
               value: "",
-              col_size: 12,
+              col_size: 4,
             },
             {
               type: "select",
@@ -615,12 +615,14 @@ export default {
               name: "course_fee_type",
               items: "",
               value: "",
+              col_size: 4,
             },
             {
               type: "text",
               lable: "Course Fee",
               name: "course_fee",
               value: "",
+              col_size: 4,
             },
           ]
         },
@@ -819,6 +821,9 @@ export default {
     this.prevReportCourseId = typeof this.course !== 'undefined' ? this.course.report_course_status_id : 1;
   },
   methods: {
+        toType(obj) {
+            return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+        },
     reportCourse() {
       let vm = this;
       if(vm.prevReportCourseId == 2 && vm.course.report_course_status_id == 3){
@@ -974,6 +979,7 @@ export default {
 
       if (window.course_details != null) {
         let vm = this;
+
         vm.courseFeeType = vm.getValues.course_fee_type;
         // get class and location by course
         if (vm.getValues.course_code != null) {
@@ -981,16 +987,20 @@ export default {
             vm.getValues.course_code,
             vm.getValues.location
           );
+        
         }
+
+        //hide subject list if unit of competency
+          if (vm.getValues.course_code == "@@@@") {
+            vm.isHidden_sw = true;
+          } else {
+            vm.isHidden_sw = false;
+          }
+
         // get  Funding Source State by location
         if (vm.getValues.location != null) {
           this.fundingSourceState(vm.getValues.location);
-        }
-
-        if (vm.getValues.course_code == "@@@@") {
-          vm.isHidden_sw = true;
-        } else {
-          vm.isHidden_sw = false;
+          this.fundingTypeChoose(vm.getValues.location);
         }
 
         if (
@@ -1088,11 +1098,13 @@ export default {
       }
     },
     showHideFormBody(level, status){
-      this.makeForm.forEach(element => {
-                if(element.FormWrapper == level){
-                  element.isHidden = status; //(true/false)
-                }
-              });
+      if(this.course == null){
+        this.makeForm.forEach(element => {
+          if(element.FormWrapper == level){
+            element.isHidden = status; //(true/false)
+          }
+        });
+      }
     },
     getOptionsbyCourse(course_code, location) {
       let vm = this;
@@ -1241,6 +1253,20 @@ export default {
           .then((res) => {
             let vm = this;
             this.class_details = res.class_details;
+
+            // Get Course Fees
+            if (res.data != null) {
+              if (filters.course_fee_type == "C") {
+                this.getValues.course_fee = res.data.concessional_fee;
+              } else if (filters.course_fee_type == "NC") {
+                this.getValues.course_fee = res.data.non_concessional_fee;
+              } else {
+                this.getValues.course_fee = res.data.full_fee;
+              }
+            } else {
+              this.getValues.course_fee = "";
+            }
+
             // Subject Lists
             if (
               res.course_subjects != null &&
@@ -1350,18 +1376,7 @@ export default {
               }
             }
 
-            // Get Course Fees
-            if (res.data != null) {
-              if (filters.course_fee_type == "C") {
-                this.getValues.course_fee = res.data.concessional_fee;
-              } else if (filters.course_fee_type == "NC") {
-                this.getValues.course_fee = res.data.non_concessional_fee;
-              } else {
-                this.getValues.course_fee = res.data.full_fee;
-              }
-            } else {
-              this.getValues.course_fee = "";
-            }
+            
 
             // close loading
             if (vm.loadData == 1) {
@@ -1527,7 +1542,7 @@ export default {
         funding = 'all'
       }
       axios.get(`/student/fundingType/ilis/${funding}`).then((response)=>{
-        // console.log(response.data);
+        console.log(funding);
         vm.makeForm[3].FormBody[0].items = response.data;
       })
     },
@@ -1639,14 +1654,14 @@ export default {
     },
     "getValues.course_code": function (newVal) {
       this.getValues.course_code = newVal;
-      this.getCourseFee();
-      // this.getOptionsbyCourse(newVal, this.getValues.location);
+      this.getOptionsbyCourse(newVal, this.getValues.location); // trigger show/hide level2 formbody etc..
+      this.getCourseFee(); // trigger show/hide level3 formbody and units.. etc.
     },
     "getValues.location": function (newVal) {
       this.getValues.location = newVal;
-      this.getCourseFee();
       this.fundingTypeChoose(newVal);
-      // this.getOptionsbyCourse(this.getValues.course_code, newVal);
+      this.getOptionsbyCourse(this.getValues.course_code, newVal); // trigger show/hide level2 formbody etc..
+      this.getCourseFee(); // trigger show/hide level3 formbody and units.. etc.
     },
     "getValues.course_fee_type": function (newVal) {
       this.getValues.course_fee_type = newVal;
