@@ -445,6 +445,7 @@ class OrganisationController extends Controller
         }
 
         $arr_delivery_loc = [];
+        $arr_postcode = [];
         foreach ($delivery_loc as $key => $value) {
             
             $country = AvtCountryIdentifier::where('identifier', $value->country_id)->first();
