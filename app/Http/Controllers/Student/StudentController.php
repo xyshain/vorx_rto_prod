@@ -196,7 +196,7 @@ class StudentController extends Controller
                 $avetmiss->save();
 
                 // SAVE TO FUNDED IF THE STUDENT TYPE IS "DOMESTIC(2)"
-                if ($student->student_type_id == 2) {
+                // if ($student->student_type_id == 2) {
                     $funded_student = new FundedStudentDetails;
                     $contact = new FundedStudentContactDetails;
                     $contact->fill([
@@ -214,7 +214,7 @@ class StudentController extends Controller
                         'student_id' => $student->student_id,
                     ]);
                     $student_visa->save();
-                }
+                // }
 
                 $notify = new Notification;
 
