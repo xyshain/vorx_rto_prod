@@ -152,7 +152,7 @@ export default {
                   });
             }else if(response.data.status=='validation_error'){
               console.log(response.data.errors);
-              let html = '<h3>Students with existing cannot class in this course be added;</h3>';
+              let html = '<h3>Students with existing class in this course cant be added;</h3>';
               
               html += '<ul style="margin-left: 10% !important;">';
               response.data.errors.forEach(er=>{

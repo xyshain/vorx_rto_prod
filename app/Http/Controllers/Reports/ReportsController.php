@@ -510,9 +510,9 @@ class ReportsController extends Controller
                 }
                 // return $attendances;
                 $students = [];
-                $pref_hours = 0;
-                $actu_hours = 0;
                 foreach($attendances as $att){
+                    $pref_hours = 0;
+                    $actu_hours = 0;
                     if(isset($att->student)&&$att->student!=null){
                         // dd($att,'naay unod ble');
                         $_user = User::where('username',$att->student_id)->first();
@@ -649,7 +649,7 @@ class ReportsController extends Controller
         $class_end = $student_class->end_date;
         $student_type = $json[1];
         // dd($class_id,$from,$to,$student_type);
-        if($from==null && $to == null){
+        if($from=='null' && $to == 'null'){
             try{
                 if($student_type=='*'){
                     $attendances = Attendance::with('student.party','attendance_details')->where('class_id',$class_id)->get();
@@ -720,11 +720,12 @@ class ReportsController extends Controller
                         $q->whereBetween('date_taken',[$from,$to])->get();
                     }])->where('class_id',$class_id)->get();
                 }
-                // return $attendances;
+                return $attendances;
                 $students = [];
-                $pref_hours = 0;
-                $actu_hours = 0;
+                
                 foreach($attendances as $att){
+                    $pref_hours = 0;
+                    $actu_hours = 0;
                     if(isset($att->student)&&$att->student!=null){
                         // dd($att,'naay unod ble');
                         $_user = User::where('username',$att->student_id)->first();
@@ -748,7 +749,7 @@ class ReportsController extends Controller
                         array_push($students,$att);
                     }
                 }
-                // dd($students);
+                // return $students;
                 // dd($attendances);
                 // return $attendances;
                 // return response()->json(['status'=>'success','attendances'=>$students]);
@@ -763,16 +764,13 @@ class ReportsController extends Controller
                 $app_settings = TrainingOrganisation::first();
                 $title = 'Attendance List ( '.Carbon::parse($from)->format('M d, Y'). ' - '.Carbon::parse($to)->format('M d, Y'). ' )'; 
                 $pdf = PDF::loadView('reports.pdf.attendance',compact('attendance','app_settings','from','to','student_class','student_type'));
-                
-                return $pdf->download($title.'.pdf');
+                return $pdf->stream();
+                // return $pdf->download($title.'.pdf');
             }catch(Exception $e){
                 return response()->json(['status'=>'error','message'=>$e->getMessage()]);
             }
         }
 
     }   
-    // public function class_list(){
-    //     $classes = 
-    // }
-
+    
 }
