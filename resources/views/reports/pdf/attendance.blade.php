@@ -105,7 +105,8 @@
                                     <td>{{$att->student->party->name}}</td>
                                     <td>{{$att->student_id}}</td>
                                     <td>{{$att->pref_hours}}</td>
-                                    <td>{{$att->actual_hours}}</td>
+                                    <td>{{$att->actual_hours}}
+									</td>
                                 </tr>
                                 @endforeach
 							</tbody>

@@ -295,7 +295,8 @@ export default {
                                 );
                                 // this.$modal.hide("edit-attendance-sheet");
                                 this.getStudentAttendance();
-                                this.admod = {};
+                                this.admod = {preferred_hours:''};
+                                this.date_taken=null
                                 this.errors ={};
                                 this.is_open = false;
                             }
@@ -334,9 +335,10 @@ export default {
                                 console.log(response.data.enrolment_pack);
                                 // this.updateEnrolment(response.data.enrolment_pack);
                                 this.getStudentAttendance();
-                                this.is_open = false;
-                                this.admod = {};
+                                this.admod = {preferred_hours:''};
+                                this.date_taken=null
                                 this.errors ={};
+                                this.is_open = false;
                             }
                         }   
                     ).catch(
@@ -373,7 +375,7 @@ export default {
     },
     edit(row){
       this.is_open = true;
-      row.date_taken = moment(row.date_taken)._d;
+      this.date_taken = moment(row.date_taken)._d;
       console.log(row);
       this.admod = row;
       

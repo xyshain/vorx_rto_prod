@@ -138,13 +138,17 @@ class StudentClassController extends Controller
             }])->where('student_type_id',$type_id)->whereHas('funded_course',function($q) use ($course_code){
                 $q->where('course_code','=',$course_code);
             })->get()->sortBy('party.name');//regardless of status
-
+            // dd($stewds[0]->attendance);
+            // dd($stewds);
             foreach($stewds as $s){
-                if($s->attendance==null){
-                    
+                // dd($s->attendance);
+                // if($s->attendance){
+                    // dd($s);
                     array_push($students,$s);
-                }   
+                // }   
             }
+            // dd($students);
+            // dd($students);
         }else{
             $stewds = Student::with(['offer_letter.course_details','attendance'=>function($q) use($course_code){
                 $q->where('course_code',$course_code);
