@@ -82,9 +82,10 @@
 							<thead>
 								<tr>
                                     <th style="background-color:{{$app_color}}" width="15%">Profile image</th>
-                                    <th style="background-color:{{$app_color}}" width="15%">Student Name</th>
+                                    <th style="background-color:{{$app_color}}" width="20%">Student Name</th>
                                     <th style="background-color:{{$app_color}}" width="15%">Student id</th>
-                                    <th style="background-color:{{$app_color}}" width="55%">Hours</th>
+                                    <th style="background-color:{{$app_color}}" width="20%">Preferred Hours</th>
+                                    <th style="background-color:{{$app_color}}" width="20%">Actual Hours</th>
 									<!-- <th class="text-center" style="background-color:{{$app_color}}"><span style="font-size:14px;">Date</span></th>
 									<th class="text-center" style="background-color:{{$app_color}}"><span style="font-size:14px;">Hours of Training for that date</span></th> -->
                                     
@@ -93,15 +94,18 @@
 							<tbody>
                                 @foreach($attendance as $att)
                                 <tr>
-                                    <td><img src="{{public_path()}}/storage/user/avatar/{{$att->profile_image}}" alt=""></td>
+                                    <td>
+										
+										@if(isset($att->user))
+										<img src="{{public_path()}}/storage/user/avatars/{{$att->user->profile_image}}" alt="" style="width:50px;">
+										@else
+										<img src="{{public_path()}}/storage/user/avatars/default-profile.png" alt="" style="width:50px;">
+										@endif
+									</td>
                                     <td>{{$att->student->party->name}}</td>
                                     <td>{{$att->student_id}}</td>
-                                    <td>
-                                    <div class="progress">
-                                            <div class="'progress-bar bg-danger" role="progressbar" style="width:100%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" title="fsda"></div>
-                                        
-    </div>
-                                    </td>
+                                    <td>{{$att->pref_hours}}</td>
+                                    <td>{{$att->actual_hours}}</td>
                                 </tr>
                                 @endforeach
 							</tbody>

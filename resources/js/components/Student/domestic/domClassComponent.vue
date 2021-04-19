@@ -53,7 +53,7 @@
                                 <label for="">Date taken:</label>
                                 <span style="font-size: 74%;opacity: 73%;">( DD/M/YYYY )</span>
                                 <date-picker
-                                @input="getPrefTime(index)"
+                                @input="date_change(index)"
                                 locale="en"
                                 v-model="cl.admod.date_taken"
                                 :masks="{L:'DD/MM/YYYY'}"
@@ -81,7 +81,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="">Preferred hours:</label>
-                                    <input type="number" class="form-control" v-model="cl.admod.preferred_hours" placeholder="8">
+                                    <input type="number" class="form-control" v-model="cl.admod.preferred_hours" placeholder="0">
                                     <div v-if="cl.errors">
                                     <span v-if="cl.errors.preferred_hours" :class="['badge badge-danger']">{{ cl.errors.preferred_hours[0] }}</span>
                                     </div>
@@ -197,6 +197,49 @@ export default {
         }
     },
     methods:{
+        date_change(index){
+            var val = this.classList[index].admod.date_taken;
+            // console.log(val);
+            var d_t = moment(val).format('llll');
+            var dt_split = d_t.split(',');
+            var day = dt_split[0];
+            
+            let dis = this;
+            swal.fire({
+            title: 'Please wait...',
+            allowOutsideClick: false,
+            onBeforeOpen: () => {
+                swal.showLoading()
+                },
+            });
+            axios.get(`/attendance/get_preferred/${this.classList[index].class_id}/${day}`).then(
+                response=>{
+                if(response.data.status=='success'){
+                    // console.log(response.data.hours);
+                    this.classList[index].admod.preferred_hours = response.data.hours;
+                    swal.close();
+                }else if(response.data.status=='error'){
+                    swal.fire({
+                    type: "error",
+                    title: 'Opss. something went wrong.',
+                    html:response.data.message
+                    });
+                    this.classList[index].admod.preferred_hours = 0;
+                }else{
+                    swal.close();
+                    this.classList[index].admod.preferred_hours = 0;
+                }
+                }
+            ).catch(
+                err=>{
+                swal.fire({
+                    type: "error",
+                    title: 'Opss. something went wrong.',
+                    html:err
+                    });
+                }
+            );
+        },
         admod_attendance(){
             this.is_open = true;
         },
@@ -205,7 +248,8 @@ export default {
         },
         cancelEdit(idx){
             this.is_open = false;
-            this.classList[idx].admod = {};
+            this.classList[idx].admod = {preferred_hours:0};
+            // this.classList[idx].admod.preferred_hours = 0;
         },
         // getPrefTime(ind){
         //     if(this.classList[ind].unit!='' && this.classList[ind].class_date){
@@ -297,7 +341,9 @@ export default {
                             time_start:null,
                             time_end:null,
                         };
-                        e.admod = {};
+                        e.admod = {
+                            preferred_hours:0
+                        };
                         axios.get('/student/domestic/get_units/'+e.student_id+'/'+e.course_code).then(
                             response=>{
                                 response.data.forEach(function(units){
