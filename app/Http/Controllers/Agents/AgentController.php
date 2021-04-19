@@ -129,6 +129,7 @@ class AgentController extends Controller
             $agent_detail->phone = $request->agent['phone'];
             $agent_detail->email = $request->agent['email'];
             $agent_detail->agent_code = $agent_code;
+            $agent_detail->is_active = 0;
             $agent_detail->user()->associate($user);
             $agent_detail->user_reference()->associate(\Auth::user());
             $agent_detail->save();
@@ -263,22 +264,25 @@ class AgentController extends Controller
         // dd($request->agent['id']);
             // $agent = Agent::with(['detail', 'party'])->where('id', $agent_id)->first();
             $agent = AgentDetail::with(['user.party'])->where('id', $agent_id)->first();
-
+            if(isset($request->agent['detail']['is_active']) && $request->agent['detail']['is_active'] == true){
+                $is_active = 1;
+            }else{
+                $is_active = 0;
+            }
 
             // agent user updates
-            // if($agent->user->is_active) {
-            //     $agent->user->is_active = isset($request->agent['is_active']) ? $request->agent['is_active'] : 0;
-            //     $agent->user->update();
-            // }
+            if($agent->user) {
+                $agent->user->is_active = $is_active;
+                $agent->user->update();
+            }
 
             $agent->fill(
                 $request->agent['detail']
             );
-            
+            $agent->is_active = $is_active;
             $agent->update();
-
             // $agent->update([
-            //     'is_active' => isset($request->agent['is_active']) ? $request->agent['is_active'] : null
+            //     'is_active' => isset($request->agent['detail']['is_active']) ? $request->agent['detail']['is_active'] : 0
             // ]);
 
             $agent->user->party->update(
