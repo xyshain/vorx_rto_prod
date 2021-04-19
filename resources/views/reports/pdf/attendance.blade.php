@@ -20,13 +20,12 @@
 			$app_color = 'primary';
 		}
 	?>
-@foreach($attendance as $att)
+
 <body class="exo2-regular position-relative">
 	<div>
 		<div class="col-xs-12 no-padding position-relative">
 			<div class="pdf-wrapper">
 			
-		@if($loop->first)
 				<div style="padding-bottom: 10px;  margin: 0 10px;">
 					<table width="100%" cellpadding="0" cellspacing="0" border="0">
 						<tr>
@@ -54,42 +53,62 @@
 						<table width="100%" class="form-table">
 							<tr>
 								<td width="50%">
-                                    <label class="label label-textbox">Class: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2"></span></div></label> 
+                                    <label class="label label-textbox">Class: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$student_class->desc}}</span></div></label> 
 								</td>
 								<td width="50%">
-									<label class="label label-textbox">Student Type: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2"></span></div></label>
+									<label class="label label-textbox">Student Type: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">
+                                        @if($student_type==1)
+                                            International
+                                        @elseif($student_type==2)
+                                            Domestic
+                                        @else
+                                            All
+                                        @endif
+                                
+                                    </span></div></label>
 								</td>
 							</tr>
                             <tr>
 								<td width="50%">
-                                    <label class="label label-textbox">Start Date: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2"></span></div></label> 
+                                    <label class="label label-textbox">Start Date: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$from}}</span></div></label> 
 								</td>
 								<td width="50%">
-									<label class="label label-textbox">End Date: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2"></span></div></label>
+									<label class="label label-textbox">End Date: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$to}}</span></div></label>
 								</td>
 							</tr>
 						</table>
-						@endif
 						<br>
 						<table class="table default-bordered-table" cellspacing="0" cellpadding="0" width="85%" style="margin:0 auto !important">
 							<thead>
 								<tr>
                                     <th style="background-color:{{$app_color}}" width="15%">Profile image</th>
-                                    <th style="background-color:{{$app_color}}" width="15%">Student Name</th>
+                                    <th style="background-color:{{$app_color}}" width="20%">Student Name</th>
                                     <th style="background-color:{{$app_color}}" width="15%">Student id</th>
-                                    <th style="background-color:{{$app_color}}" width="55%">Hours</th>
+                                    <th style="background-color:{{$app_color}}" width="20%">Preferred Hours</th>
+                                    <th style="background-color:{{$app_color}}" width="20%">Actual Hours</th>
 									<!-- <th class="text-center" style="background-color:{{$app_color}}"><span style="font-size:14px;">Date</span></th>
 									<th class="text-center" style="background-color:{{$app_color}}"><span style="font-size:14px;">Hours of Training for that date</span></th> -->
                                     
 								</tr>
 							</thead>
 							<tbody>
+                                @foreach($attendance as $att)
                                 <tr>
-                                    <td>test</td>
-                                    <td>test</td>
-                                    <td>test</td>
-                                    <td>test</td>
+                                    <td>
+										
+										@if(isset($att->user))
+										<img src="{{public_path()}}/storage/user/avatars/{{$att->user->profile_image}}" alt="" style="width:50px;">
+										@else
+										<img src="{{public_path()}}/storage/user/avatars/default-profile.png" alt="" style="width:50px;">
+										@endif
+									</td>
+                                    <td>{{$att->student->party->name}}</td>
+                                    <td>{{$att->student_id}}</td>
+                                    <td>{{$att->pref_hours}}</td>
+                                    <td>{{$att->actual_hours}}
+									</td>
                                 </tr>
+                                @endforeach
 							</tbody>
 							<tfoot>
 								<tr>
@@ -108,7 +127,7 @@
 	</div>
 </body>
 
-@endforeach
+
 <!-- End Page 1 of 1 -->
 
 </html>

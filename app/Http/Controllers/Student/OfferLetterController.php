@@ -136,7 +136,9 @@ class OfferLetterController extends Controller
                 'total_course_fee_due' => $package_structure['total_course_fee_due'],
                 'payment_required' => $package_structure['downpayment'],
                 'initial_payment_amount' => $package_structure['initial_payment_amount'],
-                'balance_due' => $package_structure['balance_due'],
+                'installment_desired_amount' => $package_structure['installment_amount'],
+                'installment_interval' => $package_structure['weekly_interval'],
+                'installment_start_date' => $package_structure['installment_start_date'] != ''  ? Carbon::parse($package_structure['installment_start_date'])->timezone('Australia/Melbourne')->format('Y-m-d') : null,
             ]);
 
             $ol_fee->offer_letter()->associate($offerLetter);
@@ -163,6 +165,7 @@ class OfferLetterController extends Controller
                     'tuition_fees'      => $course['tuition'],
                     'max_tuition_fee'  => $course['max_tuition'],
                     'material_fees'     => $course['material'],
+                    'weekly_payment'   => $package_structure['weekly_payment'],
                     'commition_limit'   => 0,
                     'course_start_date' => Carbon::parse($course['course_start'])->format('Y-m-d'),
                     'course_end_date' => Carbon::parse($course['course_end'])->format('Y-m-d'),
@@ -232,6 +235,7 @@ class OfferLetterController extends Controller
 
             if ($package_structure['balance_due'] != '0.00') {
                 $this->createPayment($offerLetter);
+                // $this->updatePayment($course, $package_structure, $package_structure['weekly_payment']);
             }
 
             if($request->agent != ''){
@@ -257,7 +261,8 @@ class OfferLetterController extends Controller
         // 
         // dd($id);
 
-        $offerLetter = OfferLetter::with('student_details', 'course_details.payments.attachment', 'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
+        $offerLetter = OfferLetter::with('student_details','course_details.payment_template', 'course_details.payments.attachment', 'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
+
         \JavaScript::put([
             'student_id' => $id,
         ]);
@@ -330,7 +335,7 @@ class OfferLetterController extends Controller
                 'discounted_amount' => $package_structure['discounted_amount'],
                 'balance_due' => $package_structure['balance_due'],
                 'installment_desired_amount' => $package_structure['installment_amount'],
-                'weekly_interval' => $package_structure['weekly_interval'],
+                'installment_interval' => $package_structure['weekly_interval'],
                 'installment_start_date' => $package_structure['installment_start_date'] != ''  ? Carbon::parse($package_structure['installment_start_date'])->timezone('Australia/Melbourne')->format('Y-m-d') : null,
             ]);
             // dd($offer_letter->fees->wasChanged('initial_payment_amount'));
@@ -961,29 +966,22 @@ class OfferLetterController extends Controller
         // dd('offerlettercontroller');
         $course_fees = $offerLetter->fees;
         $course_detail  = $offerLetter->course_details;
-
+     
         try {
             DB::beginTransaction();
             foreach ($course_detail as $key => $course) {
 
                 if ($key  == 0) {
-                    $tuitDur = round($course_fees->payment_required / $course->week_duration);
-
-                    $totalTuition = $course_fees->course_tuition_fee / $course->week_duration;
-                    $weekCount = $course_fees->initial_payment_amount != 0 ? round($course_fees->initial_payment_amount / $tuitDur) : round($course_fees->payment_required / $tuitDur);
+                    if($course_fees->initial_payment_amount == '0.00'){
+                        $balance = $course_fees->total_course_fee_due - $course_fees->discounted_amount;
+                    }else{
+                        $menus = $course_fees->discounted_amount + $course_fees->initial_payment_amount;
+                        $balance = $course_fees->total_course_fee_due - $menus;
+                    }
                     $initial_Due = \Carbon\Carbon::parse($course->course_start_date)->subDays(3)->format('Y-m-d');
-                    $startdate = Carbon::parse($course->course_start_date)->addWeek($tuitDur);
-                    $nonTuition = $course_fees->application_fee + $course_fees->materials_fee;
-                    // $week = round($balance / $totalTuition);
-                    // dd($totalTuition);
-                    // $course_fees->payment_required : $course_fees->initial_payment_amount
-                    // $balance = $course_fees->initial_payment_amount == 0 ?  $course_fees->payment_required  - $nonTuition : $course_fees->initial_payment_amount - $nonTuition;
-                    $balance = $course_fees->initial_payment_amount == 0 ?  $course_fees->payment_required : $course_fees->initial_payment_amount;
-                    $bduration = $course->wk_duration;
-                    $duration = $bduration - $tuitDur;
-                    $balance_ = $course_fees->course_tuition_fee - $course_fees->discounted_amount - $balance;
-                    // dd($balance);
-                    for ($i = 0; $i < 2; $i++) {
+                    $balance_ = $course_fees->installment_desired_amount;
+                    $startdate = Carbon::parse($course_fees->installment_start_date);
+                    for ($i = 0; $i <= $course->weekly_payment; $i++) {
                         $permitted_chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
                         $invoice_no = $this->generate_string($permitted_chars, 12);
                         $payment = new PaymentScheduleTemplate;
@@ -1000,7 +998,46 @@ class OfferLetterController extends Controller
                         }
                         $payment->user()->associate(\Auth::user());
                         $payment->save();
+                        if($i> 0 ){
+                            $startdate->addWeek($course_fees->installment_interval);
+                        }
                     }
+
+                    
+                    // $tuitDur = round($course_fees->payment_required / $course->week_duration);
+
+                    // $totalTuition = $course_fees->course_tuition_fee / $course->week_duration;
+                    // $weekCount = $course_fees->initial_payment_amount != 0 ? round($course_fees->initial_payment_amount / $tuitDur) : round($course_fees->payment_required / $tuitDur);
+                    // $initial_Due = \Carbon\Carbon::parse($course->course_start_date)->subDays(3)->format('Y-m-d');
+                    // $startdate = Carbon::parse($course->course_start_date)->addWeek($tuitDur);
+                    // $nonTuition = $course_fees->application_fee + $course_fees->materials_fee;
+                    // // $week = round($balance / $totalTuition);
+                    // // dd($totalTuition);
+                    // // $course_fees->payment_required : $course_fees->initial_payment_amount
+                    // // $balance = $course_fees->initial_payment_amount == 0 ?  $course_fees->payment_required  - $nonTuition : $course_fees->initial_payment_amount - $nonTuition;
+                    // $balance = $course_fees->initial_payment_amount == 0 ?  $course_fees->payment_required : $course_fees->initial_payment_amount;
+                    // $bduration = $course->wk_duration;
+                    // $duration = $bduration - $tuitDur;
+                    // $balance_ = $course_fees->course_tuition_fee - $course_fees->discounted_amount - $balance;
+                    // // dd($balance);
+                    // for ($i = 0; $i < 2; $i++) {
+                    //     $permitted_chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                    //     $invoice_no = $this->generate_string($permitted_chars, 12);
+                    //     $payment = new PaymentScheduleTemplate;
+                    //     $payable = $course_fees->initial_payment_amount == 0  ? $course_fees->payment_required : $course_fees->initial_payment_amount;
+                    //     $payment->fill([
+                    //         'invoice_no' => $invoice_no,
+                    //         'due_date' => ($i == 0) ?  $initial_Due : $startdate->format('Y-m-d'),
+                    //         'payable_amount' => ($i == 0) ? $payable : $balance_
+                    //     ]);
+                    //     $payment->offerLetter()->associate($offerLetter);
+                    //     $payment->course_detail()->associate($course);
+                    //     if ($course->funded_course != null) {
+                    //         $payment->funded_course_detail()->associate($course->funded_course);
+                    //     }
+                    //     $payment->user()->associate(\Auth::user());
+                    //     $payment->save();
+                    // }
 
                     // for ($i = 0; $i < $duration; $i++) {
                     //     $checknegative = $balance_ - $totalTuition;

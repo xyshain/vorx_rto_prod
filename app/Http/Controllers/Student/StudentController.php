@@ -196,7 +196,7 @@ class StudentController extends Controller
                 $avetmiss->save();
 
                 // SAVE TO FUNDED IF THE STUDENT TYPE IS "DOMESTIC(2)"
-                if ($student->student_type_id == 2) {
+                // if ($student->student_type_id == 2) {
                     $funded_student = new FundedStudentDetails;
                     $contact = new FundedStudentContactDetails;
                     $contact->fill([
@@ -214,7 +214,7 @@ class StudentController extends Controller
                         'student_id' => $student->student_id,
                     ]);
                     $student_visa->save();
-                }
+                // }
 
                 $notify = new Notification;
 
@@ -1353,5 +1353,18 @@ class StudentController extends Controller
                 break;
         }      
         return null;
+    }
+
+    public function change_type($student_id,$type){
+        // dd('hi');
+        $student_type = $type =='true' ? 2 : 1 ;
+        $student = Student::where('student_id',$student_id)->first();
+        $student->student_type_id = $student_type ;
+        $student->save();
+        if($student_type == 2){
+            return ['status' => 'success' ,'type' => 'domestic' ,'student' => $student->id];
+        }else{
+            return ['status' => 'success' ,'type' => 'international' ,'student' => $student->id];
+        }
     }
 }

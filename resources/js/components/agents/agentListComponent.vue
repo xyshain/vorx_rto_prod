@@ -31,7 +31,10 @@
                             </div>
 
                         </div>
-
+                        <div class="text-center" slot="is_active" slot-scope="{row}">
+                            <span class="badge badge-success" v-if="row.is_active == 1">{{row.is_active | statusLabel}}</span>
+                            <span class="badge badge-warning" v-else>{{row.is_active | statusLabel}}</span>
+                        </div>
                         <div class="btn-group" slot="actions" slot-scope="{row}">
                             <a href="#formsection" class="btn btn-primary btn-sm" @click="agentDetail(row.id)"> <i class="fas fa-edit"> </i></a>
                             <a href="javascript:void(0)" class="btn btn-danger btn-sm text-white" @click="removeAgent(row.id)"> <i class="fas fa-trash"> </i></a>
@@ -126,7 +129,7 @@
                     is_active: '',
                 },
 
-                columns:['agent_code','agent_name','company_name','email', 'phone','actions'],
+                columns:['agent_code','agent_name','company_name','email', 'phone','is_active','actions'],
                 app_color: app_color,
                 options: {
                     initialPage:1,
@@ -139,6 +142,7 @@
                         'company_name': 'Company',
                         'email': 'Email',
                         'phone': 'Phone Number',
+                        'is_active': 'Status',
                         actions: 'Actions'
                     },
                     sortable: ['agent_code','company_name', 'agent_name','email', 'phone'],
@@ -236,6 +240,12 @@
                 });
             }
   
+            
+        },
+         filters: {
+           statusLabel : function (value) {
+                return value == 1 ? 'Active' : 'Inactive';
+            },
             
         }
     }

@@ -1108,7 +1108,10 @@ class DomesticController extends Controller
                 // ADD/UPDATE ATTENDANCE
                 $this->storeUpdate_attendance($request['class'], $funded_student_course);
 
-                // dd($this->createPaymentSchedule($funded_student_course));
+                if($funded_student_course->wasChanged('course_fee')){
+                    $this->createPaymentSchedule($funded_student_course);
+                }
+
                 //resched payment schedule (fullfee course only)
                 // if ($funded_student_course->course_fee_type == 'FF') {
                 //     $old_ps = PaymentScheduleTemplate::where('funded_student_course_id', $funded_student_course->id)->get();
@@ -1387,7 +1390,7 @@ class DomesticController extends Controller
                 // ADD/UPDATE ATTENDANCE
                 $this->storeUpdate_attendance($request['class'], $funded_student_course);
 
-                // dd($this->createPaymentSchedule($funded_student_course));
+                $this->createPaymentSchedule($funded_student_course);
                 //create payment schedule (full fee course only)
                 // if ($funded_student_course->course_fee_type == 'FF') {
                 //     $this->createPaymentSchedule($funded_student_course);
@@ -2290,8 +2293,9 @@ class DomesticController extends Controller
     public function createPaymentSchedule($funded_student_course)
     {
         $course_detail = $funded_student_course;
-        $funded_matrix = FundedCourseMatrices::where('course_code', $course_detail->course_code)->where('location', $course_detail->location)->first();
-
+        // $funded_matrix = FundedCourseMatrices::where('course_code', $course_detail->course_code)->where('location', $course_detail->location)->first();
+        // dump($course_detail);
+        // dd($funded_matrix);
         try {
 
             DB::beginTransaction();
@@ -2302,99 +2306,110 @@ class DomesticController extends Controller
             $cstart_date = Carbon::createFromFormat('Y-m-d', $course_detail->end_date);
             $monthly = $cstart_date->diffInMonths($course_detail->start_date);
             // $monthly = $course_detail->course_end_date->diffInMonths($course_detail->course_start_date);
+            $permitted_chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $invoice_no = $this->generate_string($permitted_chars, 12);
+            $payment = new PaymentScheduleTemplate;
+            $payment->fill([
+                'invoice_no'                => $invoice_no,
+                'due_date'                  => $startDuration->subDays(3)->format('Y-m-d'),
+                'payable_amount'            => (float) $course_detail->course_fee
+            ]);
+            $payment->user()->associate(Auth::user());
+            $payment->funded_course_detail()->associate($course_detail);
+            $payment->save();
 
-            if ($funded_matrix != null) {
+            // if ($funded_matrix != null) {
 
-                $min_payment = $funded_matrix->min_payment;
-                $mos_payment = round($course_detail->course_fee / $monthly);
+            //     $min_payment = $funded_matrix->min_payment;
+            //     $mos_payment = round($course_detail->course_fee / $monthly);
 
-                if ($min_payment < $mos_payment) {
+            //     if ($min_payment < $mos_payment) {
 
-                    // minimum payment is less than monthly payment(duration)
-                    for ($i = 0; $i < $monthly; $i++) {
-                        $payment = new PaymentScheduleTemplate;
-                        $curr_balance = isset($curr_balance) ? $curr_balance : $course_detail->course_fee;
-                        $remaining_bal = number_format($monthly - 1);
-                        $checkNegative = number_format($course_detail->course_fee - $min_payment);
+            //         // minimum payment is less than monthly payment(duration)
+            //         for ($i = 0; $i < $monthly; $i++) {
+            //             $payment = new PaymentScheduleTemplate;
+            //             $curr_balance = isset($curr_balance) ? $curr_balance : $course_detail->course_fee;
+            //             $remaining_bal = number_format($monthly - 1);
+            //             $checkNegative = number_format($course_detail->course_fee - $min_payment);
 
-                        if ($checkNegative > 0) {
-                            // $roundPayable = $noRound > $round ? $round + 100 : $round;
-                            $roundPayable = $min_payment;
-                        } else {
-                            $roundPayable = $curr_balance;
-                        }
+            //             if ($checkNegative > 0) {
+            //                 // $roundPayable = $noRound > $round ? $round + 100 : $round;
+            //                 $roundPayable = $min_payment;
+            //             } else {
+            //                 $roundPayable = $curr_balance;
+            //             }
 
-                        $payment->fill([
-                            'due_date'                  => ($i == 0) ? $startDuration->addWeek($weekCount)->format('Y-m-d') : $startDuration->addMonth()->format('Y-m-d'),
-                            'payable_amount'            => ($i == $remaining_bal) ? (float) $curr_balance : (float) $roundPayable
-                        ]);
+            //             $payment->fill([
+            //                 'due_date'                  => ($i == 0) ? $startDuration->addWeek($weekCount)->format('Y-m-d') : $startDuration->addMonth()->format('Y-m-d'),
+            //                 'payable_amount'            => ($i == $remaining_bal) ? (float) $curr_balance : (float) $roundPayable
+            //             ]);
 
-                        $payable = $roundPayable;
-                        $curr_balance = (isset($curr_balance) ? floor((int) $curr_balance - (int) $payable) : (int) $course_detail->course_fee);
-                        $payment->funded_course_detail()->associate($course_detail);
-                        $payment->user()->associate(Auth::user());
+            //             $payable = $roundPayable;
+            //             $curr_balance = (isset($curr_balance) ? floor((int) $curr_balance - (int) $payable) : (int) $course_detail->course_fee);
+            //             $payment->funded_course_detail()->associate($course_detail);
+            //             $payment->user()->associate(Auth::user());
 
-                        if ($roundPayable != 0) {
-                            $payment->save();
-                        }
-                    }
-                } elseif ($min_payment > $mos_payment) {
+            //             if ($roundPayable != 0) {
+            //                 $payment->save();
+            //             }
+            //         }
+            //     } elseif ($min_payment > $mos_payment) {
 
-                    // with course matrix but min payment is greater than monthly payment (base on duration)
-                    for ($i = 0; $i < $monthly; $i++) {
-                        $payment = new PaymentScheduleTemplate;
-                        $curr_balance = isset($curr_balance) ? $curr_balance : $course_detail->course_fee;
-                        $noRound = round($course_detail->course_fee / $monthly);
-                        $round = round($course_detail->course_fee / $monthly, -2);
-                        $checkNegative = number_format($curr_balance - ($course_detail->course_fee / $monthly));
+            //         // with course matrix but min payment is greater than monthly payment (base on duration)
+            //         for ($i = 0; $i < $monthly; $i++) {
+            //             $payment = new PaymentScheduleTemplate;
+            //             $curr_balance = isset($curr_balance) ? $curr_balance : $course_detail->course_fee;
+            //             $noRound = round($course_detail->course_fee / $monthly);
+            //             $round = round($course_detail->course_fee / $monthly, -2);
+            //             $checkNegative = number_format($curr_balance - ($course_detail->course_fee / $monthly));
 
-                        if ($checkNegative > 0) {
-                            $roundPayable = $noRound > $round ? $round + 100 : $round;
-                        } else {
-                            $roundPayable = $curr_balance;
-                        }
-                        $payment->fill([
-                            'due_date'                  => ($i == 0) ? $startDuration->addWeek($weekCount)->format('Y-m-d') : $startDuration->addMonth()->format('Y-m-d'),
-                            'payable_amount'            => (float) $roundPayable
-                        ]);
-                        $payable = $roundPayable;
-                        $curr_balance = (isset($curr_balance) ? floor((int) $curr_balance - (int) $payable) : (int) $course_detail->course_fee);
+            //             if ($checkNegative > 0) {
+            //                 $roundPayable = $noRound > $round ? $round + 100 : $round;
+            //             } else {
+            //                 $roundPayable = $curr_balance;
+            //             }
+            //             $payment->fill([
+            //                 'due_date'                  => ($i == 0) ? $startDuration->addWeek($weekCount)->format('Y-m-d') : $startDuration->addMonth()->format('Y-m-d'),
+            //                 'payable_amount'            => (float) $roundPayable
+            //             ]);
+            //             $payable = $roundPayable;
+            //             $curr_balance = (isset($curr_balance) ? floor((int) $curr_balance - (int) $payable) : (int) $course_detail->course_fee);
 
-                        $payment->funded_course_detail()->associate($course_detail);
-                        $payment->user()->associate(Auth::user());
-                        if ($roundPayable != 0) {
-                            $payment->save();
-                        }
-                    }
-                }
-            } else {
-                // dd('without course matrix created');
-                for ($i = 0; $i < $monthly; $i++) {
-                    $payment = new PaymentScheduleTemplate;
-                    $curr_balance = isset($curr_balance) ? $curr_balance : $course_detail->course_fee;
-                    $noRound = round($course_detail->course_fee / $monthly);
-                    $round = round($course_detail->course_fee / $monthly, -2);
-                    $checkNegative = number_format($curr_balance - ($course_detail->course_fee / $monthly));
+            //             $payment->funded_course_detail()->associate($course_detail);
+            //             $payment->user()->associate(Auth::user());
+            //             if ($roundPayable != 0) {
+            //                 $payment->save();
+            //             }
+            //         }
+            //     }
+            // } else {
+            //     // dd('without course matrix created');
+            //     for ($i = 0; $i < $monthly; $i++) {
+            //         $payment = new PaymentScheduleTemplate;
+            //         $curr_balance = isset($curr_balance) ? $curr_balance : $course_detail->course_fee;
+            //         $noRound = round($course_detail->course_fee / $monthly);
+            //         $round = round($course_detail->course_fee / $monthly, -2);
+            //         $checkNegative = number_format($curr_balance - ($course_detail->course_fee / $monthly));
 
-                    if ($checkNegative > 0) {
-                        $roundPayable = $noRound > $round ? $round + 100 : $round;
-                    } else {
-                        $roundPayable = $curr_balance;
-                    }
-                    $payment->fill([
-                        'due_date'                  => ($i == 0) ? $startDuration->addWeek($weekCount)->format('Y-m-d') : $startDuration->addMonth()->format('Y-m-d'),
-                        'payable_amount'            => (float) $roundPayable
-                    ]);
-                    $payable = $roundPayable;
-                    $curr_balance = (isset($curr_balance) ? floor((int) $curr_balance - (int) $payable) : (int) $course_detail->course_fee);
+            //         if ($checkNegative > 0) {
+            //             $roundPayable = $noRound > $round ? $round + 100 : $round;
+            //         } else {
+            //             $roundPayable = $curr_balance;
+            //         }
+            //         $payment->fill([
+            //             'due_date'                  => ($i == 0) ? $startDuration->addWeek($weekCount)->format('Y-m-d') : $startDuration->addMonth()->format('Y-m-d'),
+            //             'payable_amount'            => (float) $roundPayable
+            //         ]);
+            //         $payable = $roundPayable;
+            //         $curr_balance = (isset($curr_balance) ? floor((int) $curr_balance - (int) $payable) : (int) $course_detail->course_fee);
 
-                    $payment->funded_course_detail()->associate($course_detail);
-                    $payment->user()->associate(Auth::user());
-                    if ($roundPayable != 0) {
-                        $payment->save();
-                    }
-                }
-            }
+            //         $payment->funded_course_detail()->associate($course_detail);
+            //         $payment->user()->associate(Auth::user());
+            //         if ($roundPayable != 0) {
+            //             $payment->save();
+            //         }
+            //     }
+            // }
             // dd($min_payment);
 
 

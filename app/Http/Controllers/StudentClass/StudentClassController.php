@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Validator;
 use App\Models\StudentClass;
 use App\Models\Student\Student;
+use App\Models\ClassTimeTable;
 use App\Models\OfferLetterCourseDetail;
 use App\Models\PreferredAttendance;
 use App\Models\CompletionStudentCourse;
@@ -137,13 +138,17 @@ class StudentClassController extends Controller
             }])->where('student_type_id',$type_id)->whereHas('funded_course',function($q) use ($course_code){
                 $q->where('course_code','=',$course_code);
             })->get()->sortBy('party.name');//regardless of status
-
+            // dd($stewds[0]->attendance);
+            // dd($stewds);
             foreach($stewds as $s){
-                if($s->attendance==null){
-                    
+                // dd($s->attendance);
+                // if($s->attendance){
+                    // dd($s);
                     array_push($students,$s);
-                }   
+                // }   
             }
+            // dd($students);
+            // dd($students);
         }else{
             $stewds = Student::with(['offer_letter.course_details','attendance'=>function($q) use($course_code){
                 $q->where('course_code',$course_code);
@@ -522,6 +527,29 @@ class StudentClassController extends Controller
         $units = CompletionStudentCourse::with('completion.details.unit')->where('student_course_id',$offer_letter->id)->where('student_type',1)->first();
         
         return $units->completion->details;
+    }
+
+    public function get_preferred($class_id,$day){
+        $time_table = ClassTimeTable::where('class_id',$class_id)->first();
+        if(isset($time_table)){
+            // dd($time_table->training_days_weekly);
+            if(isset($time_table->training_days_weekly)){
+                $training_days = $time_table->training_days_weekly;
+                foreach($training_days as $td){
+                    if($td['day']==$day){
+                        $hours = $td['hours'];
+                    }
+                }
+                if(isset($hours)){
+                    return response()->json(['status'=>'success','hours'=>$hours]);
+                }
+            }else{
+                return response()->json(['status'=>'error','message'=>'Something went wrong.']);
+            }
+        }else{
+            return response()->json(['status'=>'error','message'=>'Time Table not found']);
+        }
+        // dd($class_id,$day);
     }
 }
 

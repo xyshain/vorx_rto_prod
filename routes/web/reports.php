@@ -26,7 +26,7 @@ Route::get('reports/student-list', 'Reports\ReportsController@student_list');
 Route::get('/reports/attendance-list-generator','Reports\ReportsController@attendance');
 Route::post('/reports/generate-attendance', 'Reports\ReportsController@generate_attendance');
 Route::post('/reports/attendance/export-excel','Reports\ReportsController@attendance_excel');
-Route::post('/reports/attendance/export-pdf','Reports\ReportsController@attendance_pdf');
+Route::get('/reports/attendance/export-pdf/{json_text}','Reports\ReportsController@attendance_pdf');
 
 // send progress report
 Route::post('/report/send/course-progress', 'Reports\ReportsController@send_course_progress');
