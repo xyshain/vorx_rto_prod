@@ -708,6 +708,7 @@ class ReportsController extends Controller
         }else{
             $from = $from != 'null' ? $from : $class_start;
             $to = $to != 'null' ? $to : $class_end;
+            // dd($from,$to);
             try{
                 if($student_type=='*'){
                     $attendances = Attendance::with(['student.party','attendance_details'=>function($q)use($from,$to){
@@ -720,7 +721,7 @@ class ReportsController extends Controller
                         $q->whereBetween('date_taken',[$from,$to])->get();
                     }])->where('class_id',$class_id)->get();
                 }
-                return $attendances;
+                // return $attendances;
                 $students = [];
                 
                 foreach($attendances as $att){
@@ -760,7 +761,7 @@ class ReportsController extends Controller
                         $attendance->total_hours += $ad->actual_hours;
                     }
                 }
-                
+                // dd($from,$to);
                 $app_settings = TrainingOrganisation::first();
                 $title = 'Attendance List ( '.Carbon::parse($from)->format('M d, Y'). ' - '.Carbon::parse($to)->format('M d, Y'). ' )'; 
                 $pdf = PDF::loadView('reports.pdf.attendance',compact('attendance','app_settings','from','to','student_class','student_type'));

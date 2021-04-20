@@ -5,8 +5,10 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	@if($app_settings->student_id_prefix =='PCA')
 	<link type="text/css" href="{{ public_path()}}/custom/unit-of-competency-lln-test/pdf-style-pca.css" rel="stylesheet" />
-	@else
+	@elseif($app_settings->student_id_prefix =='CEA')
 	<link type="text/css" href="{{ public_path()}}/cea-lln-test-form/pdf-style.css" rel="stylesheet" />
+	@else
+	<link type="text/css" href="{{ public_path()}}/custom/unit-of-competency-lln-test/pdf-style-cea.css" rel="stylesheet" />
 	@endif
 	<title>Attendance Sheet</title>
 	<!-- Page 1 of 1 -->
@@ -81,11 +83,11 @@
 						<table class="table default-bordered-table" cellspacing="0" cellpadding="0" width="85%" style="margin:0 auto !important">
 							<thead>
 								<tr>
-                                    <th style="background-color:{{$app_color}}" width="15%">Profile image</th>
-                                    <th style="background-color:{{$app_color}}" width="20%">Student Name</th>
-                                    <th style="background-color:{{$app_color}}" width="15%">Student id</th>
-                                    <th style="background-color:{{$app_color}}" width="20%">Preferred Hours</th>
-                                    <th style="background-color:{{$app_color}}" width="20%">Actual Hours</th>
+                                    <th  width="15%">Profile image</th>
+                                    <th  width="20%">Student Name</th>
+                                    <th  width="15%">Student id</th>
+                                    <th  width="20%">Preferred Hours</th>
+                                    <th  width="20%">Actual Hours</th>
 									<!-- <th class="text-center" style="background-color:{{$app_color}}"><span style="font-size:14px;">Date</span></th>
 									<th class="text-center" style="background-color:{{$app_color}}"><span style="font-size:14px;">Hours of Training for that date</span></th> -->
                                     
@@ -93,6 +95,7 @@
 							</thead>
 							<tbody>
                                 @foreach($attendance as $att)
+								@for($i=0; $i < 20; $i++)
                                 <tr>
                                     <td>
 										
@@ -108,6 +111,10 @@
                                     <td>{{$att->actual_hours}}
 									</td>
                                 </tr>
+								@if($i==8||$i%8 == 8)
+									<page-break></page-break>
+								@endif
+								@endfor
                                 @endforeach
 							</tbody>
 							<tfoot>
