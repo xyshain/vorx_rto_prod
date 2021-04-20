@@ -201,19 +201,10 @@
                                     <span v-if="errors.postcode" :class="['badge badge-danger']">{{ errors.postcode[0] }}</span>
                                 </div>
           </div>-->
-          <div class="col-lg-6">
-            <div :class="['form-group', errors.country_identifier ? 'has-error' : '']">
-              <label for="country_identifier">Country</label>
-              <!-- <input 
-                                        id="country_identifier" 
-                                        name="country_identifier" 
-                                        value=""  
-                                        autofocus="autofocus" 
-                                        class="form-control" 
-                                        type="number" 
-                                        v-model="training_dlvr_location.country_identifier">
-              <span v-if="errors.country_identifier" :class="['badge badge-danger']">{{ errors.country_identifier[0] }}</span>-->
-              <multiselect
+          <!-- <div class="col-lg-6"> -->
+            <!-- <div :class="['form-group', errors.country_identifier ? 'has-error' : '']"> -->
+              <!-- <label for="country_identifier">Country</label> -->
+              <!-- <multiselect
                 v-model="training_dlvr_location.country_id"
                 tag-placeholder="Add this as new tag"
                 placeholder="Search country"
@@ -223,13 +214,13 @@
                 :multiple="false"
                 :taggable="false"
                 @tag="addTag"
-              ></multiselect>
-              <span
+              ></multiselect> -->
+              <!-- <span
                 v-if="errors.country_id"
                 :class="['badge badge-danger']"
-              >{{ errors.country_id[0] }}</span>
-            </div>
-          </div>
+              >{{ errors.country_id[0] }}</span> -->
+            <!-- </div> -->
+          <!-- </div> -->
           <div class="col-md-12 text-right" v-if="setup == 1">
             <button v-if="training_dlvr_location.id" class="btn btn-primary" @click="saveTrainingDlvrLoc">
                 <i class="far fa-edit"></i> Update Delivery Location
