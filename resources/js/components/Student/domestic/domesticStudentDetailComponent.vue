@@ -9,7 +9,8 @@
         <div class="row">
           <div class="col-md-6">
             <h6 :class="'m-0 font-weight-bold text-' + app_color">
-              Student Details
+              Student Details 
+              <!-- <button @click="checkernatkin" >eee</button> -->
               <span>
                 ( {{ student_id }} - {{ student_info.firstname }}
                 {{ student_info.middlename }} {{ student_info.lastname }} )
@@ -391,7 +392,7 @@
               aria-labelledby="course-progress"
             >
               <div>
-                <completion></completion>
+                <completion refs="checkCompletion"></completion>
               </div>
             </div>
             <div
@@ -555,9 +556,18 @@ export default {
   },
   created() {
     this.fetchData();
+    
   },
-
   methods: {
+    checkernatkin(){
+      let vm = this;
+      vm.$children.find(child => {
+        if(child.$attrs.refs == 'checkCompletion'){
+          child.fetchData();
+        }
+
+      })
+    },
     isTest(){
       axios.get(`/testdriven/${window.student_id}`).then((res)=>{
           if(res.data.status == 'success'){
@@ -721,6 +731,8 @@ export default {
       if ($event == "updated") {
         this.firstLoad = 0;
         this.fetchData();
+        this.checkernatkin();
+        this.updateHistory = true;
         // console.log("ka updated vah");
       }
     },

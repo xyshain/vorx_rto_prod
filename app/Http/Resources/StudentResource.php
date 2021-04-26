@@ -38,6 +38,14 @@ class StudentResource extends JsonResource
                 if($this->latest_offer_letter->offer_course->status != null){
                     $status = $this->latest_offer_letter->offer_course->status->description;
                 }
+            }else{
+                if($this->latest_funded_course){
+                    if ($this->latest_funded_course->status != null) {
+                        $status = $this->latest_funded_course->status->description;
+                    }
+                    $course = !in_array($this->latest_funded_course->course_code, ['@@@@', '1111']) ? $this->latest_funded_course->course->name : 'Unit of Competency';
+                }
+               
             }
         } else {
             // dd($this->latest_funded_course);

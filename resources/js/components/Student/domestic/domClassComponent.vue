@@ -380,9 +380,11 @@ export default {
                         };
                         axios.get('/student/domestic/get_units/'+e.student_id+'/'+e.course_code).then(
                             response=>{
-                                response.data.forEach(function(units){
-                                    e.units.push(units);
-                                });
+                                if(response.data.length > 0){
+                                     response.data.forEach(function(units){
+                                        e.units.push(units);
+                                    });
+                                }
                             }
                         );
                         data.push(e);
