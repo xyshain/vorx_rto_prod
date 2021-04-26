@@ -755,13 +755,20 @@ class ReportsController extends Controller
                 // return $attendances;
                 // return response()->json(['status'=>'success','attendances'=>$students]);
                 $attendance = $students;
-
+                // $attendance = [];
+                // dd($attendance);
                 if(isset($attendance->attendance_details)){
                     foreach($attendance->attendance_details as $ad){
                         $attendance->total_hours += $ad->actual_hours;
                     }
                 }
                 // dd($from,$to);
+                // $attendance = collect($attendance);
+                // dd($attendance->chunk(2));
+                // for($i = 0 ; $i < 20 ; $i++){
+                //     $attendance[$i] = $students[0];
+                // }
+                // dd($attendance);
                 $app_settings = TrainingOrganisation::first();
                 $title = 'Attendance List ( '.Carbon::parse($from)->format('M d, Y'). ' - '.Carbon::parse($to)->format('M d, Y'). ' )'; 
                 $pdf = PDF::loadView('reports.pdf.attendance',compact('attendance','app_settings','from','to','student_class','student_type'));
@@ -773,5 +780,10 @@ class ReportsController extends Controller
         }
 
     }   
+
+    public function payments(){
+        
+        return view('reports.payment-list');
+    }
     
 }

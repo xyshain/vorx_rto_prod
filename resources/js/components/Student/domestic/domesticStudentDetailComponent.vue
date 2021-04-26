@@ -759,6 +759,8 @@ export default {
                 if (response.data.status == "success") {
                   this.firstLoad = 0;
                   this.fetchData();
+                  // this.updateDoms();
+                  this.$children[4].getStudentAttendance();
                   Toast.fire({
                     position: "top-end",
                     type: "success",

@@ -21,8 +21,9 @@
 		}else{
 			$app_color = 'primary';
 		}
+		$attendance = collect($attendance);
 	?>
-
+@foreach($attendance->chunk(12) as $atte)
 <body class="exo2-regular position-relative">
 	<div>
 		<div class="col-xs-12 no-padding position-relative">
@@ -52,6 +53,7 @@
 					<div class="content">
 						<h1 class="section-header proximanova-bold primary-font-color px-12-font text-justify text-uppercase"></h1>
                         <br>
+						@if($loop->first)
 						<table width="100%" class="form-table">
 							<tr>
 								<td width="50%">
@@ -72,13 +74,14 @@
 							</tr>
                             <tr>
 								<td width="50%">
-                                    <label class="label label-textbox">Start Date: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$from}}</span></div></label> 
+                                    <label class="label label-textbox">Start Date: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{isset($from) ? Carbon\Carbon::parse($from)->toFormattedDateString() : 'Not specified'}}</span></div></label> 
 								</td>
 								<td width="50%">
-									<label class="label label-textbox">End Date: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$to}}</span></div></label>
+									<label class="label label-textbox">End Date: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{isset($to) ? Carbon\Carbon::parse($to)->toFormattedDateString() : 'Not specified'}}</span></div></label>
 								</td>
 							</tr>
 						</table>
+						@endif
 						<br>
 						<table class="table default-bordered-table" cellspacing="0" cellpadding="0" width="85%" style="margin:0 auto !important">
 							<thead>
@@ -94,8 +97,7 @@
 								</tr>
 							</thead>
 							<tbody>
-                                @foreach($attendance as $att)
-								@for($i=0; $i < 20; $i++)
+                                @foreach($atte as $att)
                                 <tr>
                                     <td>
 										
@@ -111,10 +113,6 @@
                                     <td>{{$att->actual_hours}}
 									</td>
                                 </tr>
-								@if($i==8||$i%8 == 8)
-									<page-break></page-break>
-								@endif
-								@endfor
                                 @endforeach
 							</tbody>
 							<tfoot>
@@ -133,6 +131,7 @@
 		</div>
 	</div>
 </body>
+@endforeach
 
 
 <!-- End Page 1 of 1 -->

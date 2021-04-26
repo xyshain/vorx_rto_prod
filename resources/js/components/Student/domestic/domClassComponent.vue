@@ -3,7 +3,12 @@
 <div class="card shadow mb-4">
     <edit-attendance-modal/>
     <div v-if="classList.length==0">
-        No Classes found
+        <div class="card">
+            <div class="card-body">
+            No Classes found
+
+            </div>
+        </div>
     </div>
     <div v-for="(cl,index) in classList" :key="cl.id" v-else>
         <div class="accordion" :id="'accordion'+cl.id">
@@ -20,6 +25,7 @@
                     >{{cl.student_class.desc}}({{cl.course_code}}) - {{cl.total_hours}} total hours</button>
                     <div class="d-inline-block float-right">
                         <a :href="'/attendance/pdf/'+cl.id" target="_blank" class="btn btn-warning" title="Generate PDF"><i class="fas fa-file-pdf"></i></a>
+                        <button class="btn btn-danger" title="Withdraw Class" @click="deleteClass(cl.id)"><i class="fas fa-trash"></i></button>
                     </div>
                 </h2>
                 </div>
@@ -197,6 +203,34 @@ export default {
         }
     },
     methods:{
+        deleteClass(id){
+            swal
+            .fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!"
+            })
+            .then(result => {
+            if (result.value) {
+                axios.post('/classes/delete_student',{
+                id:id
+                }).then(
+                response=>{
+                    swal.fire(
+                    "Deleted!",
+                    "Class has been deleted.",
+                    "success"
+                    );
+                    this.getStudentAttendance();
+                }
+                ).catch();
+            }
+            });
+        },
         date_change(index){
             var val = this.classList[index].admod.date_taken;
             // console.log(val);
