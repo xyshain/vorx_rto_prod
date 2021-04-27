@@ -621,7 +621,7 @@ export default {
           // console.log(res.data);
           vm.initial_payment_receipt =
             typeof res.data.id !== "undefined" ? res.data : {};
-          swal.close();
+          // swal.close();
         })
         .catch((err) => {
           // console.log(err);

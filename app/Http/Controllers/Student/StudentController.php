@@ -196,7 +196,8 @@ class StudentController extends Controller
                 $avetmiss->save();
 
                 // SAVE TO FUNDED IF THE STUDENT TYPE IS "DOMESTIC(2)"
-                if ($student->student_type_id == 2) {
+                // include international students now
+                // if ($student->student_type_id == 2) {
                     $funded_student = new FundedStudentDetails;
                     $contact = new FundedStudentContactDetails;
                     $contact->fill([
@@ -214,7 +215,7 @@ class StudentController extends Controller
                         'student_id' => $student->student_id,
                     ]);
                     $student_visa->save();
-                }
+                // }
 
                 $notify = new Notification;
 
@@ -248,7 +249,13 @@ class StudentController extends Controller
         $to = TrainingOrganisation::first();
         if($student_id == null){
             $student = Student::where('student_id', '!=', null)->latest()->first();
-            $student_id = $student->student_id;
+            if($student == null){
+                $student_id = 0;
+            }else{
+                $student_id = $student->student_id;
+            }
+            
+            
         }
         $next_id = abs(str_replace($to->student_id_prefix,"",$student_id));
         $next_id++;

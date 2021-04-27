@@ -342,8 +342,7 @@
               role="tabpanel"
               aria-labelledby="nav-attachment-tab"
             >
-              <!-- <student-attachment></student-attachment> -->
-              <avetmiss-details></avetmiss-details>
+              <!-- <avetmiss-details></avetmiss-details> -->
             </div>
             <div
               class="tab-pane fade"
@@ -478,6 +477,8 @@ export default {
       firstLoad: 1,
       ptr: window.ptr,
       updateDom: false,
+      course_data: false,
+      payment_data: false,
     };
   },
   methods: {
@@ -499,7 +500,6 @@ export default {
       })
     },
     isReport() {
-      console.log(this.id);
       let update_changes = 1;
 
       if(this.report_avetmiss == false) {
@@ -516,7 +516,7 @@ export default {
         .then((result) => {
           let vm = this;
           if (result.value == true) {
-            vm.updateReport();
+            vm.x();
           }else{
             vm.report_avetmiss = true;
           }
@@ -586,7 +586,7 @@ export default {
     },
     updatePayment(updateHistory) {
       this.updateHistory = updateHistory;
-      this.firstLoad = 0;
+      // this.firstLoad = 0;
       this.fetchStudentOfferLetter();
     },
     fetchStudent() {
@@ -642,9 +642,11 @@ export default {
           this.offerletterData = res.data;
           this.reference = this.offerletterData[0];
           if (this.firstLoad == 1) {
-            swal.close();
+            // if(this.course_data == true && this.payment_data == true){
+              swal.close();
+            // }
           }
-          this.firstLoad = 1;
+        this.firstLoad = 1;
         })
         .catch((err) => {
           console.log(err);

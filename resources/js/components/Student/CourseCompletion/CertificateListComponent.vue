@@ -205,7 +205,7 @@ export default {
     },
     editCompletion(completion) {
       let vm = this;
-      console.log(completion)
+      // console.log(completion)
       vm.$emit("editCompletion", {
         course: completion.course,
         units: completion.units,
@@ -221,7 +221,7 @@ export default {
         .get(`/certficate_issuance/list/${window.student.id}`)
         .then(response => {
           let data = response.data;
-          console.log(data);
+          // console.log(data);
           data.forEach(element => {
             if (element.release_date != null) {
               element.release_date = moment(element.release_date)._d;
@@ -253,7 +253,7 @@ export default {
         .get(`/certficate_issuance/list/${window.student_id}`)
         .then(response => {
           let data = response.data;
-          console.log(data);
+          // console.log(data);
           data.forEach(element => {
             if (element.release_date != null) {
               element.release_date = moment(element.release_date)._d;
@@ -296,16 +296,16 @@ export default {
       });
       let cert = this.certificates[certificate].id;
       let data = this.certificates[certificate];
-      console.log(data.reissued_date);
+      // console.log(data.reissued_date);
       if (data.release_date != null) {
-        console.log("sulod");
+        // console.log("sulod");
         data.release_date = moment(data.release_date).format("YYYY-MM-DD");
       }
       if (data.reissued_date != null) {
         console.log("sulod");
         data.reissued_date = moment(data.reissued_date).format("YYYY-MM-DD");
       }
-      console.log(data);
+      // console.log(data);
       axios
         .put(`/certificate_issuance/${cert}`, data)
         .then(res => {
@@ -321,7 +321,7 @@ export default {
             title: err.data.message
           });
         });
-      console.log(data);
+      // console.log(data);
       // console.log(this.certificates[certificate]);
       // console.log(certificate);
     },
