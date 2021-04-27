@@ -18,6 +18,7 @@ use App\Models\FundedStudentCourse;
 use App\Models\FundedStudentCourseDetail;
 use App\Models\FundedStudentDetails;
 use App\Models\FundedStudentContactDetails;
+use App\Models\FundedStudentPaymentDetails;
 use App\Models\StateIdentifier;
 use App\Models\StudentCompletion;
 use App\Models\StudentCompletionDetail;
@@ -782,8 +783,24 @@ class ReportsController extends Controller
     }   
 
     public function payments(){
-        
+        $courses = [];
+
+        if(\Auth::user()->hasRole('Demo')){
+            $courses =  Course::where('user_id', \Auth::user()->id)->get()->pluck('name','code');
+        }else{
+            $courses =  Course::all()->pluck('name','code');
+        }
+        $courses['*'] = 'All Courses';
+        // dd($courses);
+        \JavaScript::put([
+            'courses'=>$courses
+        ]);
         return view('reports.payment-list');
     }
     
+    public function generate_payments(Request $request){
+        $funded_student_payments = FundedStudentPaymentDetails::with('student.party','funded_student_course.course')->get();
+
+        return $funded_student_payments;
+    }
 }

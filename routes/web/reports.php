@@ -30,6 +30,7 @@ Route::get('/reports/attendance/export-pdf/{json_text}','Reports\ReportsControll
 
 // for generate payment list module
 Route::get('/reports/payment-list-generator','Reports\ReportsController@payments');
+Route::post('/reports/generate-payments', 'Reports\ReportsController@generate_payments');
 
 // send progress report
 Route::post('/report/send/course-progress', 'Reports\ReportsController@send_course_progress');

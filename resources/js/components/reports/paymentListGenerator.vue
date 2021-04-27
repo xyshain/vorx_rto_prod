@@ -16,13 +16,22 @@
                             <form @submit.prevent>
                                 <div class="form-row">
                                     <div class="form-group col-md-5">
-                                        <label for="month">Start date: <span class="badge"></span></label>
-                                        <date-picker :masks="{ L: 'DD/MM/YYYY' }" locale="en" v-model="from" ></date-picker>
+                                        <label for="month">Start Month: <span class="badge"></span></label>
+                                        <input type="month" class="form-control" v-model="from" value="">
                                     </div>
                                     <div class="form-group col-md-5">
-                                        <label for="year">End date: <span class="badge"></span></label>
-                                        <date-picker :masks="{ L: 'DD/MM/YYYY' }" locale="en" v-model="to" ></date-picker>
+                                        <label for="year">End Month: <span class="badge"></span></label>
+                                        <input type="month" class="form-control" v-model="to" value="">
                                         <!-- <input type="number" class="form-control" id="year" placeholder=""> -->
+                                    </div>
+                                    <div class="form-group col-md-5">
+                                        <label for="year">Course:</label>
+                                        <select name="" id="" class="form-control" v-model="get_course">
+                                            <option :value="key" v-for="(itm,key) in courses" :key="key">
+                                                <span v-if="key != '*'">{{key}} - {{itm}}</span>
+                                                <span v-else>{{itm}}</span>
+                                            </option>
+                                        </select>
                                     </div>
                                     <div class="form-group col-md-2">
                                         <div class="clearfix" style="height: 22px;"></div>
@@ -34,7 +43,16 @@
                         </div>  
                     </div>
                 </div>
-                
+                <div>
+                    <v-client-table :class="'header-'+app_color" :data="payments" :columns="columns" :options="options" ref="paymentsTable">
+                        <div slot="funded_student_course" slot-scope="{row}">
+                            {{row.funded_student_course.course_code}} - {{row.funded_student_course.course.name}}
+                        </div>
+                        <div slot="payment_date" slot-scope="{row}">
+                            {{row.payment_date | dateformat}}
+                        </div>
+                    </v-client-table>
+                </div>
             </div>
         </div>
     </div>
@@ -51,11 +69,46 @@ export default {
   components: {
     // CreateOfferLetter
   },
+  filters:{
+        dateformat: function(date) {
+        if (!date) return "";
+        date = moment(date).format("DD/MM/YYYY");
+        return date;
+        },
+  },
   data() {
     return {
         from:null,
         to:null,
-        app_color:app_color
+        app_color:app_color,
+        courses:courses,
+        get_course:'*',
+        payments:[],
+        columns:['student.party.name','funded_student_course','payment_method_id','amount','payment_date'],
+        options:{
+            orderBy:{
+                column:'student.party.name',
+                ascending:true
+            },
+            initialPage:1,
+            perPage:10,
+            highlightMatches:true,
+            sortIcon: { base:'fas', up:'fa-sort-amount-up', down:'fa-sort-amount-down', is:'fa-sort' },
+            headings: {
+                'student.party.name':'Student Name',
+                'funded_student_course':'Course',
+                'payment_methods_id':'Payment Method'
+            },
+            // sortable: ["Student ID", "Given Name", "Last Name", "Date of Birth","USI","Course Code", "Course Name","Start Date", "End Date"],
+            rowClassCallback(row) {
+                return row.id = row.id;
+            },
+            columnClasses: {id: 'class-is'},
+            texts: {
+                filter: "Search:",
+                filterPlaceholder: "Search keywords",
+            }
+        },
     }
   },
   created() {
@@ -63,16 +116,43 @@ export default {
   },
   methods: {
       generateList(){
-          
+        let loading = null;
+        if(this.from > this.to){
+            swal.fire({
+            type: "error",
+            title: 'Start Month must be less than End Month.',
+            });
+            // return false;
+        }
+        loading = swal.fire({
+            title: 'Processing Payments List...',
+            // html: '',// add html attribute if you want or remove
+            allowOutsideClick: false,
+            onBeforeOpen: () => {
+                swal.showLoading()
+            },
+        });
+
+        axios.post('/reports/generate-payments',{
+            from: this.from,
+            to: this.to,
+            get_course: this.get_course,
+        }).then(
+            response=>{
+                this.payments = response.data
+                swal.close();
+            }
+        ).catch(
+            err=>{
+                console.log(err);
+            }
+        );
       },
       exportExcel(){
           
-        
       },
       resetFields(){
-          console.log();
-          this.selected_class = '';
-          this.student_type = '*';
+          this.get_course = '*';
           this.from = null;
           this.to = null;
       }
