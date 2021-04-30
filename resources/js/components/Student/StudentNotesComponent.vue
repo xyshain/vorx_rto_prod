@@ -199,7 +199,7 @@
     }
 </script>
 
-<style scoped>
+<style>
     .tab-pane {
         border: 1px solid #e0dfdf;
         border-top: none;
@@ -227,7 +227,7 @@
         border-radius: 0;
         height: 100%;
     }
-.vc-text-base{
+input.vc-text-base{
     height: 100% !important;
 }
 </style>
