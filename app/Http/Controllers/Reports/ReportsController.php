@@ -18,6 +18,7 @@ use App\Models\FundedStudentCourse;
 use App\Models\FundedStudentCourseDetail;
 use App\Models\FundedStudentDetails;
 use App\Models\FundedStudentContactDetails;
+use App\Models\FundedStudentPaymentDetails;
 use App\Models\StateIdentifier;
 use App\Models\StudentCompletion;
 use App\Models\StudentCompletionDetail;
@@ -510,9 +511,9 @@ class ReportsController extends Controller
                 }
                 // return $attendances;
                 $students = [];
-                $pref_hours = 0;
-                $actu_hours = 0;
                 foreach($attendances as $att){
+                    $pref_hours = 0;
+                    $actu_hours = 0;
                     if(isset($att->student)&&$att->student!=null){
                         // dd($att,'naay unod ble');
                         $_user = User::where('username',$att->student_id)->first();
@@ -649,7 +650,7 @@ class ReportsController extends Controller
         $class_end = $student_class->end_date;
         $student_type = $json[1];
         // dd($class_id,$from,$to,$student_type);
-        if($from==null && $to == null){
+        if($from=='null' && $to == 'null'){
             try{
                 if($student_type=='*'){
                     $attendances = Attendance::with('student.party','attendance_details')->where('class_id',$class_id)->get();
@@ -708,6 +709,7 @@ class ReportsController extends Controller
         }else{
             $from = $from != 'null' ? $from : $class_start;
             $to = $to != 'null' ? $to : $class_end;
+            // dd($from,$to);
             try{
                 if($student_type=='*'){
                     $attendances = Attendance::with(['student.party','attendance_details'=>function($q)use($from,$to){
@@ -722,9 +724,10 @@ class ReportsController extends Controller
                 }
                 // return $attendances;
                 $students = [];
-                $pref_hours = 0;
-                $actu_hours = 0;
+                
                 foreach($attendances as $att){
+                    $pref_hours = 0;
+                    $actu_hours = 0;
                     if(isset($att->student)&&$att->student!=null){
                         // dd($att,'naay unod ble');
                         $_user = User::where('username',$att->student_id)->first();
@@ -748,31 +751,56 @@ class ReportsController extends Controller
                         array_push($students,$att);
                     }
                 }
-                // dd($students);
+                // return $students;
                 // dd($attendances);
                 // return $attendances;
                 // return response()->json(['status'=>'success','attendances'=>$students]);
                 $attendance = $students;
-
+                // $attendance = [];
+                // dd($attendance);
                 if(isset($attendance->attendance_details)){
                     foreach($attendance->attendance_details as $ad){
                         $attendance->total_hours += $ad->actual_hours;
                     }
                 }
-                
+                // dd($from,$to);
+                // $attendance = collect($attendance);
+                // dd($attendance->chunk(2));
+                // for($i = 0 ; $i < 20 ; $i++){
+                //     $attendance[$i] = $students[0];
+                // }
+                // dd($attendance);
                 $app_settings = TrainingOrganisation::first();
                 $title = 'Attendance List ( '.Carbon::parse($from)->format('M d, Y'). ' - '.Carbon::parse($to)->format('M d, Y'). ' )'; 
                 $pdf = PDF::loadView('reports.pdf.attendance',compact('attendance','app_settings','from','to','student_class','student_type'));
-                
-                return $pdf->download($title.'.pdf');
+                return $pdf->stream();
+                // return $pdf->download($title.'.pdf');
             }catch(Exception $e){
                 return response()->json(['status'=>'error','message'=>$e->getMessage()]);
             }
         }
 
     }   
-    // public function class_list(){
-    //     $classes = 
-    // }
 
+    public function payments(){
+        $courses = [];
+
+        if(\Auth::user()->hasRole('Demo')){
+            $courses =  Course::where('user_id', \Auth::user()->id)->get()->pluck('name','code');
+        }else{
+            $courses =  Course::all()->pluck('name','code');
+        }
+        $courses['*'] = 'All Courses';
+        // dd($courses);
+        \JavaScript::put([
+            'courses'=>$courses
+        ]);
+        return view('reports.payment-list');
+    }
+    
+    public function generate_payments(Request $request){
+        $funded_student_payments = FundedStudentPaymentDetails::with('student.party','funded_student_course.course')->get();
+
+        return $funded_student_payments;
+    }
 }

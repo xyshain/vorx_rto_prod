@@ -364,7 +364,8 @@ class OrganisationController extends Controller
                     'postcode'                                         => $postcode['postcode'],
                     'state_id'                                         => $state_id->value,
                     'addr_location'                                    => $postcode['suburb'],
-                    'country_id'                                       => $country_id['identifier'],
+                    // 'country_id'                                       => $country_id['identifier'],
+                    'country_id'                                       => '1101',
                     "addr_flat_unit_detail"                            => $request->addr_flat_unit_detail,
                     "addr_building_property_name"                      => $request->addr_building_property_name,
                     "addr_street_name"                                 => $request->addr_street_name,
@@ -392,7 +393,7 @@ class OrganisationController extends Controller
                 'postcode'                      => 'required',
                 // 'state_id' => 'required',
                 // 'addr_location' => 'required',
-                'country_id'                     => 'required'
+                // 'country_id'                     => 'required'
             ]);
             if ($validator->fails()) {
                 return response()->json(['status' => 'errors', 'errors' => $validator->messages()]);
@@ -411,7 +412,8 @@ class OrganisationController extends Controller
                     'postcode'                                         => $postcode['postcode'],
                     'state_id'                                         => $state_id->value,
                     'addr_location'                                    => $postcode['suburb'],
-                    'country_id'                                       => $country_id['identifier'],
+                    // 'country_id'                                       => $country_id['identifier'],
+                    'country_id'                                       => '1101',
                     "addr_flat_unit_detail"                            => $request->addr_flat_unit_detail,
                     "addr_building_property_name"                      => $request->addr_building_property_name,
                     "addr_street_name"                                 => $request->addr_street_name,
@@ -445,6 +447,7 @@ class OrganisationController extends Controller
         }
 
         $arr_delivery_loc = [];
+        $arr_postcode = [];
         foreach ($delivery_loc as $key => $value) {
             
             $country = AvtCountryIdentifier::where('identifier', $value->country_id)->first();

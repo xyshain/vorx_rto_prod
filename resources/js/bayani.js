@@ -66,3 +66,6 @@ Vue.component('menu-edit', require('./components/menus/editMenuComponent.vue').d
 
 // attendance list generator
 Vue.component('attendance-list-generator', require('./components/reports/attendanceListGenerator.vue').default);
+
+// payment list generator
+Vue.component('payment-list-generator', require('./components/reports/paymentListGenerator.vue').default);

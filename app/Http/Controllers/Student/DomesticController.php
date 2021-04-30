@@ -691,6 +691,9 @@ class DomesticController extends Controller
             $course = FundedStudentCourse::with('course')->find($id);
             $course_details = FundedStudentCourseDetail::where('funded_student_course_id', $id)->first();
             $course_completion = CompletionStudentCourse::with('completion.details')->where('student_course_id', $id)->first();
+
+            $attendance = Attendance::where('student_id',$course->student_id)->where('course_code',$course->course_code)->where('class_id','!=',0)->first();
+
             $completion = $course_completion->completion;
             $com_details = $completion->details;
             foreach ($com_details as $key => $value) {
@@ -711,6 +714,9 @@ class DomesticController extends Controller
                 $course_details->delete();
             }
 
+            if($attendance != null){
+                $attendance->delete();
+            }
 
             DB::commit();
             //code...

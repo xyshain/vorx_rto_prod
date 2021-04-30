@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Validator;
 use App\Models\StudentClass;
 use App\Models\Student\Student;
+use App\Models\ClassTimeTable;
 use App\Models\OfferLetterCourseDetail;
 use App\Models\PreferredAttendance;
 use App\Models\CompletionStudentCourse;
@@ -104,7 +105,12 @@ class StudentClassController extends Controller
 
         $class_fields = StudentClass::with('course.courseprospectus','delivery_location','attendance')->find($class_id);
         // dd($class_fields);
-        $class_fields->trainer_selected = $class_fields->trainer_selected;
+        if($class_fields->trainer_id != null){
+            // $class_fields->trainer_selected = 'bullshit';
+            // dd('fuck u');
+            $class_fields->trainer_selected = $class_fields->trainer_selected;
+        }
+        // $class_fields->trainer_selected = isset($class_fields->trainer_selected) ? $class_fields->trainer_selected : '';
         return $class_fields;
     }
 
@@ -137,13 +143,17 @@ class StudentClassController extends Controller
             }])->where('student_type_id',$type_id)->whereHas('funded_course',function($q) use ($course_code){
                 $q->where('course_code','=',$course_code);
             })->get()->sortBy('party.name');//regardless of status
-
+            // dd($stewds[0]->attendance);
+            // dd($stewds);
             foreach($stewds as $s){
-                if($s->attendance==null){
-                    
+                // dd($s->attendance);
+                // if($s->attendance){
+                    // dd($s);
                     array_push($students,$s);
-                }   
+                // }   
             }
+            // dd($students);
+            // dd($students);
         }else{
             $stewds = Student::with(['offer_letter.course_details','attendance'=>function($q) use($course_code){
                 $q->where('course_code',$course_code);
@@ -178,7 +188,8 @@ class StudentClassController extends Controller
         $errors = [];
         try{
             foreach($request->student as $rs){
-                $attendance = Attendance::where('student_id',$rs['student_id'])->where('course_code',$class->course_code)->first();
+                $attendance = Attendance::where('student_id',$rs['student_id'])->where('course_code',$class->course_code)->where('class_id','!=',0)->first();
+                // return $attendance;
                 if(isset($attendance)){
                     // dd($rs);
                     $existing_student = $rs['party']['name'];
@@ -452,10 +463,16 @@ class StudentClassController extends Controller
 
     public function get_classes($id){//student classes
         // dd('ha');
-        $attendance = Attendance::with(['student','student_class.delivery_location','course','attendance_details'=>function($query){
-            $query->orderBy('id','desc');
-        }])->where('student_id',$id)->where('class_id','!=',0)->get();
-        
+        $funded_courses = FundedStudentCourse::where('student_id',$id)->get();
+        $attendance = [];
+        // return $funded_courses;
+        for($i = 0; $i < count($funded_courses); $i++){
+            $attendance[$i] = Attendance::with(['student','student_class.delivery_location','course','attendance_details'=>function($query){
+                $query->orderBy('id','desc');
+            }])->where('student_id',$id)->where('course_code',$funded_courses[$i]->course_code)->where('class_id','!=',0)->first();
+        }
+        // return $attendance;
+        // dd('a');
         foreach($attendance as $att){
             $att->total_hours = 0;
             if(isset($att->student_class)){
@@ -522,6 +539,29 @@ class StudentClassController extends Controller
         $units = CompletionStudentCourse::with('completion.details.unit')->where('student_course_id',$offer_letter->id)->where('student_type',1)->first();
         
         return $units->completion->details;
+    }
+
+    public function get_preferred($class_id,$day){
+        $time_table = ClassTimeTable::where('class_id',$class_id)->first();
+        if(isset($time_table)){
+            // dd($time_table->training_days_weekly);
+            if(isset($time_table->training_days_weekly)){
+                $training_days = $time_table->training_days_weekly;
+                foreach($training_days as $td){
+                    if($td['day']==$day){
+                        $hours = $td['hours'];
+                    }
+                }
+                if(isset($hours)){
+                    return response()->json(['status'=>'success','hours'=>$hours]);
+                }
+            }else{
+                return response()->json(['status'=>'error','message'=>'Something went wrong.']);
+            }
+        }else{
+            return response()->json(['status'=>'error','message'=>'Time Table not found']);
+        }
+        // dd($class_id,$day);
     }
 }
 

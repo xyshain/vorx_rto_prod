@@ -54,7 +54,9 @@
               </div>
               <div class="col-md-6">
                 <label for="description">Trainers:</label>
-                <span v-for="(ti,index) in class_.trainer_selected" :key="ti.id"> {{ti.firstname}} {{ti.lastname}}<span v-if="index!= Object.keys(class_.trainer_selected).length - 1">,</span> </span>
+                <template v-if="class_.trainer_id!=null">
+                  <span v-for="(ti,index) in class_.trainer_selected" :key="ti.id"> {{ti.firstname}} {{ti.lastname}}<span v-if="index!= Object.keys(class_.trainer_selected).length - 1">,</span> </span>
+                </template>
               </div>
             </div>
         </div>

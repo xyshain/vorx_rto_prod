@@ -536,6 +536,7 @@ export default {
       });
     },
     deleteOfferLetter(offer) {
+      // console.log(this.$parent.$children[4]);
       const Toast = swal.mixin({
         toast: true,
         position: "top-end",
@@ -575,6 +576,7 @@ export default {
                     type: "success",
                     title: "You deleted successfuly",
                   });
+                  this.$parent.$children[4].getStudentAttendance();
                 } else {
                   Toast.fire({
                     type: "error",

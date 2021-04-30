@@ -28,5 +28,9 @@ Route::post('/reports/generate-attendance', 'Reports\ReportsController@generate_
 Route::post('/reports/attendance/export-excel','Reports\ReportsController@attendance_excel');
 Route::get('/reports/attendance/export-pdf/{json_text}','Reports\ReportsController@attendance_pdf');
 
+// for generate payment list module
+Route::get('/reports/payment-list-generator','Reports\ReportsController@payments');
+Route::post('/reports/generate-payments', 'Reports\ReportsController@generate_payments');
+
 // send progress report
 Route::post('/report/send/course-progress', 'Reports\ReportsController@send_course_progress');

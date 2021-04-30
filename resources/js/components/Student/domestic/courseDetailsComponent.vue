@@ -1538,6 +1538,7 @@ export default {
     },
     getResponseData(data){
       let vm = this;
+      console.log(data);
       if(data.status == 'errors'){
         vm.errors = data.errors;
       }else{

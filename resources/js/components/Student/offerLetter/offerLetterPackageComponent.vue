@@ -168,7 +168,7 @@
                         <h6>Course Fee Package Structure</h6>
         </div>-->
         <div class="clearfix"></div>
-        <table :class="'table table-bordered header-' + app_color">
+        <table  v-show="selected_package.length > 0" :class="'table table-bordered header-' + app_color">
           <thead :class="'header-' + app_color">
             <th colspan="2" :class="'table-header-' + app_color">
               Course Fee Package Structure
@@ -649,25 +649,28 @@ export default {
     },
     updateInitial() {
       let offerData = this.$parent.offerData;
-      if (
-        parseInt(this.course_package_structure.initial_payment_amount) !=
-        parseInt(offerData.fees.initial_payment_amount)
-      ) {
-        // console.log(this.course_package_structure.initial_payment_amount);
-        this.$parent.update = true;
-      } else if (
-        parseFloat(this.course_package_structure.discounted_amount) !=
-        parseFloat(offerData.fees.discounted_amount)
-      ) {
-        this.$parent.update = true;
-      } else if (
-        parseFloat(this.course_package_structure.weekly_payment) !=
-        parseFloat(offerData.fees.weekly_payment)
-      ) {
-        this.$parent.update = true;
-      } else {
-        this.$parent.update = false;
+      if(offerData != undefined){
+        if (
+          parseInt(this.course_package_structure.initial_payment_amount) !=
+          parseInt(offerData.fees.initial_payment_amount)
+        ) {
+          // console.log(this.course_package_structure.initial_payment_amount);
+          this.$parent.update = true;
+        } else if (
+          parseFloat(this.course_package_structure.discounted_amount) !=
+          parseFloat(offerData.fees.discounted_amount)
+        ) {
+          this.$parent.update = true;
+        } else if (
+          parseFloat(this.course_package_structure.weekly_payment) !=
+          parseFloat(offerData.fees.weekly_payment)
+        ) {
+          this.$parent.update = true;
+        } else {
+          this.$parent.update = false;
+        }
       }
+      
     },
     clearPackage() {
       this.packages = [];
