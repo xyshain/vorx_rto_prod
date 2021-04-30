@@ -199,7 +199,7 @@
     }
 </script>
 
-<style>
+<style scoped>
     .tab-pane {
         border: 1px solid #e0dfdf;
         border-top: none;
