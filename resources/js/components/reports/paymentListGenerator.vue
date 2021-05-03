@@ -21,7 +21,7 @@
                                     </div>
                                     <div class="form-group col-md-5">
                                         <label for="year">End Month: <span class="badge"></span></label>
-                                        <input type="month" class="form-control" v-model="to" value="">
+                                        <input type="month" class="form-control" v-model="to" value="" :min="from" :disabled="disableTo"> 
                                         <!-- <input type="number" class="form-control" id="year" placeholder=""> -->
                                     </div>
                                     <div class="form-group col-md-5">
@@ -46,7 +46,7 @@
                 <div>
                     <v-client-table :class="'header-'+app_color" :data="payments" :columns="columns" :options="options" ref="paymentsTable">
                         <div slot="funded_student_course" slot-scope="{row}">
-                            {{row.funded_student_course.course_code}} - {{row.funded_student_course.course.name}}
+                            {{row.course_code}} - {{row.course.name}}
                         </div>
                         <div slot="payment_date" slot-scope="{row}">
                             {{row.payment_date | dateformat}}
@@ -80,11 +80,12 @@ export default {
     return {
         from:null,
         to:null,
+        disableTo:true,
         app_color:app_color,
         courses:courses,
         get_course:'*',
         payments:[],
-        columns:['student.party.name','funded_student_course','payment_method_id','amount','payment_date'],
+        columns:['student.party.name','funded_student_course','amount_due','total_paid'],
         options:{
             orderBy:{
                 column:'student.party.name',
@@ -113,6 +114,30 @@ export default {
   },
   created() {
     // this.fetchStudents();
+  },
+  watch:{
+      from(val){
+          if(typeof val!='undefined' && val!=null){
+            var fromDate = new Date(val);
+            if(fromDate=='Invalid Date'){
+                this.disableTo = true;
+                this.to = null;
+            }else{
+                var newDate = new Date(fromDate.setMonth(fromDate.getMonth()+1));
+                var toDate = moment(newDate).format('YYYY-MM');
+                
+                this.disableTo = false
+                this.to = toDate;
+            }            
+          }else{
+              this.to = null;
+          }
+      },
+      to(val){
+          if(typeof val=='undefined'||val==null){
+              this.disableTo = true;
+          }
+      }
   },
   methods: {
       generateList(){
@@ -154,7 +179,7 @@ export default {
       resetFields(){
           this.get_course = '*';
           this.from = null;
-          this.to = null;
+        //   this.to = null;
       }
   },
 };
