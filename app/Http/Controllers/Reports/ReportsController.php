@@ -19,6 +19,7 @@ use App\Models\FundedStudentCourseDetail;
 use App\Models\FundedStudentDetails;
 use App\Models\FundedStudentContactDetails;
 use App\Models\FundedStudentPaymentDetails;
+use App\Models\PaymentScheduleTemplate;
 use App\Models\StateIdentifier;
 use App\Models\StudentCompletion;
 use App\Models\StudentCompletionDetail;
@@ -644,6 +645,7 @@ class ReportsController extends Controller
         $from = $json[2];
         $to = $json[3];
         // dd($from,$to);
+        // dd($from,$to);
         $student_class = StudentClass::where('id',$class_id)->first();
         // dd($student_class);
         $class_start = $student_class->start_date;
@@ -700,6 +702,7 @@ class ReportsController extends Controller
                 
                 $app_settings = TrainingOrganisation::first();
                 $title = 'Attendance List ( '.Carbon::parse($class_start)->format('M d, Y'). ' - '.Carbon::parse($class_end)->format('M d, Y'). ' )'; 
+                
                 $pdf = PDF::loadView('reports.pdf.attendance',compact('attendance','app_settings','from','to','student_class','student_type'));
                 
                 return $pdf->download($title.'.pdf');
@@ -799,8 +802,64 @@ class ReportsController extends Controller
     }
     
     public function generate_payments(Request $request){
-        $funded_student_payments = FundedStudentPaymentDetails::with('student.party','funded_student_course.course')->get();
+        // return $request->all();
+        // return $request->from;
+        if($request->from!=null){
+            if($request->get_course=='*'){
+                $funded_students = FundedStudentCourse::with('student.party','course')->where('start_date','>',$request->from.'-01')->get();
+            }else{
+                $funded_students = FundedStudentCourse::with('student.party','course')->where('start_date','>',$request->from.'-01')->where('course_code',$request->get_course)->get();
+            }
+            $to = Carbon::parse($request->to)->endOfMonth()->format('Y-m-d');
+            if(isset($funded_students)){
+                foreach($funded_students as $fs){
+                    $fs->amount_due = 0;
+                    $fs->total_paid = 0;
+                    $student_payment_template = PaymentScheduleTemplate::where('funded_student_course_id',$fs->id)->where('due_date','<=',$to)->get();
+                    $funded_student_payment_details = FundedStudentPaymentDetails::where('student_course_id',$fs->id)->where('payment_date','<=',$to)->get();
+                    // return $student_payment_template;
+                    if(isset($student_payment_template)){
+                        foreach($student_payment_template as $spt){
+                            $fs->amount_due += $spt->payable_amount;
+                        }
+                    }
+                    
+                    if(isset($funded_student_payment_details)){
+                        foreach($funded_student_payment_details as $fspd){
+                            $fs->total_paid += $fspd->amount;
+                        }
+                    }
+                }
+            }
+            
+        }else{
+            if($request->get_course=='*'){
+                $funded_students = FundedStudentCourse::with('student.party','course')->get();
+            }else{
+                $funded_students = FundedStudentCourse::with('student.party','course')->where('course_code',$request->get_course)->get();
+            }
 
-        return $funded_student_payments;
+            if(isset($funded_students)){
+                foreach($funded_students as $fs){
+                    $fs->amount_due = 0;
+                    $fs->total_paid = 0;
+                    $student_payment_template = PaymentScheduleTemplate::where('funded_student_course_id',$fs->id)->get();
+                    $funded_student_payment_details = FundedStudentPaymentDetails::where('student_course_id',$fs->id)->get();
+                    // return $student_payment_template;
+                    if(isset($student_payment_template)){
+                        foreach($student_payment_template as $spt){
+                            $fs->amount_due += $spt->payable_amount;
+                        }
+                    }
+                    if(isset($funded_student_payment_details)){
+                        foreach($funded_student_payment_details as $fspd){
+                            $fs->total_paid += $fspd->amount;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return $funded_students;
     }
 }
