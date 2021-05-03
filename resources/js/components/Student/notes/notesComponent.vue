@@ -12,7 +12,7 @@
                 </div>
             </div>
             <div class="col-8">
-                <note-content :triggerType="triggerType" :noteData="noteData" @updateNoteList="updateNoteLists($event)"  @createChanged="getChange($event)"/>
+                <note-content :triggerType="triggerType" :noteData="noteData" @updateNoteList="updateNoteLists($event)" />
             </div>
         </div>
     </div>
@@ -49,18 +49,34 @@ export default {
 
         createNote(){
             this.noteData = {};
+            this.activeStatus('waka')
             return this.triggerType = 'create'
+            
             // return this.createNotes = !this.createNotes;
         },
-        getChange(event){
-            if(!event){
-                this.triggerType = '';
-            }
-        },
+        
         noteSelected(event){
-            console.log(event);
+            this.activeStatus(event.index);
             this.triggerType = 'view'
             this.noteData = event.note;
+        },
+        activeStatus(index){
+            console.log(index);
+            if(index == 'waka'){
+                this.noteslist.map((value,key) =>{
+                        value.active = '';
+                })
+            }else{
+                this.noteslist.map((value,key) =>{
+                    if(key == index){
+                    value.active = 'active';
+                    }else{
+                        value.active = '';
+                    }
+                })
+            }
+           
+            
         },
         updateNoteLists(data){
             let vm = this;
