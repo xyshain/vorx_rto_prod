@@ -64,7 +64,6 @@ export default {
         },
         updateNoteLists(data){
             let vm = this;
-            console.log(data);
             vm.noteslist.unshift(data);
             vm.noteslist.sort(function(a,b){
                 // console.log(a);
