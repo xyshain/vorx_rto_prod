@@ -92,6 +92,7 @@ export default {
                         let rData = res.data.data;
                         rData.active = '';
                         this.$emit('updateNoteList',rData);
+                        this.clearNote();
                   }
                 
 
