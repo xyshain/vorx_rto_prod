@@ -153,11 +153,11 @@
               >
               <a
                 v-bind:class="'nav-item nav-link-' + app_color"
-                id="notes-tab"
+                id="nav-notes-tab"
                 data-toggle="tab"
-                href="#notes"
+                href="#nav-notes"
                 role="tab"
-                aria-controls="notes"
+                aria-controls="nav-notes"
                 aria-selected="true"
                 >Notes</a
               >
@@ -397,9 +397,9 @@
             </div>
             <div
               class="tab-pane fade show"
-              id="notes"
+              id="nav-notes"
               role="tabpanel"
-              aria-labelledby="notes-tab"
+              aria-labelledby="nav-notes-tab"
             >
               <div>
                 <student-notes></student-notes>
