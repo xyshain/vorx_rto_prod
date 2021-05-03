@@ -153,11 +153,11 @@
               >
               <a
                 v-bind:class="'nav-item nav-link-' + app_color"
-                id="notes-tab"
+                id="nav-notes-tab"
                 data-toggle="tab"
-                href="#notes"
+                href="#nav-notes"
                 role="tab"
-                aria-controls="notes"
+                aria-controls="nav-notes"
                 aria-selected="true"
                 >Notes</a
               >
@@ -397,9 +397,9 @@
             </div>
             <div
               class="tab-pane fade show"
-              id="notes"
+              id="nav-notes"
               role="tabpanel"
-              aria-labelledby="notes-tab"
+              aria-labelledby="nav-notes-tab"
             >
               <div>
                 <student-notes></student-notes>
@@ -478,7 +478,8 @@ import StudentAttachment from "../attachments/StudentAttachmentComponent.vue";
 import StudentAissAttachment from "../aiss-attachments/StudentAISSAttachmentComponent.vue";
 import CourseDetails from "./courseDetailsComponent.vue";
 import PaymentDetails from "./payments/paymentDetailsComponent.vue";
-import StudentNotes from "../StudentNotesComponent.vue";
+// import StudentNotes from "../StudentNotesComponent.vue";
+import StudentNotes from "../notes/notesComponent.vue";
 import Workbook from "../workbookComponent.vue";
 import WarningHistory from "../warningLetterHistoryComponent.vue";
 import DomClass from "./domClassComponent.vue";
