@@ -192,7 +192,7 @@ class StudentClassController extends Controller
                 // return $attendance;
                 if(isset($attendance)){
                     // dd($rs);
-                    $existing_student = $rs['party']['name'];
+                    $existing_student = $rs;
                     array_push($errors,$existing_student);
                 }
             }
