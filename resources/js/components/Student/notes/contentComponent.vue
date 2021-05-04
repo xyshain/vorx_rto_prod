@@ -89,7 +89,10 @@ export default {
                                 type: 'success', title: 'Notes added successfully',
                             })
                         }
-                        this.$emit('updateNoteList',res.data.data);
+                        let rData = res.data.data;
+                        rData.active = '';
+                        this.$emit('updateNoteList',rData);
+                        this.clearNote();
                   }
                 
 
@@ -111,9 +114,6 @@ export default {
                 this.viewNotes = false;
             }
             
-        },
-        createNotes(newVal,oldVal){
-            this.$emit('createChanged',newVal);
         },
         noteData(newVal,oldVal){
             if(!_.isEmpty(newVal)){
