@@ -187,7 +187,7 @@ class StudentCourses extends Controller
         // }else{
             $payments = FundedStudentPaymentDetails::where('student_course_id',$funded_student_course_id)->orderBy('id','desc')->get();
         // }
-        $sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$funded_student_course_id)->orderBy('id','desc')->get();
+        $sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$funded_student_course_id)->orderBy('due_date','asc')->get();
         // dd($sched_template);
         return response()->json(['payments'=>$payments,'schedule_template'=>$sched_template]);
     }

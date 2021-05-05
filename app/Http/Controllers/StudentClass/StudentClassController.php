@@ -130,6 +130,7 @@ class StudentClassController extends Controller
     }
 
     public function get_students($type_id,$class_id){
+        // return $type_id.','.$class_id;
         $class = StudentClass::find($class_id);
         $course_code = $class->course_code;
         
@@ -137,34 +138,38 @@ class StudentClassController extends Controller
         if($type_id==2){
             
             $stewds = Student::with(['attendance'=>function($q) use($course_code){
-                $q->where('course_code',$course_code);
-            },'funded_course','party.person'=>function($query){
+                $q->where('course_code',$course_code)->where('class_id','!=',0);
+            },'funded_course'=>function($qu) use($course_code){
+                $qu->where('course_code',$course_code)->first();
+            },'party.person'=>function($query){
                 $query->orderBy('firstname','asc');
             }])->where('student_type_id',$type_id)->whereHas('funded_course',function($q) use ($course_code){
                 $q->where('course_code','=',$course_code);
             })->get()->sortBy('party.name');//regardless of status
-            // dd($stewds[0]->attendance);
-            // dd($stewds);
+            
             foreach($stewds as $s){
-                // dd($s->attendance);
-                // if($s->attendance){
-                    // dd($s);
+                if(count($s->attendance)==0 && count($s->funded_course)!=0){ //dapat wala pa syay attendance ug dapat naa syay funded_course
+                    $s->funded_course_id = $s->funded_course[0]->id;
                     array_push($students,$s);
-                // }   
+                }   
             }
             // dd($students);
             // dd($students);
         }else{
             $stewds = Student::with(['offer_letter.course_details','attendance'=>function($q) use($course_code){
-                $q->where('course_code',$course_code);
+                $q->where('course_code',$course_code)->where('class_id','!=',0);
+            },'funded_course'=>function($qu) use($course_code){
+                $qu->where('course_code',$course_code)->first();
             },'party.person'])->whereHas('offer_letter.course_details',function($query) use($course_code){
                 $query->where('course_code',$course_code);
             })->where('student_type_id',$type_id)->get();//disregard status
-            // dd($stewds); 
+            // dd($stewds);
+            // return $stewds; 
             foreach($stewds as $s){
-                // if($s->attendance==null){
+                if(count($s->attendance)==0 && count($s->funded_course)!=0){ //dapat wala pa syay attendance ug dapat naa syay funded_course
+                    $s->funded_course_id = $s->funded_course[0]->id;
                     array_push($students,$s);
-                // }
+                }
             }
         }
         
@@ -206,6 +211,7 @@ class StudentClassController extends Controller
                     $attendance = new Attendance;
                     $attendance->class_id = $request->class_id;
                     $attendance->student_id = $req['student_id'];
+                    $attendance->funded_student_course_id = $req['funded_course_id'];
                     $attendance->course_code = $class->course_code;//la pa unod
                     $attendance->save();
                 }
