@@ -170,12 +170,14 @@ class StudentCourses extends Controller
     }
 
     public function student_fees(){
-        $userid = Auth::user()->username;
-        $student = Student::where('student_id',$userid)->first();
+        $user = Auth::user();
+        $student = Student::where('student_id',$user->username)->first();
         
         \JavaScript::put([
-            'student'=>$student
+            'student'=>$student,
+            'user'=>$user
         ]);
+
         return view('student_portal.fees');
     }
 

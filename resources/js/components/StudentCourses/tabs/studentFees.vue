@@ -11,7 +11,7 @@
             </p>
              <div class="pull-right">
                  <h5 v-show="menuchoicer == 'addPaymentH'">
-                    Remaining Balance: $ <span>{{ remainingBalance.toFixed(2) }}</span> <a href="javascript:void(0)" class="btn btn-success btn-sm" title="pay" @click="pay()"><i class="fa fa-money"></i></a>
+                    Remaining Balance: $ <span>{{ remainingBalance.toFixed(2) }}</span> <a href="javascript:void(0)" class="btn btn-success btn-sm" title="pay" @click="pay()">Pay</a>
                 </h5>
                 <h5 v-show="menuchoicer == 'paymentPlanH'">
                     Total Paid: $ <span>{{ getTotal().toFixed(2) }}</span>
@@ -40,7 +40,7 @@
                         <tbody>
                             <tr v-for="(pc,index) in schedule_template" :key="index">
                                 <td class="text-center">
-                                    <i class="fas fa-check-circle" style="color:red"></i>
+                                    <!-- <i class="fas fa-check-circle" style="color:red"></i> -->
                                 </td>
                                 <td class="text-center">{{index+1}}</td>
                                 <td class="text-center">{{pc.due_date | dateformat}}</td>
@@ -78,6 +78,7 @@
                 </div>
             </div>
         </div>
+        
         <pay-modal :course="course" :student="student" />
     </div>
 </template>
@@ -96,6 +97,7 @@ export default {
             payment_details:[],
             student:window.student,
             menuchoicer : 'paymentPlanH',
+            open_pay:false,
             schedule_template:[],
             options:{
                 headings: {
@@ -120,6 +122,9 @@ export default {
         return date;
         },
     },
+    watch:{
+        
+    },
     methods:{
         closeOther(e,v){
             let collapseMenuBody = Array.from(document.getElementsByClassName('collapse-menu-body'));
@@ -139,10 +144,11 @@ export default {
             })
         },
         pay(){
-            // this.$modal.show('pay-modal');
-            var encoded_id = btoa(this.course.id)
+            this.$modal.show('pay-modal');
+            this.open_pay = !this.open_pay;
+            // var encoded_id = btoa(this.course.id)
 
-            window.open("/student-portal/online-payment/"+encoded_id);
+            // window.open("/student-portal/online-payment/"+encoded_id);
             // (async () => {
             
             // const { value: accept } = await swal.fire({

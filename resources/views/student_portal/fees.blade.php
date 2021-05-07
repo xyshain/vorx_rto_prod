@@ -7,6 +7,7 @@
 @endsection
 
 @section('custom-js')
+    <script src="https://js.stripe.com/v3/"></script>
     <script src="{{ asset('js/app.js') }}"></script>
     {{-- <script src="{{ asset('/sb-admin/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script> --}}
     {{-- <script src="{{ asset('/sb-admin/vendor/chart.js/Chart.min.js') }}"></script> --}}

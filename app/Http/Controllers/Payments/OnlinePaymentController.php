@@ -161,8 +161,8 @@ class OnlinePaymentController extends Controller
     public function getCus($student_id){
         $customer_id = 'cus_'.$student_id;
         $stripe_cus = StripeCustomer::where('student_id',$student_id)->first();
-        $student_details = OfferLetter::with('student_details','student.party.person')->where('student_id',$student_id)->first();
-
+        $student_details = FundedStudentCourse::with('student.party.person')->where('student_id',$student_id)->first();
+        return $student_details;
         // dd($request->receipt_email);
         
         if(isset($stripe_cus)){
