@@ -65,8 +65,7 @@ class OnlinePaymentController extends Controller
     }
 
     public function stripe_checkout(Request $request){
-        // dd($request->all());
-        $send = new EmailSendingController;
+        // $send = new EmailSendingController;
         $training_org = TrainingOrganisation::first();
         // dd($request->all());
         $validator = Validator::make($request->all(),[
@@ -109,7 +108,7 @@ class OnlinePaymentController extends Controller
                 $funded_student_payment->stripe_payments_id = $stripe_payment->id;
                 $funded_student_payment->customer_id = $request->customer_id;
                 $funded_student_payment->transaction_code = $charge_id;
-                $funded_student_payment->note = 'Stripe payment';
+                $funded_student_payment->note = 'Stripe Online Payment';
                 $funded_student_payment->payment_date = now();
                 $funded_student_payment->amount = $request->amount;
                 $funded_student_payment->payment_method_id = 6; //Online payments
@@ -118,15 +117,14 @@ class OnlinePaymentController extends Controller
                 
                 
 
-                $subject = 'Online Payment - '.$training_org->student_id_prefix;
-                $content = 'test payment';
-                $from = [$training_org->training_organisation_name=>$training_org->email_address];
-                $email_to = [$request->receipt_email];
+                // $subject = 'Online Payment - '.$training_org->student_id_prefix;
+                // $content = 'test payment';
+                // $from = [$training_org->training_organisation_name=>$training_org->email_address];
+                // $email_to = [$request->receipt_email];
                 
-                // dd($subject,$content,$email_to);
-                // $if_sent = $send->send_automate($subject, $content, $from, $email_to);
                 
-                $send = $this->send_receipt($funded_student_payment->id);
+                
+                // $send = $this->send_receipt($funded_student_payment->id);
                 
                 // dd($send);
                 // dd($if_sent);
@@ -146,10 +144,12 @@ class OnlinePaymentController extends Controller
                 }
 
                 $remaining_balance = $total_due - $total_payment;
-
-                if($send['status']=='success'){
-                    return response()->json(['status'=>'success','message'=>'Thank you! Your payment has been accepted','remaining_balance'=>$remaining_balance]);
-                }
+                
+                return response()->json(['status'=>'success','message'=>'Thank you! Your payment has been accepted','remaining_balance'=>$remaining_balance]);
+                
+                // if($send['status']=='success'){
+                //     return response()->json(['status'=>'success','message'=>'Thank you! Your payment has been accepted','remaining_balance'=>$remaining_balance]);
+                // }
             }
 
         // } catch (\Throwable $th) {
@@ -161,21 +161,21 @@ class OnlinePaymentController extends Controller
     public function getCus($student_id){
         $customer_id = 'cus_'.$student_id;
         $stripe_cus = StripeCustomer::where('student_id',$student_id)->first();
-        $student_details = FundedStudentCourse::with('student.party.person')->where('student_id',$student_id)->first();
-        return $student_details;
+        $student_details = FundedStudentCourse::with('student.party.person','student.contact_detail')->where('student_id',$student_id)->first();
+        // return $student_details;
         // dd($request->receipt_email);
         
         if(isset($stripe_cus)){
             return $stripe_cus->customer_id;
         }else{
             $customer = Stripe::customers()->create([
-                'name'=>$student_details->party->name,
-                'email'=>$student_details->student_details->email_personal,
-                'phone'=>$student_details->student_details->mobile
+                'name'=>$student_details->student->party->name,
+                'email'=>$student_details->student->contact_detail->email,
+                'phone'=>$student_details->student->contact_detail->phone_mobile
             ]);
 
             $sc = new StripeCustomer;
-            $sc->student_id = $username;
+            $sc->student_id = $student_id;
             $sc->customer_id = $customer['id'];
             $sc->save();
 

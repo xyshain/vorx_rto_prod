@@ -12,42 +12,45 @@
         width="40%"
         height="auto"
     >
-    <div class="card card-header">
+    <div class="card">
+    <div class="card-header">
       <span><span style="font-size:20px;">Online Payment </span><span style="font-size:12px;"><i>(<b>student fields can be updated through <a href="/student-profile">student profile</a></b>)</i></span></span>
     </div>
-    <div class="card card-body">
-      <div>
+    <form class="row" @submit.prevent id="payment-form" hidden>
+    </form>
+    <div class="card-body">
+      <!-- <div>
         <a href="javascript:void(0)" class="btn btn-sm btn-info float-right" @click="getDetails()"><i class="fas fa-paste"></i> Use Details</a>
-      </div>
+      </div> -->
       <div class="row">
         <div class="col-md-6">
           <div class="form-group">
             <label for="">Receipt Email</label>
-            <input type="email" class="form-control">
+            <input type="email" class="form-control border-0 bg-white" v-model="receipt_email" disabled>
           </div>
         </div>
         <div class="col-md-6">
           <div class="form-group">
             <label for="">Name on Card</label>
-            <input type="text" class="form-control">
+            <input type="text" class="form-control border-0 bg-white" v-model="name_on_card" disabled>
           </div>
         </div>
         <div class="col-md-12">
           <div class="form-group">
             <label for="">Full Address</label>
-            <input type="text" class="form-control">
+            <input type="text" class="form-control" v-model="full_address">
           </div>
         </div>
         <div class="col-md-6">
           <div class="form-group">
             <label for="">Postal Code</label>
-            <input type="text" class="form-control">
+            <input type="text" class="form-control" v-model="postal_code">
           </div>
         </div>
         <div class="col-md-6">
           <div class="form-group">
             <label for="">Phone</label>
-            <input type="text" class="form-control">
+            <input type="text" class="form-control" v-model="phone">
           </div>
         </div>
         <div class="col-md-6">
@@ -64,7 +67,7 @@
                 </a>
                 </span> </label><span style="font-size: 74%;opacity: 73%;">( AUD )</span>
             
-            <input type="number" class="form-control" name="amount" min="0" step="0.01" placeholder="AUD">
+            <input type="number" class="form-control" name="amount" min="0" step="0.01" placeholder="AUD" v-model="amount">
           </div>
         </div>
         <div class="col-md-6">
@@ -72,6 +75,7 @@
             <label for="">Credit/Debit Card</label>
             <div id="card-element">
                 <card
+                    v-model="card_no"
                     :class="{complete}"
                     stripe="pk_test_51I7Bg3FU7cjv0OpgYeZ1COg6QrukVb8DqG7CmYTG7riv01SbFqTpbL0SeHVvg6qcy37q6cg2xHZBhSGTWlt4WLpZ007qEFk5xz"
                     :options="stripeOptions"
@@ -94,6 +98,7 @@
           <!-- <button :class="'btn btn-success pull-right'" :disabled="true" @click="pay"><i class="fas fa-circle-notch fa-spin"></i> Please wait...</button> -->
         </div>
       </div>
+    </div>
     </div>
     </modal>
 </template>
@@ -132,7 +137,20 @@ export default {
                 },
                 hidePostalCode:true
             },
+            receipt_email:'',
+            name_on_card:'',
+            full_address:'',
+            postal_code:'',
+            phone:'',
+            amount:null,
+            card_no:null,
         }
+    },
+    mounted(){
+      this.receipt_email = this.student.contact_detail.email;
+      this.name_on_card = this.student.party.name;
+      this.postal_code = this.student.contact_detail.postcode;
+      this.phone = this.student.contact_detail.phone_mobile;
     },
     props:['course','student'],
     computed:{
@@ -150,12 +168,114 @@ export default {
       },
       pay(){
         this.payment_submit = true;
-
+          
+        let customer_id = '';
         let dis = this;
 
         axios.get(`/student-portal/online-payment/stripe/getcustomer/${this.student.student_id}`).then(
           response=>{
+            customer_id = response.data;
+            var options = {
+              name:customer_id,
+              email:this.receipt_email
+            }
+      
+            createToken(options).then(
+              result=>{
+                console.log('result ni');
+                  if(typeof result.token == 'undefined'){
+                      swal.fire({
+                          type: 'error',
+                          title: 'Something went wrong.',
+                          text: 'Token not found'
+                      })
+                  }
 
+                  if(result.error){
+                      // console.log(result.error);
+                      this.errorMessage = result.error.message
+                      
+                      Toast.fire({
+                        type: "error",
+                        title: "Something went wrong..",
+                        position: "top-end",
+                      });
+                      dis.payment_submit = false;
+                  }else{
+
+                    var form = document.getElementById('payment-form');
+                    var hiddenInput = document.createElement('input');
+                    hiddenInput.setAttribute('type', 'hidden');
+                    hiddenInput.setAttribute('name', 'stripeToken');
+                    hiddenInput.setAttribute('value', result.token.id);
+                    form.appendChild(hiddenInput);
+                    // this.stripeToken = result.token.id;
+                    // Submit the form
+                    // alert(token.id);
+                    // form.submit();
+                    axios.post('/student-portal/online-payment/stripe/pay',{
+                        // payment_details:this.payment_details,
+                        stripe_token:result.token.id,
+                        funded_course_id:this.course.id,
+                        // offer_letter_course_detail_id:this.payment_data.offer_letter_course_detail_id,
+                        amount:this.amount,
+                        customer_id:customer_id,
+                        receipt_email:this.receipt_email,
+                        // firstname:this.student_details.student.party.person.firstname,
+                        // lastname:this.student_details.student.party.person.lastname,
+                        name_on_card:this.name_on_card,
+                        full_address:this.full_address,
+                        postal_code:this.postal_code,
+                        phone:this.phone
+                    }).then(
+                        response=>{
+                            if(response.data.status=='success'){
+                                dis.payment_submit = false;
+
+                                this.$parent.getPayments();
+                                this.remaining_balance = response.data.remaining_balance
+                                this.amount = '';
+                                
+                                swal.fire(
+                                    'Success!',
+                                    response.data.message,
+                                    'success'
+                                ).then(
+                                  result=>{
+                                    dis.$modal.hide('pay-modal');
+                                  }
+                                );
+                                // location.href = '/student_fees'
+                            }else{
+                                this.errors = response.data.errors
+                                swal.close();
+                            }
+                        }
+                    ).catch(
+                        err=>{
+                            Toast.fire({
+                              type: "error",
+                              title: err.response.data.message,
+                              position: "top-end",
+                            });
+                            this.errorMessage = err;
+                            dis.payment_submit = false;
+                        }
+                    );
+                  }
+
+                }
+              ).catch(
+                  erz=>{
+                      Toast.fire({
+                        type: "error",
+                        title: erz.response.data.message,
+                        position: "top-end",
+                      });
+                      console.log(erz);
+                      dis.payment_submit = false;
+                  }
+              ) 
           }
         ).catch(
           erro=>{
@@ -164,14 +284,11 @@ export default {
               title: erro,
               position: "top-end",
             });
+
+            dis.payment_submit = false;
           }
         )
 
-        Toast.fire({
-              type: "success",
-              title: "Payment Success",
-              position: "top-end",
-            });
       },
       change(event){
           if (event.error) {

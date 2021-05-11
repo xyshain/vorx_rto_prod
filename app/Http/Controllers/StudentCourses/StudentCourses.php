@@ -171,7 +171,7 @@ class StudentCourses extends Controller
 
     public function student_fees(){
         $user = Auth::user();
-        $student = Student::where('student_id',$user->username)->first();
+        $student = Student::with('contact_detail','party')->where('student_id',$user->username)->first();
         
         \JavaScript::put([
             'student'=>$student,
