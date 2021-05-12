@@ -106,7 +106,9 @@
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 {{-- <h6 class="m-0 font-weight-bold text-primary">Attendance per Unit</h6> --}}
                 <h6 class="m-0 font-weight-bold text-primary">Attendance Detail</h6>
+                @if(isset($dashboard['student']['attendance_id']))
                 <a type="button" class="'btn btn-primary btn-sm float-right'" target="_blank" href="/attendance/pdf/{{$dashboard['student']['attendance_id']}}"><i class="fas fa-file-pdf"></i>  Generate Attendance</a>
+                @endif
                 {{-- <div class="dropdown no-arrow">
                     <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>

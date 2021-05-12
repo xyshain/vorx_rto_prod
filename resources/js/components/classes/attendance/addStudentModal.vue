@@ -33,15 +33,33 @@
             <div class="col-md-12">
                 <div :class="['form-group', errors.student ? 'has-error' : '']" >
                 <label for="deliver_loc">Student Name</label>
-                 <multiselect v-model="new_attendance.student" 
-                 :options="studentList" 
+                 <!-- <multiselect v-model="new_attendance.student" 
+                 :options="options" 
                  :custom-label="getStudentInfo"
+                 group-values="studentList"
+                 group-label="select_all"
+                 :group-select="true"
                  :loading="isLoading"
                  :multiple="true"
                   :close-on-select="false"
                   placeholder="Select Student(s)" 
                   label="getStudentInfo" 
-                  track-by="id"></multiselect>
+                  track-by="id"></multiselect> -->
+
+                  <multiselect 
+                  v-model="new_attendance.student" 
+                  :options="options" 
+                  :multiple="true" 
+                  group-values="studentList" 
+                  group-label="select_all" 
+                  :group-select="true" 
+                  placeholder="Type to search" 
+                  track-by="id" 
+                  :closeOnSelect="false"
+                  :custom-label="getStudentInfo">
+                    <span slot="noResult">Oops! No elements found. Consider changing the search query.</span>
+                  </multiselect>
+
                   <span v-if="errors.student" :class="['badge badge-danger']">{{ errors.student[0] }}</span>
                 </div>
             </div>
@@ -69,18 +87,31 @@ export default {
       app_color: app_color,
       errors: {},
       new_attendance:{
-          student:'',
+          student:[],
           class_date:'',
           class_id:window.class.id,
           student_type:''
       },
-      studentList:[],
+      options:[
+        {
+          select_all:'Select All',
+          studentList:[]
+        }
+      ],
       isModal: "true",
       opt: [],
       isLoading: false
     };
   },
   watch: {
+    new_attendance:{
+      handler(newVal){
+        if(newVal.student.length>0){
+          this.errors = {}
+        }
+      },
+      deep:true
+    },
     fields: function(value) {
       if (value.code != null) {
         this.errors.code = "";
@@ -95,7 +126,7 @@ export default {
   },
   methods: {
     typeChange(){
-      this.new_attendance.student = '';
+      this.new_attendance.student = [];
       this.isLoading = true;
       this.getStudents();
     },
@@ -105,7 +136,8 @@ export default {
     getStudents(){
         axios.get('/attendance/get_students/'+this.new_attendance.student_type+'/'+this.new_attendance.class_id).then(
             response=>{
-                this.studentList = response.data;
+              console.log(response.data);
+                this.options[0].studentList = response.data;
                 this.isLoading = false;
             }
         ).catch(
@@ -129,7 +161,7 @@ export default {
     },
     closed(e) {
       this.errors = "";
-      this.new_attendance.student='';
+      this.new_attendance.student=[];
     },
     saveAttendance(){
       swal.fire({
@@ -156,12 +188,25 @@ export default {
               
               html += '<ul style="margin-left: 10% !important;">';
               response.data.errors.forEach(er=>{
-                html+='<li style="text-align:left !important; font-size: 16px; color: #ff5757 !important;"><a href="javascript:void(0)" id="'+er+'" title="Remove from selection">'+er+'</a></li>'
+                html+='<li style="text-align:left !important; font-size: 16px; color: #ff5757 !important;">'+er.party.name+'</li>'
               });
               this.error_html = html;
                 swal.fire({
                   type: "error",
-                  html:this.error_html
+                  html:this.error_html,
+                  showCancelButton:true,
+                  confirmButtonText:'Unselect Students'
+                  }).then((result)=>{
+                      if(result.value==true){
+                        response.data.errors.forEach(er=>{
+                          this.new_attendance.student.map((item,index)=>{
+                            if(er.id == item.id){
+                              // console.log(response.data.errors.length);
+                              this.new_attendance.student.splice(index,response.data.errors.length)
+                            }
+                          });
+                        });
+                      }
                   });
             }else{
                 Toast.fire({
@@ -172,7 +217,7 @@ export default {
                 });
                 this.$modal.hide("add-student-modal");
                 this.$parent.fetchAttendance();
-                this.studentList= [];
+                this.options[0].studentList= [];
             }
           }
       ).catch(

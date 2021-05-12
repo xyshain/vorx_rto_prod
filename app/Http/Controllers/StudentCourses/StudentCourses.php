@@ -170,12 +170,14 @@ class StudentCourses extends Controller
     }
 
     public function student_fees(){
-        $userid = Auth::user()->username;
-        $student = Student::where('student_id',$userid)->first();
+        $user = Auth::user();
+        $student = Student::with('contact_detail','party')->where('student_id',$user->username)->first();
         
         \JavaScript::put([
-            'student'=>$student
+            'student'=>$student,
+            'user'=>$user
         ]);
+
         return view('student_portal.fees');
     }
 
@@ -187,7 +189,7 @@ class StudentCourses extends Controller
         // }else{
             $payments = FundedStudentPaymentDetails::where('student_course_id',$funded_student_course_id)->orderBy('id','desc')->get();
         // }
-        $sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$funded_student_course_id)->orderBy('id','desc')->get();
+        $sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$funded_student_course_id)->orderBy('due_date','asc')->get();
         // dd($sched_template);
         return response()->json(['payments'=>$payments,'schedule_template'=>$sched_template]);
     }
