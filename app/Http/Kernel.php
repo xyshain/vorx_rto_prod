@@ -24,7 +24,8 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\HttpsProtocol::class,
 
         // CORS
-        \Spatie\Cors\Cors::class,
+        \Fruitcake\Cors\HandleCors::class
+        // \Spatie\Cors\Cors::class,
     ];
 
     /**
