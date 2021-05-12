@@ -79,6 +79,11 @@ class User extends Authenticatable implements AuditableContract
     public function trainer(){
         return $this->hasOne(Trainer::class, 'hasLogins');
     }
+
+    public function agent_details(){
+        return $this->hasOne(AgentDetail::class);
+    }
+
     
 
 }

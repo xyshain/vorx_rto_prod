@@ -53,4 +53,11 @@ class AgentDetail extends Model implements AuditableContract
     {
         return $this->hasOne(AgentApplication::class, 'agent_id');
     }
+
+    public function attachments()
+    {
+       return $this->hasMany(AgentAttachment::class,'agent_id');
+    }
+
+
 }
