@@ -194,45 +194,47 @@ export default {
   },
   watch:{
     date_taken(val){
-      var d_t = moment(val).format('llll');
-      var dt_split = d_t.split(',');
-      var day = dt_split[0];
-      
-      let dis = this;
-      swal.fire({
-      title: 'Please wait...',
-      allowOutsideClick: false,
-      onBeforeOpen: () => {
-          swal.showLoading()
-          },
-      });
-      axios.get(`/attendance/get_preferred/${this.student_attendance.class_id}/${day}`).then(
-        response=>{
-          if(response.data.status=='success'){
-            console.log(response.data.hours);
-            this.admod.preferred_hours = response.data.hours;
-            swal.close();
-          }else if(response.data.status=='error'){
-            swal.fire({
-            type: "error",
-            title: 'Opss. something went wrong.',
-            html:response.data.message
-            });
-            this.admod.preferred_hours = 0;
-          }else{
-            swal.close();
-            this.admod.preferred_hours = 0;
+      if(val!=null){
+        var d_t = moment(val).format('llll');
+        var dt_split = d_t.split(',');
+        var day = dt_split[0];
+        
+        let dis = this;
+        swal.fire({
+        title: 'Please wait...',
+        allowOutsideClick: false,
+        onBeforeOpen: () => {
+            swal.showLoading()
+            },
+        });
+        axios.get(`/attendance/get_preferred/${this.student_attendance.class_id}/${day}`).then(
+          response=>{
+            if(response.data.status=='success'){
+              console.log(response.data.hours);
+              this.admod.preferred_hours = response.data.hours;
+              swal.close();
+            }else if(response.data.status=='error'){
+              swal.fire({
+              type: "info",
+              title: 'Opss. something went wrong.',
+              html:response.data.message
+              });
+              this.admod.preferred_hours = 0;
+            }else{
+              swal.close();
+              this.admod.preferred_hours = 0;
+            }
           }
-        }
-      ).catch(
-        err=>{
-          swal.fire({
-            type: "error",
-            title: 'Opss. something went wrong.',
-            html:err
-            });
-        }
-      );
+        ).catch(
+          err=>{
+            swal.fire({
+              type: "error",
+              title: 'Opss. something went wrong.',
+              html:err
+              });
+          }
+        );
+      }
     }
   },
   methods: {

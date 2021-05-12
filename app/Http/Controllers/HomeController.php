@@ -147,6 +147,7 @@ class HomeController extends Controller
             $student_attendance = null;
             $units_completed = [];
             $units = [];
+            $att_detail = [];
             if ($course != null) {
                 if ($student->student_type_id == 1) {
                     // dd($course->offer_detail->offer_letter->id);
@@ -185,7 +186,7 @@ class HomeController extends Controller
                 ];
 
                 $attendance = Attendance::where('student_id', $studentDetails['student_id'])->where('course_code', $courseDetails['code'])->first();
-                $att_detail = [];
+                // dd($attendance);
                 if ($attendance != null) {
                     $studentDetails['attendance_id'] = $attendance->id;
                     $diffDatesStart = Carbon::parse($attendance->student_class->start_date);
@@ -310,7 +311,7 @@ class HomeController extends Controller
             } else {
                 $offer_letter_id = null;
             }
-
+            
             $dashboard  = [
                 'student'       => $studentDetails,
                 'courseDetail'  => $courseDetails,

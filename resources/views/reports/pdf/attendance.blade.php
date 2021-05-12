@@ -74,10 +74,10 @@
 							</tr>
                             <tr>
 								<td width="50%">
-                                    <label class="label label-textbox">Start Date: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{isset($from) ? Carbon\Carbon::parse($from)->toFormattedDateString() : 'Not specified'}}</span></div></label> 
+                                    <label class="label label-textbox">Start Date: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$from != 'null' ? Carbon\Carbon::parse($from)->toFormattedDateString() : 'Not specified'}}</span></div></label> 
 								</td>
 								<td width="50%">
-									<label class="label label-textbox">End Date: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{isset($to) ? Carbon\Carbon::parse($to)->toFormattedDateString() : 'Not specified'}}</span></div></label>
+									<label class="label label-textbox">End Date: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$to != 'null' ? Carbon\Carbon::parse($to)->toFormattedDateString() : 'Not specified'}}</span></div></label>
 								</td>
 							</tr>
 						</table>
