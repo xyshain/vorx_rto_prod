@@ -33,9 +33,9 @@ class EnrolmentController extends Controller
 
     public function __construct() {
         // dd(config('app.name'));
-        if(config('app.name') != 'CEA'){
-            abort(403, 'Unauthorized action.');
-        }
+        // if(config('app.name') != 'CEA'){
+        //     abort(403, 'Unauthorized action.');
+        // }
     }
     /**
      * Display a listing of the resource.

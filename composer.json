@@ -15,10 +15,13 @@
         "daltcore/lara-pdf-merger": "^2.0",
         "doctrine/dbal": "^2.10",
         "fideloper/proxy": "^4.0",
+        "fruitcake/laravel-cors": "^2.0",
+        "guzzlehttp/guzzle": "^6.3.1|^7.0.1",
         "intervention/image": "^2.5",
         "ixudra/curl": "^6.21",
         "laracasts/utilities": "^3.0",
         "laravel/framework": "^7.0",
+        "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.0",
         "laravel/ui": "^2.0",
         "laravelista/lumen-vendor-publish": "^7.0",
@@ -31,12 +34,10 @@
         "rambler-digital-solutions/php-json-rpc": "@stable",
         "rguedes/pdfmerger": "^1.0",
         "simplesoftwareio/simple-qrcode": "~2",
-        "fruitcake/laravel-cors": "^2.0",
         "spatie/laravel-permission": "^3.13",
         "stripe/stripe-php": "^7.67",
         "sudiptpa/omnipay-nabtransact": "^3.0",
-        "tightenco/ziggy": "^0.8.1",
-        "guzzlehttp/guzzle": "^6.3.1|^7.0.1"
+        "tightenco/ziggy": "^0.8.1"
     },
     "require-dev": {
         "facade/ignition": "^2.0",
