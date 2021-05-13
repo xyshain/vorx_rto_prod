@@ -38,12 +38,22 @@ class StudentController extends Controller
                         'status_color' => $status_color
                     ];
                 }
-                $students[] = [
-                    'student_id' => $student->student_id,
-                    'name'=> $student->party->name,
-                    'type'=> $student->type->type,
-                    'courses' => $course
-                ];
+                if($student->party == null){
+                    $students[] = [
+                        'student_id' => $student->student_id,
+                        'name'=> 'waingalan',
+                        'type'=> $student->type->type,
+                        'courses' => $course
+                    ];
+                }else{
+                    $students[] = [
+                        'student_id' => $student->student_id,
+                        'name'=> $student->party->name,
+                        'type'=> $student->type->type,
+                        'courses' => $course
+                    ];
+                }
+                
             } 
         }else{
             $agent = $user->agent_details;
@@ -69,12 +79,21 @@ class StudentController extends Controller
                             'status_color' => $status_color
                         ];
                     }
-                    $students[] = [
-                        'student_id' => $offer->student->student_id,
-                        'name'=> $offer->student->party->name,
-                        'type'=> $offer->student->type->type,
-                        'courses' => $course
-                    ];
+                    if($student->party == null){
+                        $students[] = [
+                            'student_id' => $student->student_id,
+                            'name'=> 'waingalan',
+                            'type'=> $student->type->type,
+                            'courses' => $course
+                        ];
+                    }else{
+                        $students[] = [
+                            'student_id' => $student->student_id,
+                            'name'=> $student->party->name,
+                            'type'=> $student->type->type,
+                            'courses' => $course
+                        ];
+                    }
                 }
             }
         }
