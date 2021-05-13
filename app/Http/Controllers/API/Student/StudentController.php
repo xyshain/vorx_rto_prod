@@ -31,70 +31,69 @@ class StudentController extends Controller
                     }else{
                         $status_color = 'negative';
                     }
-                    $course[] = [
-                        'code' => $fcourse->course_code,
-                        'name' => $fcourse->course->name,
-                        'status' => $fcourse->status->description,
-                        'status_color' => $status_color
-                    ];
-                }
-                if($student->party == null){
-                    $students[] = [
-                        'student_id' => $student->student_id,
-                        'name'=> 'waingalan',
-                        'type'=> $student->type->type,
-                        'courses' => $course
-                    ];
-                }else{
-                    $students[] = [
-                        'student_id' => $student->student_id,
-                        'name'=> $student->party->name,
-                        'type'=> $student->type->type,
-                        'courses' => $course
-                    ];
-                }
-                
-            } 
-        }else{
-            $agent = $user->agent_details;
-            if(!$agent->offer_letters->isEmpty()){
-                $offer_letter = $agent->offer_letters->load('student');
-                
-                foreach($offer_letter as $key=>$offer){
-                    $funded_course = $offer->student->funded_course->load('course');
-                    $course = [];
-                    foreach($funded_course as $fcourse){
-                        $status_color = 'positive';
-                        if($fcourse->status_id == 1){
-                            $status_color = 'warning';
-                        }elseif($fcourse->status_id == 2 || $fcourse->status_id == 3 || $fcourse->status_id == 4){
-                            $status_color = 'positive';
-                        }else{
-                            $status_color = 'negative';
-                        }
+                    if($fcourse->course  == null){
+                        $course[] = [
+                            'code' => $fcourse->course_code,
+                            'name' => 'NO COURSE NAME',
+                            'status' => $fcourse->status->description,
+                            'status_color' => $status_color
+                        ];
+                    }else{
                         $course[] = [
                             'code' => $fcourse->course_code,
                             'name' => $fcourse->course->name,
                             'status' => $fcourse->status->description,
                             'status_color' => $status_color
                         ];
-                    }
-                    if($student->party == null){
-                        $students[] = [
-                            'student_id' => $student->student_id,
-                            'name'=> 'waingalan',
-                            'type'=> $student->type->type,
-                            'courses' => $course
-                        ];
-                    }else{
-                        $students[] = [
-                            'student_id' => $student->student_id,
-                            'name'=> $student->party->name,
-                            'type'=> $student->type->type,
-                            'courses' => $course
-                        ];
+
                     }
                 }
+                $students[] = [
+                    'student_id' => $student->student_id,
+                    'name'=> $student->party->name,
+                    'type'=> $student->type->type,
+                    'courses' => $course
+                ];
+            } 
+        }else{
+            $agent = $user->agent_details;
+            $offer_letter = $agent->offer_letters->load('student');
+            
+            foreach($offer_letter as $key=>$offer){
+                $funded_course = $offer->student->funded_course->load('course');
+                $course = [];
+                foreach($funded_course as $fcourse){
+                    $status_color = 'positive';
+                    if($fcourse->status_id == 1){
+                        $status_color = 'warning';
+                    }elseif($fcourse->status_id == 2 || $fcourse->status_id == 3 || $fcourse->status_id == 4){
+                        $status_color = 'positive';
+                    }else{
+                        $status_color = 'negative';
+                    }
+                    if($fcourse->course  == null){
+                        $course[] = [
+                            'code' => $fcourse->course_code,
+                            'name' => 'NO COURSE NAME',
+                            'status' => $fcourse->status->description,
+                            'status_color' => $status_color
+                        ];
+                    }else{
+                        $course[] = [
+                            'code' => $fcourse->course_code,
+                            'name' => $fcourse->course->name,
+                            'status' => $fcourse->status->description,
+                            'status_color' => $status_color
+                        ];
+
+                    }
+                }
+                $students[] = [
+                    'student_id' => $offer->student->student_id,
+                    'name'=> $offer->student->party->name,
+                    'type'=> $offer->student->type->type,
+                    'courses' => $course
+                ];
             }
         }
         
