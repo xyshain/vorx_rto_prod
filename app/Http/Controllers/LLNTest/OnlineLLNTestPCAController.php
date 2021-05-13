@@ -37,9 +37,9 @@ class OnlineLLNTestPCAController extends Controller
 {
     public function __construct() {
         // dd(config('app.name'));
-        if(config('app.name') != 'Phoenix'){
-            abort(403, 'Unauthorized action.');
-        }
+        // if(config('app.name') != 'Phoenix'){
+        //     abort(403, 'Unauthorized action.');
+        // }
         // $this->middleware('auth');
     }
     /**

@@ -13,12 +13,12 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::get('user/list', 'Users\UserController@user_list')->name('user.list');
-Route::get('user/search', 'Users\UserController@user_search')->name('user.search');
-Route::delete('user/{id}', 'Users\UserController@destroy')->name('user.delete');
-Route::post('user', 'Users\UserController@store')->name('user.store');
-Route::put('user', 'Users\UserController@store')->name('user.update');
+// Route::get('user/list', 'Users\UserController@user_list')->name('user.list');
+// Route::get('user/search', 'Users\UserController@user_search')->name('user.search');
+// Route::delete('user/{id}', 'Users\UserController@destroy')->name('user.delete');
+// Route::post('user', 'Users\UserController@store')->name('user.store');
+// Route::put('user', 'Users\UserController@store')->name('user.update');
 
 
-Route::get('user/list', 'API\UserController@index')->name('api-user.list');
-Route::post('user/store', 'API\UserController@store')->name('api-user.store');
+// Route::get('user/list', 'API\UserController@index')->name('api-user.list');
+// Route::post('user/store', 'API\UserController@store')->name('api-user.store');

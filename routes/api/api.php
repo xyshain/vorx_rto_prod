@@ -16,15 +16,15 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:api')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
 
 Route::get('/check-rto/{org_id}', 'Auth\LoginController@check_rto');
 
 
 Route::post('login',[LoginController::class,'login']);
-Route::delete('login',[LoginController::class,'logout']);
+Route::delete('logout',[LoginController::class,'logout']);
 
 Route::middleware(['auth:sanctum'])->group(function(){
     Route::get('profile/',[AgentController::class,'profile']);
