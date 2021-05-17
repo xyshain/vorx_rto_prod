@@ -3,7 +3,12 @@
 <div class="card shadow mb-4">
     <edit-attendance-modal/>
     <div v-if="classList.length==0">
-        No Classes found
+        <div class="card">
+            <div class="card-body">
+            No Classes found
+
+            </div>
+        </div>
     </div>
     <div v-for="(cl,index) in classList" :key="cl.id" v-else>
         <div class="accordion" :id="'accordion'+cl.id">
@@ -20,6 +25,7 @@
                     >{{cl.student_class.desc}}({{cl.course_code}}) - {{cl.total_hours}} total hours</button>
                     <div class="d-inline-block float-right">
                         <a :href="'/attendance/pdf/'+cl.id" target="_blank" class="btn btn-warning" title="Generate PDF"><i class="fas fa-file-pdf"></i></a>
+                        <button class="btn btn-danger" title="Withdraw Class" @click="deleteClass(cl.id)"><i class="fas fa-trash"></i></button>
                     </div>
                 </h2>
                 </div>
@@ -53,7 +59,7 @@
                                 <label for="">Date taken:</label>
                                 <span style="font-size: 74%;opacity: 73%;">( DD/M/YYYY )</span>
                                 <date-picker
-                                @input="getPrefTime(index)"
+                                @input="date_change(index)"
                                 locale="en"
                                 v-model="cl.admod.date_taken"
                                 :masks="{L:'DD/MM/YYYY'}"
@@ -81,7 +87,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="">Preferred hours:</label>
-                                    <input type="number" class="form-control" v-model="cl.admod.preferred_hours" placeholder="8">
+                                    <input type="number" class="form-control" v-model="cl.admod.preferred_hours" placeholder="0">
                                     <div v-if="cl.errors">
                                     <span v-if="cl.errors.preferred_hours" :class="['badge badge-danger']">{{ cl.errors.preferred_hours[0] }}</span>
                                     </div>
@@ -197,6 +203,77 @@ export default {
         }
     },
     methods:{
+        deleteClass(id){
+            swal
+            .fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!"
+            })
+            .then(result => {
+            if (result.value) {
+                axios.post('/classes/delete_student',{
+                id:id
+                }).then(
+                response=>{
+                    swal.fire(
+                    "Deleted!",
+                    "Class has been deleted.",
+                    "success"
+                    );
+                    this.getStudentAttendance();
+                }
+                ).catch();
+            }
+            });
+        },
+        date_change(index){
+            var val = this.classList[index].admod.date_taken;
+            // console.log(val);
+            var d_t = moment(val).format('llll');
+            var dt_split = d_t.split(',');
+            var day = dt_split[0];
+            
+            let dis = this;
+            swal.fire({
+            title: 'Please wait...',
+            allowOutsideClick: false,
+            onBeforeOpen: () => {
+                swal.showLoading()
+                },
+            });
+            axios.get(`/attendance/get_preferred/${this.classList[index].class_id}/${day}`).then(
+                response=>{
+                if(response.data.status=='success'){
+                    // console.log(response.data.hours);
+                    this.classList[index].admod.preferred_hours = response.data.hours;
+                    swal.close();
+                }else if(response.data.status=='error'){
+                    swal.fire({
+                    type: "error",
+                    title: 'Opss. something went wrong.',
+                    html:response.data.message
+                    });
+                    this.classList[index].admod.preferred_hours = 0;
+                }else{
+                    swal.close();
+                    this.classList[index].admod.preferred_hours = 0;
+                }
+                }
+            ).catch(
+                err=>{
+                swal.fire({
+                    type: "error",
+                    title: 'Opss. something went wrong.',
+                    html:err
+                    });
+                }
+            );
+        },
         admod_attendance(){
             this.is_open = true;
         },
@@ -205,7 +282,8 @@ export default {
         },
         cancelEdit(idx){
             this.is_open = false;
-            this.classList[idx].admod = {};
+            this.classList[idx].admod = {preferred_hours:0};
+            // this.classList[idx].admod.preferred_hours = 0;
         },
         // getPrefTime(ind){
         //     if(this.classList[ind].unit!='' && this.classList[ind].class_date){
@@ -297,12 +375,16 @@ export default {
                             time_start:null,
                             time_end:null,
                         };
-                        e.admod = {};
+                        e.admod = {
+                            preferred_hours:0
+                        };
                         axios.get('/student/domestic/get_units/'+e.student_id+'/'+e.course_code).then(
                             response=>{
-                                response.data.forEach(function(units){
-                                    e.units.push(units);
-                                });
+                                if(response.data.length > 0){
+                                     response.data.forEach(function(units){
+                                        e.units.push(units);
+                                    });
+                                }
                             }
                         );
                         data.push(e);

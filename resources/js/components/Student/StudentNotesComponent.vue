@@ -227,7 +227,7 @@
         border-radius: 0;
         height: 100%;
     }
-.vc-text-base{
+input.vc-text-base{
     height: 100% !important;
 }
 </style>

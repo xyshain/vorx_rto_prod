@@ -9,7 +9,8 @@
         <div class="row">
           <div class="col-md-6">
             <h6 :class="'m-0 font-weight-bold text-' + app_color">
-              Student Details
+              Student Details 
+              <!-- <button @click="checkernatkin" >eee</button> -->
               <span>
                 ( {{ student_id }} - {{ student_info.firstname }}
                 {{ student_info.middlename }} {{ student_info.lastname }} )
@@ -152,11 +153,11 @@
               >
               <a
                 v-bind:class="'nav-item nav-link-' + app_color"
-                id="notes-tab"
+                id="nav-notes-tab"
                 data-toggle="tab"
-                href="#notes"
+                href="#nav-notes"
                 role="tab"
-                aria-controls="notes"
+                aria-controls="nav-notes"
                 aria-selected="true"
                 >Notes</a
               >
@@ -391,14 +392,14 @@
               aria-labelledby="course-progress"
             >
               <div>
-                <completion></completion>
+                <completion refs="checkCompletion"></completion>
               </div>
             </div>
             <div
               class="tab-pane fade show"
-              id="notes"
+              id="nav-notes"
               role="tabpanel"
-              aria-labelledby="notes-tab"
+              aria-labelledby="nav-notes-tab"
             >
               <div>
                 <student-notes></student-notes>
@@ -477,7 +478,8 @@ import StudentAttachment from "../attachments/StudentAttachmentComponent.vue";
 import StudentAissAttachment from "../aiss-attachments/StudentAISSAttachmentComponent.vue";
 import CourseDetails from "./courseDetailsComponent.vue";
 import PaymentDetails from "./payments/paymentDetailsComponent.vue";
-import StudentNotes from "../StudentNotesComponent.vue";
+// import StudentNotes from "../StudentNotesComponent.vue";
+import StudentNotes from "../notes/notesComponent.vue";
 import Workbook from "../workbookComponent.vue";
 import WarningHistory from "../warningLetterHistoryComponent.vue";
 import DomClass from "./domClassComponent.vue";
@@ -555,9 +557,18 @@ export default {
   },
   created() {
     this.fetchData();
+    
   },
-
   methods: {
+    checkernatkin(){
+      let vm = this;
+      vm.$children.find(child => {
+        if(child.$attrs.refs == 'checkCompletion'){
+          child.fetchData();
+        }
+
+      })
+    },
     isTest(){
       axios.get(`/testdriven/${window.student_id}`).then((res)=>{
           if(res.data.status == 'success'){
@@ -721,6 +732,8 @@ export default {
       if ($event == "updated") {
         this.firstLoad = 0;
         this.fetchData();
+        this.checkernatkin();
+        this.updateHistory = true;
         // console.log("ka updated vah");
       }
     },
@@ -759,6 +772,8 @@ export default {
                 if (response.data.status == "success") {
                   this.firstLoad = 0;
                   this.fetchData();
+                  // this.updateDoms();
+                  this.$children[4].getStudentAttendance();
                   Toast.fire({
                     position: "top-end",
                     type: "success",

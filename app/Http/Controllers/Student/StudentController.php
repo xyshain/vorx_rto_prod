@@ -62,6 +62,7 @@ use Illuminate\Support\Facades\Hash;
 
 use App\Http\Controllers\Enrolment\EnrolmentPCAController;
 use App\Http\Controllers\Enrolment\EnrolmentController;
+use App\Models\CompletionStudentCourse;
 use App\Models\FundedStudentCourse;
 use App\Models\ReportCourseStatuses;
 use Illuminate\Support\Facades\Storage;
@@ -196,7 +197,6 @@ class StudentController extends Controller
                 $avetmiss->save();
 
                 // SAVE TO FUNDED IF THE STUDENT TYPE IS "DOMESTIC(2)"
-                // include international students now
                 // if ($student->student_type_id == 2) {
                     $funded_student = new FundedStudentDetails;
                     $contact = new FundedStudentContactDetails;
@@ -1366,6 +1366,14 @@ class StudentController extends Controller
         // dd('hi');
         $student_type = $type =='true' ? 2 : 1 ;
         $student = Student::where('student_id',$student_id)->first();
+
+        foreach($student->funded_course as $funded_course){
+            $completion = CompletionStudentCourse::where('student_course_id',$funded_course->id)->where('student_type',$student->student_type_id)->first();
+            if($completion != null){
+                $completion->student_type = $student_type;
+                $completion->save();
+            }
+        }
         $student->student_type_id = $student_type ;
         $student->save();
         if($student_type == 2){

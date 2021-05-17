@@ -43,7 +43,7 @@ return [
 
         'api' => [
             'driver' => 'session',
-            'provider' => 'users',
+            'provider' => 'agent',
             'hash' => false,
         ],
     ],
@@ -67,6 +67,11 @@ return [
 
     'providers' => [
         'users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
+
+        'agent' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
         ],

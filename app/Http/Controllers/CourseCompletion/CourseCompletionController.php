@@ -60,7 +60,6 @@ class CourseCompletionController extends Controller
                 $completion = CompletionStudentCourse::where('student_course_id', $fundedCourse->offer_letter_course_detail_id)->where('student_type',$details->student_type_id)->first();
 
             }
-            // dd($completion);
             $course_completion = CourseCompletion::with('certificate.details', 'details', 'status')
             ->where('id', $completion->completion_id)
             ->first();

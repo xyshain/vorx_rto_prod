@@ -270,7 +270,10 @@ export default {
             //         swal.showLoading()
             //     },
             //     });
-                var link = this.selected_class.id+','+this.student_type+','+this.from+','+this.to
+                var from = this.from!==null?moment(this.from).format('YYYY-MM-DD'):null;
+                var to = this.to!==null?moment(this.to).format('YYYY-MM-DD'):null;
+
+                var link = this.selected_class.id+','+this.student_type+','+from+','+to
                 window.open('/reports/attendance/export-pdf/'+link);
           }else{
               swal.fire({

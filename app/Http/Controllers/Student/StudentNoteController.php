@@ -40,7 +40,6 @@ class StudentNoteController extends Controller
     public function store(Request $request)
     {
         //
-        // dd($request->all());
         $now = Carbon::now()->setTimezone('Australia/Brisbane')->format('Y-m-d');    
         try {
             // start db transaction
@@ -48,18 +47,18 @@ class StudentNoteController extends Controller
             $deal_type = null;
             if ($request->edit == true) {
 
-                $note = StudentNote::find($request->note['id']);
-                $note->remarks = $request->note['remarks'];
-                $note->date_notes = isset($request->note['date_notes']) ? Carbon::parse($request->note['date_notes'])->timezone('Australia/Melbourne')->format('Y-m-d') : $now;
+                $note = StudentNote::find($request->id);
+                $note->remarks = $request->remarks;
+                $note->date_notes = isset($request->date_notes) ? Carbon::parse($request->date_notes)->timezone('Australia/Melbourne')->format('Y-m-d') : $now;
                 $note->update();
 
             } else {
                 $note = new StudentNote;
-                $student = Student::where('student_id', $request->note['student_id'])->first();
-                $note->remarks = $request->note['remarks'];
-                $note->date_notes = isset($request->note['date_notes']) ? Carbon::parse($request->note['date_notes'])->timezone('Australia/Melbourne')->format('Y-m-d') : $now;
+                // $student = Student::where('student_id', $request->student_id)->first();
+                $note->remarks = $request->remarks;
+                $note->date_notes = isset($request->date_notes) ? Carbon::parse($request->date_notes)->timezone('Australia/Melbourne')->format('Y-m-d') : $now;
                 $note->user()->associate(\Auth::user());
-                $note->student()->associate($student);
+                $note->student()->associate($request->student_id);
                 $note->save();
             }
 

@@ -17,7 +17,7 @@
         <div class="row">
           <div class="col-md-6">
             <h6 :class="'m-0 font-weight-bold text-' + app_color">
-              Student Details
+              Student Detail
               <span>
                 ( {{ id }} - {{ student.firstname }} {{ student.middlename }}
                 {{ student.lastname }} )

@@ -5,8 +5,10 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	@if($app_settings->student_id_prefix =='PCA')
 	<link type="text/css" href="{{ public_path()}}/custom/unit-of-competency-lln-test/pdf-style-pca.css" rel="stylesheet" />
-	@else
+	@elseif($app_settings->student_id_prefix =='CEA')
 	<link type="text/css" href="{{ public_path()}}/cea-lln-test-form/pdf-style.css" rel="stylesheet" />
+	@else
+	<link type="text/css" href="{{ public_path()}}/custom/unit-of-competency-lln-test/pdf-style-cea.css" rel="stylesheet" />
 	@endif
 	<title>Attendance Sheet</title>
 	<!-- Page 1 of 1 -->
@@ -19,8 +21,9 @@
 		}else{
 			$app_color = 'primary';
 		}
+		$attendance = collect($attendance);
 	?>
-
+@foreach($attendance->chunk(12) as $atte)
 <body class="exo2-regular position-relative">
 	<div>
 		<div class="col-xs-12 no-padding position-relative">
@@ -50,6 +53,7 @@
 					<div class="content">
 						<h1 class="section-header proximanova-bold primary-font-color px-12-font text-justify text-uppercase"></h1>
                         <br>
+						@if($loop->first)
 						<table width="100%" class="form-table">
 							<tr>
 								<td width="50%">
@@ -70,38 +74,44 @@
 							</tr>
                             <tr>
 								<td width="50%">
-                                    <label class="label label-textbox">Start Date: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$from}}</span></div></label> 
+                                    <label class="label label-textbox">Start Date: <div class="text-input-line" style="width: 75%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$from != 'null' ? Carbon\Carbon::parse($from)->toFormattedDateString() : 'Not specified'}}</span></div></label> 
 								</td>
 								<td width="50%">
-									<label class="label label-textbox">End Date: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$to}}</span></div></label>
+									<label class="label label-textbox">End Date: <div class="text-input-line" style="width: 70%;margin-top: 5px;"><span class="dark-grey-font-color line-height-1point2">{{$to != 'null' ? Carbon\Carbon::parse($to)->toFormattedDateString() : 'Not specified'}}</span></div></label>
 								</td>
 							</tr>
 						</table>
+						@endif
 						<br>
 						<table class="table default-bordered-table" cellspacing="0" cellpadding="0" width="85%" style="margin:0 auto !important">
 							<thead>
 								<tr>
-                                    <th style="background-color:{{$app_color}}" width="15%">Profile image</th>
-                                    <th style="background-color:{{$app_color}}" width="15%">Student Name</th>
-                                    <th style="background-color:{{$app_color}}" width="15%">Student id</th>
-                                    <th style="background-color:{{$app_color}}" width="55%">Hours</th>
+                                    <th  width="15%">Profile image</th>
+                                    <th  width="20%">Student Name</th>
+                                    <th  width="15%">Student id</th>
+                                    <th  width="20%">Preferred Hours</th>
+                                    <th  width="20%">Actual Hours</th>
 									<!-- <th class="text-center" style="background-color:{{$app_color}}"><span style="font-size:14px;">Date</span></th>
 									<th class="text-center" style="background-color:{{$app_color}}"><span style="font-size:14px;">Hours of Training for that date</span></th> -->
                                     
 								</tr>
 							</thead>
 							<tbody>
-                                @foreach($attendance as $att)
+                                @foreach($atte as $att)
                                 <tr>
-                                    <td><img src="{{public_path()}}/storage/user/avatar/{{$att->profile_image}}" alt=""></td>
+                                    <td>
+										
+										@if(isset($att->user))
+										<img src="{{public_path()}}/storage/user/avatars/{{$att->user->profile_image}}" alt="" style="width:50px;">
+										@else
+										<img src="{{public_path()}}/storage/user/avatars/default-profile.png" alt="" style="width:50px;">
+										@endif
+									</td>
                                     <td>{{$att->student->party->name}}</td>
                                     <td>{{$att->student_id}}</td>
-                                    <td>
-                                    <div class="progress">
-                                            <div class="'progress-bar bg-danger" role="progressbar" style="width:100%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" title="fsda"></div>
-                                        
-    </div>
-                                    </td>
+                                    <td>{{$att->pref_hours}}</td>
+                                    <td>{{$att->actual_hours}}
+									</td>
                                 </tr>
                                 @endforeach
 							</tbody>
@@ -121,6 +131,7 @@
 		</div>
 	</div>
 </body>
+@endforeach
 
 
 <!-- End Page 1 of 1 -->

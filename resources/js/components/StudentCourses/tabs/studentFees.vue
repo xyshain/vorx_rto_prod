@@ -1,60 +1,84 @@
 <template>
     <div>
-        <div v-bind:class="'horizontal-line-wrapper-'+app_color+' my-3'">
-            <h6>Payments</h6>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-12 pull-right text-right">
-                <div class="btn-group">
-                    <button class="btn btn-success">Remaining Balance : $ {{ remainingBalance }}</button>
-                    <button class="btn btn-info" @click="pay" v-if="remainingBalance>0">Pay now</button>
+        <div id="new_payment">
+            <p class="pull-left">
+                <a class="collapse-menu active p-1 pl-2 pr-2 m-1 paymentPlanH" type="button" data-toggle="collapse" @click="closeOther('paymentPlan','paymentPlanH')" href=".paymentPlan" aria-expanded="false" aria-controls="collapseExample">
+                    <i class="fas fa-scroll"></i> Payment Plan
+                </a>
+                <a class="collapse-menu p-1 pl-2 pr-2 m-1 addPaymentH" type="button" data-toggle="collapse"  @click="closeOther('addPayment','addPaymentH')" href=".addPayment" aria-expanded="false" aria-controls="collapseExample1">
+                    <i class="fas fa-plus"></i> Payments
+                </a>   
+            </p>
+             <div class="pull-right">
+                 <h5 v-show="menuchoicer == 'addPaymentH'">
+                    Remaining Balance: $ <span>{{ remainingBalance.toFixed(2) }}</span> <a href="javascript:void(0)" class="btn btn-success btn-sm" title="pay" @click="pay()">Pay</a>
+                </h5>
+                <h5 v-show="menuchoicer == 'paymentPlanH'">
+                    Total Paid: $ <span>{{ getTotal().toFixed(2) }}</span>
+                </h5>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <div class="collapse show collapse-menu-body paymentPlan">
+                <div class="card card-body">
+                    <table
+                        class="custom-table"
+                        id="dataTable"
+                        width="100%"
+                        cellspacing="0"
+                    >
+                        <thead>
+                            <tr>
+                                <th class='text-center' width="20px;"></th>
+                                <th class='text-center'>Month</th>
+                                <th class='text-center'>Amount Due</th>
+                                <th class='text-center'>Recommended Pay Date</th>
+                                <th class='text-center'></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(pc,index) in schedule_template" :key="index">
+                                <td class="text-center">
+                                    <!-- <i class="fas fa-check-circle" style="color:red"></i> -->
+                                </td>
+                                <td class="text-center">{{index+1}}</td>
+                                <td class="text-center">{{pc.due_date | dateformat}}</td>
+                                <td class="text-center">{{pc.payable_amount}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="collapse collapse-menu-body addPayment">
+                <div class="card card-body">
+                    <table
+                        class="custom-table"
+                        id="dataTable"
+                        width="100%"
+                        cellspacing="0"
+                    >
+                        <thead>
+                            <tr>
+                                <th class='text-center' width="20px;"></th>
+                                <th class='text-center'>Amount</th>
+                                <th class='text-center'>Payment Date</th>
+                                <th class='text-center'>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(pd,index) in payment_details" :key="index">
+                                <td></td>
+                                <td class="text-center">{{pd.amount}}</td>
+                                <td class="text-center">{{pd.payment_date | dateformat}}</td>
+                                <td class="text-center">{{pd.note}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th :class="['background-'+app_color]">#</th>
-                    <th :class="['background-'+app_color]">Date paid</th>
-                    <th :class="['background-'+app_color]">Note</th>
-                    <th :class="['background-'+app_color]">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(pd,index) in payment_details" :key="index">
-                    <td>{{index+1}}</td>
-                    <td>{{pd.payment_date | dateformat}}</td>
-                    <td>{{pd.note}}</td>
-                    <td>{{pd.amount}}</td>
-                </tr>
-            </tbody>
-            <tfoot>
-                <tr>
-                <td colspan="3" align="right">Total :</td>
-                <td colspan="1">$ {{ getTotal() }}</td>
-                </tr>
-            </tfoot>
-        </table>
-
-        <div v-bind:class="'horizontal-line-wrapper-'+app_color+' my-3'">
-            <h6>Payment Schedule</h6>
-        </div>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th :class="['background-'+app_color]">#</th>
-                    <th :class="['background-'+app_color]">Date</th>
-                    <th :class="['background-'+app_color]">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(pc,index) in schedule_template" :key="index">
-                    <td>{{index+1}}</td>
-                    <td>{{pc.due_date | dateformat}}</td>
-                    <td>{{pc.payable_amount}}</td>
-                </tr>
-            </tbody>
-        </table>
+        
         <pay-modal :course="course" :student="student" />
     </div>
 </template>
@@ -72,6 +96,8 @@ export default {
             columns: ["payment_date","note","amount"],
             payment_details:[],
             student:window.student,
+            menuchoicer : 'paymentPlanH',
+            open_pay:false,
             schedule_template:[],
             options:{
                 headings: {
@@ -96,12 +122,33 @@ export default {
         return date;
         },
     },
+    watch:{
+        
+    },
     methods:{
+        closeOther(e,v){
+            let collapseMenuBody = Array.from(document.getElementsByClassName('collapse-menu-body'));
+            let collapseMenu = Array.from(document.getElementsByClassName('collapse-menu'));
+            collapseMenuBody.map(element => {
+                if(!element.className.includes(e)){
+                    element.classList.remove('show')
+                }
+            })
+            collapseMenu.map(element1 => {
+                if(!element1.className.includes(v)){
+                    element1.classList.remove('active')
+                }else{
+                    element1.classList.add('active')
+                    this.menuchoicer = v;
+                }
+            })
+        },
         pay(){
-            // this.$modal.show('pay-modal');
-            var encoded_id = btoa(this.course.id)
+            this.$modal.show('pay-modal');
+            this.open_pay = !this.open_pay;
+            // var encoded_id = btoa(this.course.id)
 
-            window.open("/student-portal/online-payment/"+encoded_id);
+            // window.open("/student-portal/online-payment/"+encoded_id);
             // (async () => {
             
             // const { value: accept } = await swal.fire({
@@ -177,9 +224,16 @@ export default {
     }
 }
 </script>
-<style>
+<style scoped>
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
     }
+table.custom-table  th { background-color: transparent!important; color:gray!important; border: none!important;}
+table.custom-table tbody tr td{padding:20px !important;}
+a.collapse-menu.active {
+  background-color: #024b67;
+  color: white;
+}
+.btn-square { border-radius: 0; }
 </style>

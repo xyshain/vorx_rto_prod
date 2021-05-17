@@ -58,7 +58,7 @@
                         <span style="font-size: 74%;opacity: 73%;">( DD/M/YYYY )</span>
                         <date-picker
                         locale="en"
-                        v-model="admod.date_taken"
+                        v-model="date_taken"
                         :masks="{L:'DD/MM/YYYY'}"
                         />
                         <div v-if="errors">
@@ -82,7 +82,7 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="">Preferred hours</label>
-                        <input type="number" class="form-control" v-model="admod.preferred_hours" placeholder="8">
+                        <input type="number" class="form-control" v-model="admod.preferred_hours" placeholder="0">
                         <div v-if="errors"> 
                           <span v-if="errors.preferred_hours" :class="['badge badge-danger']">{{ errors.preferred_hours[0] }}</span>
                         </div>
@@ -157,7 +157,9 @@ export default {
       student_attendance:window.student_attendance,
       student_id:window.student_id,
       admod:{
+        preferred_hours:''
       },
+      date_taken:null,
       errors:{},
       units:[],
         columns: ["id","date_taken","preferred_hours","actual_hours","status","actions"],
@@ -190,6 +192,51 @@ export default {
       this.getStudentAttendance();
       this.getUnits();
   },
+  watch:{
+    date_taken(val){
+      if(val!=null){
+        var d_t = moment(val).format('llll');
+        var dt_split = d_t.split(',');
+        var day = dt_split[0];
+        
+        let dis = this;
+        swal.fire({
+        title: 'Please wait...',
+        allowOutsideClick: false,
+        onBeforeOpen: () => {
+            swal.showLoading()
+            },
+        });
+        axios.get(`/attendance/get_preferred/${this.student_attendance.class_id}/${day}`).then(
+          response=>{
+            if(response.data.status=='success'){
+              console.log(response.data.hours);
+              this.admod.preferred_hours = response.data.hours;
+              swal.close();
+            }else if(response.data.status=='error'){
+              swal.fire({
+              type: "info",
+              title: 'Opss. something went wrong.',
+              html:response.data.message
+              });
+              this.admod.preferred_hours = 0;
+            }else{
+              swal.close();
+              this.admod.preferred_hours = 0;
+            }
+          }
+        ).catch(
+          err=>{
+            swal.fire({
+              type: "error",
+              title: 'Opss. something went wrong.',
+              html:err
+              });
+          }
+        );
+      }
+    }
+  },
   methods: {
     admod_attendance(){
       this.is_open = true;
@@ -199,7 +246,9 @@ export default {
       },
     cancelEdit(){
       this.is_open = false;
-      this.admod = {};
+      this.admod = {preferred_hours:0};
+      // this.admod.preferred_hours = 0;
+      this.date_taken = null;
       this.errors = {};
 
     },
@@ -229,6 +278,7 @@ export default {
                if(typeof this.admod.id != 'undefined'){//store  
                     console.log('update');
                     this.admod.attendance_id = this.student_attendance.id;
+                    this.admod.date_taken = this.date_taken;
                     axios.post('/attendance/update_student_attendance_detail',this.admod).then(
                             response=>{
                                 console.log(response.data);
@@ -247,7 +297,8 @@ export default {
                                 );
                                 // this.$modal.hide("edit-attendance-sheet");
                                 this.getStudentAttendance();
-                                this.admod = {};
+                                this.admod = {preferred_hours:''};
+                                this.date_taken=null
                                 this.errors ={};
                                 this.is_open = false;
                             }
@@ -266,6 +317,7 @@ export default {
                 }else{
                     console.log('store');
                     this.admod.attendance_id = this.student_attendance.id;
+                    this.admod.date_taken = this.date_taken;
                     axios.post('/attendance/new_student_attendance_detail',this.admod).then(
                         response=>{
                             if(response.data.status == 'error'){
@@ -285,9 +337,10 @@ export default {
                                 console.log(response.data.enrolment_pack);
                                 // this.updateEnrolment(response.data.enrolment_pack);
                                 this.getStudentAttendance();
-                                this.is_open = false;
-                                this.admod = {};
+                                this.admod = {preferred_hours:''};
+                                this.date_taken=null
                                 this.errors ={};
+                                this.is_open = false;
                             }
                         }   
                     ).catch(
@@ -324,7 +377,7 @@ export default {
     },
     edit(row){
       this.is_open = true;
-      row.date_taken = moment(row.date_taken)._d;
+      this.date_taken = moment(row.date_taken)._d;
       console.log(row);
       this.admod = row;
       

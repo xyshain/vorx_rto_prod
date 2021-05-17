@@ -27,7 +27,8 @@ Route::middleware(['rto'])->group(function () {
     Route::post('attendance/update_student_attendance_detail','StudentClass\StudentClassController@update_student_attendance_detail');
     Route::get('attendance/get_student_attendance/{attendance_id}','StudentClass\StudentClassController@get_student_attendance');
     Route::get('attendance/get_student_attendance_detail_fields/{attendance_id}','StudentClass\StudentClassController@get_student_attendance_detail_fields');
-    
+    Route::get('attendance/get_preferred/{class_id}/{day}','StudentClass\StudentClassController@get_preferred');
+
     //attendance sheet pdf
     Route::get('attendance/pdf/{id}','StudentClass\StudentClassController@pdf');
     

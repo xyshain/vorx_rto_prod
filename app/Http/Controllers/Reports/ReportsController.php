@@ -18,6 +18,8 @@ use App\Models\FundedStudentCourse;
 use App\Models\FundedStudentCourseDetail;
 use App\Models\FundedStudentDetails;
 use App\Models\FundedStudentContactDetails;
+use App\Models\FundedStudentPaymentDetails;
+use App\Models\PaymentScheduleTemplate;
 use App\Models\StateIdentifier;
 use App\Models\StudentCompletion;
 use App\Models\StudentCompletionDetail;
@@ -510,9 +512,9 @@ class ReportsController extends Controller
                 }
                 // return $attendances;
                 $students = [];
-                $pref_hours = 0;
-                $actu_hours = 0;
                 foreach($attendances as $att){
+                    $pref_hours = 0;
+                    $actu_hours = 0;
                     if(isset($att->student)&&$att->student!=null){
                         // dd($att,'naay unod ble');
                         $_user = User::where('username',$att->student_id)->first();
@@ -643,13 +645,14 @@ class ReportsController extends Controller
         $from = $json[2];
         $to = $json[3];
         // dd($from,$to);
+        // dd($from,$to);
         $student_class = StudentClass::where('id',$class_id)->first();
         // dd($student_class);
         $class_start = $student_class->start_date;
         $class_end = $student_class->end_date;
         $student_type = $json[1];
         // dd($class_id,$from,$to,$student_type);
-        if($from==null && $to == null){
+        if($from=='null' && $to == 'null'){
             try{
                 if($student_type=='*'){
                     $attendances = Attendance::with('student.party','attendance_details')->where('class_id',$class_id)->get();
@@ -699,6 +702,7 @@ class ReportsController extends Controller
                 
                 $app_settings = TrainingOrganisation::first();
                 $title = 'Attendance List ( '.Carbon::parse($class_start)->format('M d, Y'). ' - '.Carbon::parse($class_end)->format('M d, Y'). ' )'; 
+                
                 $pdf = PDF::loadView('reports.pdf.attendance',compact('attendance','app_settings','from','to','student_class','student_type'));
                 
                 return $pdf->download($title.'.pdf');
@@ -708,6 +712,7 @@ class ReportsController extends Controller
         }else{
             $from = $from != 'null' ? $from : $class_start;
             $to = $to != 'null' ? $to : $class_end;
+            // dd($from,$to);
             try{
                 if($student_type=='*'){
                     $attendances = Attendance::with(['student.party','attendance_details'=>function($q)use($from,$to){
@@ -722,9 +727,10 @@ class ReportsController extends Controller
                 }
                 // return $attendances;
                 $students = [];
-                $pref_hours = 0;
-                $actu_hours = 0;
+                
                 foreach($attendances as $att){
+                    $pref_hours = 0;
+                    $actu_hours = 0;
                     if(isset($att->student)&&$att->student!=null){
                         // dd($att,'naay unod ble');
                         $_user = User::where('username',$att->student_id)->first();
@@ -748,31 +754,112 @@ class ReportsController extends Controller
                         array_push($students,$att);
                     }
                 }
-                // dd($students);
+                // return $students;
                 // dd($attendances);
                 // return $attendances;
                 // return response()->json(['status'=>'success','attendances'=>$students]);
                 $attendance = $students;
-
+                // $attendance = [];
+                // dd($attendance);
                 if(isset($attendance->attendance_details)){
                     foreach($attendance->attendance_details as $ad){
                         $attendance->total_hours += $ad->actual_hours;
                     }
                 }
-                
+                // dd($from,$to);
+                // $attendance = collect($attendance);
+                // dd($attendance->chunk(2));
+                // for($i = 0 ; $i < 20 ; $i++){
+                //     $attendance[$i] = $students[0];
+                // }
+                // dd($attendance);
                 $app_settings = TrainingOrganisation::first();
                 $title = 'Attendance List ( '.Carbon::parse($from)->format('M d, Y'). ' - '.Carbon::parse($to)->format('M d, Y'). ' )'; 
                 $pdf = PDF::loadView('reports.pdf.attendance',compact('attendance','app_settings','from','to','student_class','student_type'));
-                
-                return $pdf->download($title.'.pdf');
+                return $pdf->stream();
+                // return $pdf->download($title.'.pdf');
             }catch(Exception $e){
                 return response()->json(['status'=>'error','message'=>$e->getMessage()]);
             }
         }
 
     }   
-    // public function class_list(){
-    //     $classes = 
-    // }
 
+    public function payments(){
+        $courses = [];
+
+        if(\Auth::user()->hasRole('Demo')){
+            $courses =  Course::where('user_id', \Auth::user()->id)->get()->pluck('name','code');
+        }else{
+            $courses =  Course::all()->pluck('name','code');
+        }
+        $courses['*'] = 'All Courses';
+        // dd($courses);
+        \JavaScript::put([
+            'courses'=>$courses
+        ]);
+        return view('reports.payment-list');
+    }
+    
+    public function generate_payments(Request $request){
+        // return $request->all();
+        // return $request->from;
+        if($request->from!=null){
+            if($request->get_course=='*'){
+                $funded_students = FundedStudentCourse::with('student.party','course')->where('start_date','>',$request->from.'-01')->get();
+            }else{
+                $funded_students = FundedStudentCourse::with('student.party','course')->where('start_date','>',$request->from.'-01')->where('course_code',$request->get_course)->get();
+            }
+            $to = Carbon::parse($request->to)->endOfMonth()->format('Y-m-d');
+            if(isset($funded_students)){
+                foreach($funded_students as $fs){
+                    $fs->amount_due = 0;
+                    $fs->total_paid = 0;
+                    $student_payment_template = PaymentScheduleTemplate::where('funded_student_course_id',$fs->id)->where('due_date','<=',$to)->get();
+                    $funded_student_payment_details = FundedStudentPaymentDetails::where('student_course_id',$fs->id)->where('payment_date','<=',$to)->get();
+                    // return $student_payment_template;
+                    if(isset($student_payment_template)){
+                        foreach($student_payment_template as $spt){
+                            $fs->amount_due += $spt->payable_amount;
+                        }
+                    }
+                    
+                    if(isset($funded_student_payment_details)){
+                        foreach($funded_student_payment_details as $fspd){
+                            $fs->total_paid += $fspd->amount;
+                        }
+                    }
+                }
+            }
+            
+        }else{
+            if($request->get_course=='*'){
+                $funded_students = FundedStudentCourse::with('student.party','course')->get();
+            }else{
+                $funded_students = FundedStudentCourse::with('student.party','course')->where('course_code',$request->get_course)->get();
+            }
+
+            if(isset($funded_students)){
+                foreach($funded_students as $fs){
+                    $fs->amount_due = 0;
+                    $fs->total_paid = 0;
+                    $student_payment_template = PaymentScheduleTemplate::where('funded_student_course_id',$fs->id)->get();
+                    $funded_student_payment_details = FundedStudentPaymentDetails::where('student_course_id',$fs->id)->get();
+                    // return $student_payment_template;
+                    if(isset($student_payment_template)){
+                        foreach($student_payment_template as $spt){
+                            $fs->amount_due += $spt->payable_amount;
+                        }
+                    }
+                    if(isset($funded_student_payment_details)){
+                        foreach($funded_student_payment_details as $fspd){
+                            $fs->total_paid += $fspd->amount;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return $funded_students;
+    }
 }
