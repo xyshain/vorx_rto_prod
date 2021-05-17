@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Student;
 use App\Http\Controllers\Controller;
 use App\Models\Student\Student;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -162,7 +163,7 @@ class StudentController extends Controller
             'firstname'     => $person->firstname,
             'middlename'    => $person->middlename,
             'lastname'      => $person->lastname,
-            'dob'           => $person->date_of_birth,
+            'dob'           => Carbon::parse($person->date_of_birth)->format('d/m/Y'),
             'gender'        => $person->gender,
             'prefix'        => $person->prefix,
             'funded_detail' => $funded_detail,
