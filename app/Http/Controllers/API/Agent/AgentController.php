@@ -47,7 +47,7 @@ class AgentController extends Controller
 
     public function fetchAttachment($attachment)
     {
-        $data = AgentAttachment::where('hash',$attachment)->get();
+        $data = AgentAttachment::where('hash_name',$attachment)->first();
         return $data;
     }
 
