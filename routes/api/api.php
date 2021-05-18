@@ -27,6 +27,8 @@ Route::get('/check-rto/{org_id}', 'Auth\LoginController@check_rto');
 Route::post('login',[LoginController::class,'login']);
 Route::delete('logout',[LoginController::class,'logout']);
 
+Route::get('/test/student/{student}',[ StudentController::class, 'show' ]);
+
 Route::middleware(['auth:sanctum'])->group(function(){
     // default fetching 
     Route::get('defaults/all',[AgentController::class,'defaults']);
