@@ -116,6 +116,7 @@ class StudentController extends Controller
                     'disability_ids',
                     'disability_ids',
                     'prior_educational_achievement_ids',
+                    'prior_educational_achievement_flag',
                     'at_school_flag',
                     'institute',
                     'statistical_area_level_1_id',
@@ -126,6 +127,34 @@ class StudentController extends Controller
                     'verified_by',
                     'verified_date',
                 ])->first();
+
+        if($funded_detail->disability_flag == null){
+            $funded_detail->disability_flag = false;
+        }else{
+            if($funded_detail->disability_flag == 'N'){
+                $funded_detail->disability_flag = false;
+            }else{
+                $funded_detail->disability_flag = true;
+            }
+        }
+        if($funded_detail->at_school_flag == null){
+            $funded_detail->at_school_flag = false;
+        }else{
+            if($funded_detail->at_school_flag == 'N'){
+                $funded_detail->at_school_flag = false;
+            }else{
+                $funded_detail->at_school_flag = true;
+            }
+        }
+        if($funded_detail->prior_educational_achievement_flag == null){
+            $funded_detail->prior_educational_achievement_flag = false;
+        }else{
+            if($funded_detail->prior_educational_achievement_flag == 'N'){
+                $funded_detail->prior_educational_achievement_flag = false;
+            }else{
+                $funded_detail->prior_educational_achievement_flag = true;
+            }
+        }
         $contact_detail = $student->contact_detail()->select([
                     'addr_suburb',
                     'addr_postal_delivery_box',
@@ -156,7 +185,8 @@ class StudentController extends Controller
                 'applied_for_au_residency',
                 'study_rights'
             ])->first();
-
+    
+      
         $course = $student->funded_course;
 
         $data = [

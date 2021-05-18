@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\Agent\AgentController;
 use App\Http\Controllers\API\Auth\LoginController;
 use App\Http\Controllers\API\Student\StudentController;
+use App\Models\Agent;
 use Illuminate\Http\Request;
 
 /*
@@ -27,6 +28,9 @@ Route::post('login',[LoginController::class,'login']);
 Route::delete('logout',[LoginController::class,'logout']);
 
 Route::middleware(['auth:sanctum'])->group(function(){
+    // default fetching 
+    Route::get('defaults/all',[AgentController::class,'defaults']);
+
     Route::get('profile/',[AgentController::class,'profile']);
     Route::patch('/profile/update/{id}',[ AgentController::class, 'update' ]);
 
