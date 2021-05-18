@@ -37,9 +37,11 @@ Route::middleware(['auth:sanctum'])->group(function(){
     Route::patch('/profile/update/{id}',[ AgentController::class, 'update' ]);
 
     /* Agent attachment */
-    Route::get('profile/Attachment/fetch',[ AgentController::class, 'fetchAllAttachment']);
-    Route::get('profile/Attachment/fetch/{id}',[ AgentController::class, 'fetchAttachment']);
-    Route::post('profile/Attachment/save',[ AgentController::class, 'saveAttachment']);
+    Route::get('profile/attachment/fetch',[ AgentController::class, 'fetchAllAttachment']);
+    Route::get('profile/attachment/fetch/{id}',[ AgentController::class, 'fetchAttachment']);
+    Route::post('profile/attachment/save',[ AgentController::class, 'saveAttachment']);
+    Route::delete('profile/attachment/delete/{id}', [ AgentController::class, 'agent_attachment_delete']);
+    Route::put('profile/attachment/rename/{id}', [ AgentController::class, 'rename']);
 
 
     Route::get('/student/{student}',[ StudentController::class, 'show' ]);
