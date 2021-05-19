@@ -60,9 +60,9 @@ class AgentController extends Controller
                 $file_path = '';
     
                 if ($value->path_id == $value->agent_id) {
-                    $file_path = '/storage/agent/new/attachments/' . $value->agent_id . '/' . $value->hash_name . '.' . $value->ext;
+                    $file_path = 'storage/agent/new/attachments/' . $value->agent_id . '/' . $value->hash_name . '.' . $value->ext;
                 } else {
-                    $file_path = '/storage/agent/attachments/' . $value->path_id . '/' . $value->hash_name . '.' . $value->ext;
+                    $file_path = 'storage/agent/attachments/' . $value->path_id . '/' . $value->hash_name . '.' . $value->ext;
                 }
     
                 array_push($attchments, [
@@ -83,7 +83,7 @@ class AgentController extends Controller
         }
     }
 
-    public function fetchAttachment($id)
+    public function preview($id)
     {
         $file = AgentAttachment::find($id);
         $path_old = null;
@@ -149,7 +149,7 @@ class AgentController extends Controller
     
                 DB::commit();
     
-                $file_path = '/storage/agent/new/attachments/' . $agentAttachment->agent_id . '/' . $agentAttachment->hash_name . '.' . $agentAttachment->ext;
+                $file_path = 'storage/agent/new/attachments/' . $agentAttachment->agent_id . '/' . $agentAttachment->hash_name . '.' . $agentAttachment->ext;
     
                 $file = [
                     'id' => $agentAttachment->id,
@@ -181,14 +181,14 @@ class AgentController extends Controller
         }
     }
 
-    public function agent_attachment_delete($id)
+    public function destroy($id)
     {
         $attachment = AgentAttachment::where('id', $id)->first();
 
         if ($attachment->path_id == $attachment->agent_id) {
-            $file_path = '/storage/agent/new/attachments/' . $attachment->agent_id . '/' . $attachment->hash_name . '.' . $attachment->ext;
+            $file_path = 'storage/agent/new/attachments/' . $attachment->agent_id . '/' . $attachment->hash_name . '.' . $attachment->ext;
         } else {
-            $file_path = '/storage/agent/old/attachments/' . $attachment->path_id . '/' . $attachment->hash_name . '.' . $attachment->ext;
+            $file_path = 'storage/agent/old/attachments/' . $attachment->path_id . '/' . $attachment->hash_name . '.' . $attachment->ext;
         }
         
         Storage::delete($file_path);
@@ -204,6 +204,7 @@ class AgentController extends Controller
     }
 
     public function rename(Request $request, $id){
+
         try {
             DB::beginTransaction();
 
