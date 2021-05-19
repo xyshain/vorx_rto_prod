@@ -48,7 +48,7 @@ class StudentAttachmentController extends Controller
             $studentAttachment = new StudentAttachment([
                 'name'      => $file->getClientOriginalName(),
                 'hash_name' => $hashFileName,
-                'size'      => $file->getClientSize(),
+                'size'      => $file->getSize(),
                 'mime_type' => $file->getMimeType(),
                 'ext'       => $ext,
                 '_input'       => 'attachment',

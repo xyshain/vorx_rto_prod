@@ -34,7 +34,7 @@ class StudentAissAttachmentController extends Controller
             $studentAttachment = new StudentAissAttachment([
                 'name'      => $file->getClientOriginalName(),
                 'hash_name' => $hashFileName,
-                'size'      => $file->getClientSize(),
+                'size'      => $file->getSize(),
                 'mime_type' => $file->getMimeType(),
                 'ext'       => $file->guessClientExtension(),
                 '_input'       => 'attachment',

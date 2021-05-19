@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\Agent\AgentController;
 use App\Http\Controllers\API\Auth\LoginController;
 use App\Http\Controllers\API\Student\StudentController;
+use App\Http\Controllers\API\Student\StudentAttachmentController;
 use App\Models\Agent;
 use Illuminate\Http\Request;
 
@@ -36,12 +37,19 @@ Route::middleware(['auth:sanctum'])->group(function(){
 
     /* Agent attachment */
     Route::get('profile/attachment/fetch',[ AgentController::class, 'fetchAllAttachment']);
-    Route::get('profile/attachment/fetch/{id}',[ AgentController::class, 'fetchAttachment']);
+    Route::get('profile/attachment/preview/{id}',[ AgentController::class, 'preview']);
     Route::post('profile/attachment/save',[ AgentController::class, 'saveAttachment']);
-    Route::delete('profile/attachment/delete/{id}', [ AgentController::class, 'agent_attachment_delete']);
+    Route::delete('profile/attachment/delete/{id}', [ AgentController::class, 'destroy']);
     Route::put('profile/attachment/rename/{id}', [ AgentController::class, 'rename']);
 
 
     Route::get('/student/{student}',[ StudentController::class, 'show' ]);
     Route::get('/students/{user}',[ StudentController::class, 'index' ]);
+
+    /* Student attachment */
+    Route::get('student/attachment/fetch/{student_id}',[ StudentAttachmentController::class, 'fetchAllAttachment']);
+    Route::get('student/attachment/preview/{id}',[ StudentAttachmentController::class, 'preview']);
+    Route::post('student/attachment/save/{student_id}',[ StudentAttachmentController::class, 'saveAttachment']);
+    Route::delete('student/attachment/delete/{id}', [ StudentAttachmentController::class, 'destroy']);
+    Route::put('student/attachment/rename/{id}', [ StudentAttachmentController::class, 'rename']);
 });
