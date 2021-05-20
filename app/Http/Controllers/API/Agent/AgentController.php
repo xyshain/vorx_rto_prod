@@ -13,6 +13,7 @@ use App\Models\AvtLabourForceStatus;
 use App\Models\AvtLangIdentifier;
 use App\Models\AvtPriorEducationAchievement;
 use App\Models\AvtStateIdentifier;
+use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -234,6 +235,7 @@ class AgentController extends Controller
         $indigenous = AvtClientIndigenousStatus::orderBy('description','asc')->select('description as label','value')->get();
         $labour_force_status = AvtLabourForceStatus::orderBy('status','asc')->select('status as label','value')->get();
         $schl_lvl_completed = AvtHighestSchlLvlCompleted::orderBy('description','asc')->select('description as label','value')->get();
+        $courses = Course::orderBy('name','asc')->select(DB::raw("CONCAT(code,' - ',name) AS label"), 'code as value')->get();
         $defaults['country'] = $country;
         $defaults['disabilities'] = $disabilities;
         $defaults['achievements'] = $achievements;
@@ -242,6 +244,7 @@ class AgentController extends Controller
         $defaults['indigenous'] = $indigenous;
         $defaults['labour_force_status'] = $labour_force_status;
         $defaults['schl_lvl_completed'] = $schl_lvl_completed;
+        $defaults['courses'] = $courses;
         
         return $defaults;
     }
