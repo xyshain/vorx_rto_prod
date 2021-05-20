@@ -104,6 +104,7 @@ class StudentController extends Controller
     public function show(Student $student){
         // $data = [];
         $person = $student->party->person;
+       
         $funded_detail = $student->funded_detail()->select([
                     'unique_student_id',
                     'highest_school_level_completed_id',
@@ -113,7 +114,6 @@ class StudentController extends Controller
                     'labour_force_status_id',
                     'country_id',
                     'disability_flag',
-                    'disability_ids',
                     'disability_ids',
                     'prior_educational_achievement_ids',
                     'prior_educational_achievement_flag',
@@ -127,8 +127,20 @@ class StudentController extends Controller
                     'verified_by',
                     'verified_date',
                 ])->first();
+        $funded_detail->disability_ids = $funded_detail->disabilityvalue;
+        $funded_detail->prior_educational_achievement_ids = $funded_detail->prioreducationvalue;
+        $funded_detail->language_id = $funded_detail->languageapi;
+        $funded_detail->indigenous_status_id = $funded_detail->indigenous;
+        $funded_detail->country_id = $funded_detail->country;
+        $funded_detail->highest_school_level_completed_id = $funded_detail->highestschool;
 
         if($funded_detail->disability_flag == null){
+            if(count($funded_detail->disability_ids) > 0){
+                $funded_detail->disability_flag = false;
+            }else{
+                
+                $funded_detail->disability_flag = true;
+            }
             $funded_detail->disability_flag = false;
         }else{
             if($funded_detail->disability_flag == 'N'){

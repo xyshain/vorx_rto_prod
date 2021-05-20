@@ -91,27 +91,51 @@ class FundedStudentDetails extends Model implements AuditableContract
         return $this->belongsTo(AvtLabourForceStatus::class, 'labour_force_status_id', 'value');
     }
 
-    public function getDisabilityValueAttributes()
+    public function getDisabilityValueAttribute()
     {
-        $disability = AvtDisabilityTypes::whereIn('value', explode(',', $this->disability_ids))->get();
-
+        
+        $disability = AvtDisabilityTypes::whereIn('value', explode(',',$this->disability_ids))->select('description as label','value')->get();
         if (isset($disability[0])) {
-            return implode(', ', $disability->pluck('description'));
+            return  $disability;
+            // return implode(', ', $disability->pluck('description'));
         } else {
             return null;
         }
     }
 
-    public function getPriorEducationValueAttributes()
+    public function getPriorEducationValueAttribute()
     {
-        $prior = AvtPriorEducationAchievement::whereIn('value', explode(',', $this->prior_educational_achievement_ids))->get();
+        $prior = AvtPriorEducationAchievement::whereIn('value', explode(',', $this->prior_educational_achievement_ids))->select('description as label','value')->get();
 
         if (isset($prior[0])) {
-            return implode(', ', $prior->pluck('description'));
+            return $prior;
         } else {
-            return null;
+            return [];
         }
     }
+
+    public function getLanguageapiAttribute(){
+        $lang = AvtLangIdentifier::where('value',$this->language_id)->select('description as label','value')->first();
+        return $lang;
+    }
+
+    public function getIndigenousAttribute(){
+        $lang = AvtClientIndigenousStatus::where('value',$this->indigenous_status_id)->select('description as label','value')->first();
+        return $lang;
+    }
+
+    public function getCountryAttribute(){
+        $lang = AvtCountryIdentifier::where('identifier',$this->country_id)->select('full_name as label','identifier as value')->first();
+        return $lang;
+    }
+
+    public function getHighestSchoolAttribute(){
+        $lang = AvtHighestSchlLvlCompleted::where('value',$this->highest_school_level_completed_id)->select('description as label','value')->first();
+        return $lang;
+    }
+
+
+
 
 
 
