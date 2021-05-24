@@ -46,6 +46,7 @@ Route::middleware(['auth:sanctum'])->group(function(){
 
 
     Route::get('/student/{student}',[ StudentController::class, 'show' ]);
+    Route::get('/student/{student}/course',[ StudentController::class, 'course' ]);
     Route::get('/students/{user}',[ StudentController::class, 'index' ]);
 
     /* Student attachment */
