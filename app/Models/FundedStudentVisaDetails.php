@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Student\Student;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -51,5 +52,10 @@ class FundedStudentVisaDetails extends Model implements AuditableContract
     public function user()
     {
         return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
+
+    public function getVisaValueAttribute(){
+        $lang = VisaStatus::where('id',$this->visa_type)->select(DB::raw('id as value, IF(id=1, "Not Applicable", concat(type, " - ", visa)) AS label'))->first();
+        return $lang;
     }
 }

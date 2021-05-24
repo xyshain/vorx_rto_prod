@@ -133,6 +133,10 @@ class FundedStudentDetails extends Model implements AuditableContract
         $lang = AvtHighestSchlLvlCompleted::where('value',$this->highest_school_level_completed_id)->select('description as label','value')->first();
         return $lang;
     }
+    public function getlabourAttribute(){
+        $lang = AvtLabourForceStatus::where('value',$this->labour_force_status_id)->select('status as label','value')->first();
+        return $lang;
+    }
 
 
 
