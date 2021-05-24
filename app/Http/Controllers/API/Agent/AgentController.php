@@ -15,6 +15,7 @@ use App\Models\AvtPostcode;
 use App\Models\AvtPriorEducationAchievement;
 use App\Models\AvtStateIdentifier;
 use App\Models\VisaStatus;
+use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -239,6 +240,7 @@ class AgentController extends Controller
         $postcode = AvtPostcode::select(DB::raw("CONCAT(postcode ,' - ',suburb,', ',state) AS label"), 'id as value')->get();
         $visa_type = VisaStatus::select(DB::raw('id as value, IF(id=1, "Not Applicable", concat(type, " - ", visa)) AS label'))->orderBy('value', 'asc')->get();
 
+        $courses = Course::orderBy('name','asc')->select(DB::raw("CONCAT(code,' - ',name) AS label"), 'code as value')->get();
         $defaults['country'] = $country;
         $defaults['disabilities'] = $disabilities;
         $defaults['achievements'] = $achievements;
@@ -249,6 +251,7 @@ class AgentController extends Controller
         $defaults['schl_lvl_completed'] = $schl_lvl_completed;
         $defaults['postcode'] = $postcode;
         $defaults['visa_type'] = $visa_type;
+        $defaults['courses'] = $courses;
         
         return $defaults;
     }
