@@ -11,8 +11,10 @@ use App\Models\AvtDisabilityTypes;
 use App\Models\AvtHighestSchlLvlCompleted;
 use App\Models\AvtLabourForceStatus;
 use App\Models\AvtLangIdentifier;
+use App\Models\AvtPostcode;
 use App\Models\AvtPriorEducationAchievement;
 use App\Models\AvtStateIdentifier;
+use App\Models\VisaStatus;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -235,6 +237,9 @@ class AgentController extends Controller
         $indigenous = AvtClientIndigenousStatus::orderBy('description','asc')->select('description as label','value')->get();
         $labour_force_status = AvtLabourForceStatus::orderBy('status','asc')->select('status as label','value')->get();
         $schl_lvl_completed = AvtHighestSchlLvlCompleted::orderBy('description','asc')->select('description as label','value')->get();
+        $postcode = AvtPostcode::select(DB::raw("CONCAT(postcode ,' - ',suburb,', ',state) AS label"), 'id as value')->get();
+        $visa_type = VisaStatus::select(DB::raw('id as value, IF(id=1, "Not Applicable", concat(type, " - ", visa)) AS label'))->orderBy('value', 'asc')->get();
+
         $courses = Course::orderBy('name','asc')->select(DB::raw("CONCAT(code,' - ',name) AS label"), 'code as value')->get();
         $defaults['country'] = $country;
         $defaults['disabilities'] = $disabilities;
@@ -244,6 +249,8 @@ class AgentController extends Controller
         $defaults['indigenous'] = $indigenous;
         $defaults['labour_force_status'] = $labour_force_status;
         $defaults['schl_lvl_completed'] = $schl_lvl_completed;
+        $defaults['postcode'] = $postcode;
+        $defaults['visa_type'] = $visa_type;
         $defaults['courses'] = $courses;
         
         return $defaults;

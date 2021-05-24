@@ -133,12 +133,12 @@ class StudentController extends Controller
         $funded_detail->indigenous_status_id = $funded_detail->indigenous;
         $funded_detail->country_id = $funded_detail->country;
         $funded_detail->highest_school_level_completed_id = $funded_detail->highestschool;
+        $funded_detail->labour_force_status_id = $funded_detail->labour;
 
         if($funded_detail->disability_flag == null){
-            if(count($funded_detail->disability_ids) > 0){
+            if($funded_detail->disability_ids == null){
                 $funded_detail->disability_flag = false;
             }else{
-                
                 $funded_detail->disability_flag = true;
             }
             $funded_detail->disability_flag = false;
@@ -186,6 +186,7 @@ class StudentController extends Controller
                     "emer_telephone",
                     "emer_relationship"
                 ])->first();
+        $contact_detail->addr_suburb = $contact_detail->suburb;
         $visa = $student->visa_details()->select([
                 'nationality',
                 'passport_number',
@@ -196,10 +197,10 @@ class StudentController extends Controller
                 'expiry_date_visa_type',
                 'applied_for_au_residency',
                 'study_rights'
-            ])->first();
+            ])->first();    
+        $visa->visa_type = $visa->visavalue;
     
       
-        $course = $student->funded_course;
 
         $data = [
             'firstname'     => $person->firstname,
@@ -211,9 +212,26 @@ class StudentController extends Controller
             'funded_detail' => $funded_detail,
             'contact'       => $contact_detail,
             'visa'          => $visa,
-            'course'        => $course
         ];
         return $data;
+    }
+
+    public function course(Student $student){
+        
+        $data = $student->load('funded_course.status','funded_course.offer_detail');
+        $course = [];
+        foreach($data->funded_course as $funded_course){
+            $d = [
+                'code' => $funded_course->course->code,
+                'name' => $funded_course->course->name,
+                'status' => $funded_course->status != null ?  $funded_course->status->description : '',
+                'start_date' => Carbon::parse($funded_course->start_date)->format('d/m/Y'), 
+                'end_date' => Carbon::parse($funded_course->end_date)->format('d/m/Y'), 
+            ];
+            array_push($course,$d);
+           
+        }
+        return $course;
     }
 
 }
