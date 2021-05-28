@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\API\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\AgentTempUpdate;
+use App\Models\AvtPostcode;
+use App\Models\AvtStateIdentifier;
 use App\Models\Student\Student;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
@@ -218,20 +222,162 @@ class StudentController extends Controller
 
     public function course(Student $student){
         
-        $data = $student->load('funded_course.status','funded_course.offer_detail');
+        $data = $student->load('funded_course.status','funded_course.offer_detail','funded_course.course_details');
+      
         $course = [];
         foreach($data->funded_course as $funded_course){
+            $course_fee_type = '';
+            switch ($funded_course->course_fee_type) {
+                case 'C':
+                    $course_fee_type = 'Concessional';
+                    break;
+                case 'NC':
+                    $course_fee_type = 'Non-Concessional';
+                    break;
+                default:
+                    $course_fee_type = 'Full Fee';
+                    break;
+            }
             $d = [
                 'code' => $funded_course->course->code,
                 'name' => $funded_course->course->name,
                 'status' => $funded_course->status != null ?  $funded_course->status->description : '',
                 'start_date' => Carbon::parse($funded_course->start_date)->format('d/m/Y'), 
                 'end_date' => Carbon::parse($funded_course->end_date)->format('d/m/Y'), 
+                'eligibility' => $funded_course->eligibility == 'E' ? 'Eligible' : 'Not Eligible',
+                'fee' => $funded_course->course_fee, 
+                'course_fee_type' => $course_fee_type, 
+                'state' => $funded_course->location, 
+                'funding_type' => $funded_course->course_details->fundingtype != null ? $funded_course->course_details->fundingtype->name : '', 
+                'national_funding' => $funded_course->course_details->fund_national != null ? $funded_course->course_details->fund_national->description : '', 
+                'state_funding' => $funded_course->course_details->fund_state != null ? $funded_course->course_details->fund_state->description : '', 
+                'specific_funding' => $funded_course->course_details->specficit_funding != null ? $funded_course->course_details->specficit_funding->description : '', 
+                'study_reasons' => $funded_course->course_details->study_reason != null ? $funded_course->course_details->study_reason->description : '', 
+                'delivery_mode' => $funded_course->course_details->delivery_mode != null ? $funded_course->course_details->delivery_mode->description  : '', 
+                'training_contract' => $funded_course->course_details->training_contract_id, 
+                'apprenticeships' => $funded_course->course_details->client_id_apprenticeships, 
+                'purchasing_contract_id' => $funded_course->course_details->purchasing_contract_id, 
+                'purchasing_contract_schedule_id' => $funded_course->course_details->purchasing_contract_schedule_id, 
+                'associated_course_id' => $funded_course->course_details->associated_course_id, 
+                'full_time_leaning_option' => $funded_course->course_details->full_time_leaning_option, 
+                'full_time_leaning_option' => $funded_course->course_details->full_time_leaning_option, 
+                'outcome_id_national' => $funded_course->course_details->outcome_id_national, 
+                'commencing_course' => $funded_course->course_details->commencing_course != null ? $funded_course->course_details->commencing_course->description : '', 
+                
             ];
             array_push($course,$d);
            
         }
         return $course;
+    }
+
+
+    public function update(Request $request, Student $student){
+
+        switch ($request->module) {
+            case 'info':
+                $data = [
+                    'firstname' => $request->data['firstname'],
+                    'lastname' => $request->data['lastname'],
+                    'middlename' => $request->data['middlename'],
+                    'date_of_birth' => $request->data['dob'],
+                    'prefix' => $request->data['prefix'],
+                ];
+                $status = $this->student_info($data,$student->student_id);
+                if($status == 'success'){
+                    return response(['status'=>'success','message'=>'update submitted']);
+                }else{
+                    return response(['status'=>'error']);
+                }
+                break;
+            case 'contact' : 
+                $data = $request->data;
+                $status  = $this->contact_info($data,$student->student_id);
+                if($status == 'success'){
+                    return response(['status'=>'success','message'=>'update submitted']);
+                }else{
+                    return $status;
+                    return response(['status'=>'error']);
+                }
+                break;
+            case 'avetmiss' : 
+                $data = $request->data;
+                $status  = $this->avetmiss_info($data,$student->student_id);
+                if($status == 'success'){
+                    return response(['status'=>'success','message'=>'update submitted']);
+                }else{
+                    return $status;
+                    return response(['status'=>'error']);
+                }
+                break;
+            default:
+                abort(404,'NOT FOUND');
+                # code...
+                break;
+        }
+        // return $request->all();
+    }
+
+    private function avetmiss_info($avetmiss,$student_id){
+        try {
+            //code...
+            DB::beginTransaction();
+            AgentTempUpdate::updateOrCreate([
+                'student_id' => $student_id,
+                'module' => 'avetmiss',
+                'agent_id'=> Auth::user()->id
+            ],['inputs' => $avetmiss]);
+            DB::commit();
+            return 'success';
+        } catch (\Throwable $th) {
+            throw $th;
+        }
+    }
+
+    private function contact_info($contact,$student_id){
+        try {
+        DB::beginTransaction();
+        $suburb = $contact['addr_suburb'];
+        $suburb_id = $suburb['value'];
+        $postcode = AvtPostcode::where('id', $suburb_id)->first();
+        $suburb = $postcode->suburb;
+        $state = AvtStateIdentifier::where('state_key', $postcode->state)->first();
+        $state_id = $state->id;
+        $contact['addr_suburb'] = $suburb;
+        $contact['postcode'] = $postcode->postcode;
+        $contact['state_id'] = $state->id;
+
+        AgentTempUpdate::updateOrCreate([
+            'student_id' => $student_id,
+            'module' => 'contact',
+            'agent_id'=> Auth::user()->id
+        ],['inputs' => $contact]);
+        DB::commit();
+        return 'success';
+        
+            //code...
+        } catch (\Throwable $th) {
+            DB::rollback();
+            throw $th;
+        }
+
+    }
+
+    private function student_info($student,$student_id){
+        try {
+            DB::beginTransaction();
+            AgentTempUpdate::updateOrCreate([
+                'student_id' => $student_id,
+                'module' => 'info',
+                'agent_id'=> Auth::user()->id
+            ],['inputs' => $student]);
+            DB::commit();
+            return 'success';
+        } catch (\Throwable $th) {
+            DB::rollback();
+            throw $th;
+        }
+       
     }
 
 }
