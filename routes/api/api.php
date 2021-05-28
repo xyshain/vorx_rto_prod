@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\Agent\AgentController;
+use App\Http\Controllers\API\Agent\CommissionController;
 use App\Http\Controllers\API\Auth\LoginController;
 use App\Http\Controllers\API\Student\StudentController;
 use App\Http\Controllers\API\Student\StudentAttachmentController;
@@ -57,4 +58,8 @@ Route::middleware(['auth:sanctum'])->group(function(){
     Route::post('student/attachment/save/{student_id}',[ StudentAttachmentController::class, 'saveAttachment']);
     Route::delete('student/attachment/delete/{id}', [ StudentAttachmentController::class, 'destroy']);
     Route::put('student/attachment/rename/{id}', [ StudentAttachmentController::class, 'rename']);
+
+
+    /* Commission */
+    Route::get('commission',[ CommissionController::class, 'index']);
 });

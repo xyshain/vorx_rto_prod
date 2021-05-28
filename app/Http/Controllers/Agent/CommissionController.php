@@ -16,7 +16,7 @@ class CommissionController extends Controller
 {
     //
     public function index(){
-        $agents = AgentDetail::with('commission_settings.sub_settings.student', 'commission_settings.cutoff_period', 'commission_settings.sub_settings.course', 'commission_settings.sub_settings.cutoff_period')->has('commission_settings')->get();
+        $agents = AgentDetail::with('commission_settings.sub_settings.student', 'commission_settings.cutoff_period', 'commission_settings.sub_settings.student_course', 'commission_settings.sub_settings.cutoff_period')->has('commission_settings')->get();
 
         $list = [];
 
@@ -47,7 +47,8 @@ class CommissionController extends Controller
                 }
                 foreach($commission_setting->sub_settings as $subkey => $subsetting){
                     $student = $subsetting->student;
-                    $funded_course = $student->funded_course()->where('course_code', $subsetting->course->code)->first();
+                    $funded_course = $subsetting->student_course;
+                    // $funded_course = $student->funded_course()->where('course_code', $subsetting->course->code)->first();
                     $offer_details = $funded_course->offer_detail;
                     // $payment_details = $funded_course->payment_details()->get(['id as payment_id', 'payment_date', 'amount', 'pre_deduc_comm', 'comm_release_status', 'note'])->toArray();
                     $payment_details = $funded_course->payment_details()->doesntHave('commission')->get(['id as payment_id','payment_date','amount','pre_deduc_comm','comm_release_status','note'])->toArray();
@@ -70,7 +71,7 @@ class CommissionController extends Controller
                         'student_id' => $student->student_id,
                         'name' => $student->party->name,
                         'dob' => $student->party->person->date_of_birth,
-                        'code' => $subsetting->course->code.' - '.$subsetting->course->name,
+                        'code' => $funded_course->course->code.' - '.$funded_course->course->name,
                         'student_course_id' => $funded_course->id,
                         'course_start' => $funded_course->start_date,
                         'course_end' => $funded_course->end_date,
