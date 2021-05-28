@@ -29,6 +29,7 @@ Route::post('login',[LoginController::class,'login']);
 Route::delete('logout',[LoginController::class,'logout']);
 
 Route::get('/test/student/{student}',[ StudentController::class, 'show' ]);
+Route::get('/test/student/{student}/course',[ StudentController::class, 'course' ]);
 
 Route::middleware(['auth:sanctum'])->group(function(){
     // default fetching 
@@ -44,10 +45,11 @@ Route::middleware(['auth:sanctum'])->group(function(){
     Route::delete('profile/attachment/delete/{id}', [ AgentController::class, 'destroy']);
     Route::put('profile/attachment/rename/{id}', [ AgentController::class, 'rename']);
 
-
+    /* Student */
     Route::get('/student/{student}',[ StudentController::class, 'show' ]);
     Route::get('/student/{student}/course',[ StudentController::class, 'course' ]);
     Route::get('/students/{user}',[ StudentController::class, 'index' ]);
+    Route::patch('/student/info/{student}',[ StudentController::class, 'update' ]);
 
     /* Student attachment */
     Route::get('student/attachment/fetch/{student_id}',[ StudentAttachmentController::class, 'fetchAllAttachment']);
