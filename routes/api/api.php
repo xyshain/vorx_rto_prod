@@ -62,4 +62,5 @@ Route::middleware(['auth:sanctum'])->group(function(){
 
     /* Commission */
     Route::get('commission',[ CommissionController::class, 'index']);
+    Route::get('commission/{commission_serial}',[ CommissionController::class, 'commission']);
 });

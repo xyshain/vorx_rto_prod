@@ -401,7 +401,8 @@ class CommissionController extends Controller
                 }
                 foreach ($commission_setting->sub_settings as $subkey => $subsetting) {
                     $student = $subsetting->student;
-                    $funded_course = $student->funded_course()->where('course_code', $subsetting->course->code)->first();
+                    // $funded_course = $student->funded_course()->where('course_code', $subsetting->course->code)->first();
+                    $funded_course = $student->student_course;
                     $offer_details = $funded_course->offer_detail;
                     $payment_details = $funded_course->payment_details()->doesntHave('commission')->get(['id as payment_id', 'payment_date', 'amount', 'pre_deduc_comm', 'comm_release_status', 'note'])->toArray();
 
@@ -423,7 +424,7 @@ class CommissionController extends Controller
                         'student_id' => $student->student_id,
                         'name' => $student->party->name,
                         'dob' => $student->party->person->date_of_birth,
-                        'code' => $subsetting->course->code . ' - ' . $subsetting->course->name,
+                        'code' => $funded_course->course->code . ' - ' . $funded_course->course->name,
                         'course_start' => $funded_course->start_date,
                         'course_end' => $funded_course->end_date,
                         'course_end' => $funded_course->end_date,
@@ -456,7 +457,7 @@ class CommissionController extends Controller
     }
 
     public function view_commison_per_agent($serial,$agent_id){
-        $cutoff = AgentCommissionCutoff::with('commission_details.commission_sub.course')->where('serial_no',$serial)->where('agent_id',$agent_id)->first();
+        $cutoff = AgentCommissionCutoff::with('commission_details.commission_sub.student_course')->where('serial_no',$serial)->where('agent_id',$agent_id)->first();
         // dd($cutoff);
         $com_setting = TrainingOrganisation::first();
         if ($com_setting->logo_img != null) {
@@ -483,7 +484,7 @@ class CommissionController extends Controller
                 'student_id'    => $commission_detail->commission_sub->student_id,
                 'name'          => $commission_detail->commission_sub->student->party->name,
                 'dob'          => $commission_detail->commission_sub->student->party->person->date_of_birth,
-                'course'        => $commission_detail->commission_sub->course->code. ' - ' .$commission_detail->commission_sub->course->name,
+                'course'        => $commission_detail->commission_sub->student_course->course_code. ' - ' .$commission_detail->commission_sub->student_course->course->name,
                 'payments'      => $commission_detail->commission_sub->commission_details,
                 'tuition'       =>  $tuition,
                 'non_tuition'   => $non_tuition,
