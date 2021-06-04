@@ -123,11 +123,12 @@ return [
     | new session cookie is created by the framework for every driver.
     |
     */
+    'cookie' => 'RTO_laravel_session',
 
-    'cookie' => env(
-        'SESSION_COOKIE',
-        Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
-    ),
+    // 'cookie' => env(
+    //     'SESSION_COOKIE',
+    //     Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
+    // ),
 
     /*
     |--------------------------------------------------------------------------
@@ -179,7 +180,7 @@ return [
     |
     */
 
-    'http_only' => true,
+    'http_only' => false,
 
     /*
     |--------------------------------------------------------------------------
