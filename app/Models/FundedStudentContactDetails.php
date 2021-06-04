@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Student\Student;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -78,5 +79,10 @@ class FundedStudentContactDetails extends Model implements AuditableContract
         // dd($address);
         return $address;
 
+    }
+
+    public function getSuburbAttribute(){
+        $lang = AvtPostcode::where('postcode',$this->postcode)->where('suburb',$this->addr_suburb)->select(DB::raw("CONCAT(postcode ,' - ',suburb,', ',state) AS label"), 'id as value')->first();
+        return $lang;
     }
 }

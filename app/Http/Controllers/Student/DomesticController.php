@@ -818,7 +818,7 @@ class DomesticController extends Controller
         // dd($request);
         if (count($request['addr_suburb']) != 0) {
             $suburb = $request['addr_suburb'];
-            $suburb_id = $suburb['id'];
+            $suburb_id = $suburb['value'];
             $postcode = AvtPostcode::where('id', $suburb_id)->first();
             $suburb = $postcode->suburb;
             $state = AvtStateIdentifier::where('state_key', $postcode->state)->first();

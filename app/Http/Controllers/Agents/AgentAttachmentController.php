@@ -33,7 +33,7 @@ class AgentAttachmentController extends Controller
             $agentAttachment = new AgentAttachment([
                 'name'      => $file->getClientOriginalName(),
                 'hash_name' => $hashFileName,
-                'size'      => $file->getClientSize(),
+                'size'      => $file->getSize(),
                 'mime_type' => $file->getMimeType(),
                 'ext'       => $file->guessClientExtension(),
                 '_input'       => 'attachment',

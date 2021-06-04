@@ -42,6 +42,10 @@ class FundedStudentCourseDetail extends Model implements AuditableContract
         return $this->belongsTo(AvtFundingSourceNational::class, 'funding_source_national', 'value');
     }
 
+    public function study_reason(){
+        return $this->belongsTo(AvtStudyReason::class,'study_reason_id','value');
+    }
+
     public function fund_state()
     {
         return $this->belongsTo(AvtFundingSourceState::class, 'funding_source_state_training_authority', 'value');
@@ -50,8 +54,17 @@ class FundedStudentCourseDetail extends Model implements AuditableContract
     {
         return $this->belongsTo(AvtPredominantDlvrMode::class, 'predominant_delivery_mode', 'value');
     }
-    public function funding_type()
+    public function fundingtype()
     {
         return $this->belongsTo(AvtFundingType::class, 'funding_type');
     }
+    public function specficit_funding()
+    {
+        return $this->belongsTo(AvtSpecificFunding::class, 'specific_funding_id');
+    }
+
+    public function commencing_course(){
+        return $this->belongsTo(AvtCommencingCourse::class,'commence_prg_identifier','value');
+    }
+
 }

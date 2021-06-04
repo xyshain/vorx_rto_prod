@@ -61,7 +61,7 @@ class DocumentsController extends Controller
                 'name'      => $file->getClientOriginalName(),
                 'note'      => $request->note,
                 'hash_name' => $hashFileName,
-                'size'      => $file->getClientSize(),
+                'size'      => $file->getSize(),
                 'mime_type' => $file->getMimeType(),
                 'ext'       => $file->guessClientExtension(),
                 '_input'    => 'attachment',

@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Models\Course\Course;
 use App\Models\Student\Student;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AgentCommissionSettingSub extends Model
 {
     //
+    use SoftDeletes;
 
     public $fillable = [
         'agent_id',
@@ -22,6 +24,7 @@ class AgentCommissionSettingSub extends Model
         'commission_limit',
         'commission_type',
         'commission_cutoff',
+        'cut_off_period',
         'remarks',
     ];
 

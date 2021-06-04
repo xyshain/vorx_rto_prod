@@ -84,7 +84,7 @@ export default {
                     url: '/student/fetch-logins/'+vm.student_id
                 })
                 .then(res => {
-                    console.log(res.data.party)
+                    // console.log(res.data.party)
                     vm.has_logins = res.data.party.user == null ? false : true
                     vm.user = res.data.party.user == null ? {username:vm.student_id} : res.data.party.user
                 })

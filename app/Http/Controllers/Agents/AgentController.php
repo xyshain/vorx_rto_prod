@@ -320,7 +320,7 @@ class AgentController extends Controller
                 'gst_type' =>  $value->gst_status == 1 ? 'Including' : 'Excluding',
                 'remarks' => $value->remarks,
                 // 'registered_gst' => $value->gst_status,
-                'registered_gst' => title_case(str_slug($value->gst_type)),
+                'registered_gst' => strtoupper($value->gst_type),
                 'registered_gst_sign' => $value->gst_status,
                 'registered_gst_date' => $value->registered_date != '0000-00-00' ? Carbon::parse($value->registered_date)->format('d/m/Y') : null,
                 // 'starting_student_count' => $value->starting_student_count,
@@ -423,8 +423,7 @@ class AgentController extends Controller
     {
         
         // dd($commId);
-        $acs = AgentCommissionSetting::find($commId);
-
+        $acs = AgentCommissionSettingMain::find($commId);
         try {
             // start db transaction
             DB::beginTransaction();

@@ -249,7 +249,13 @@ class StudentController extends Controller
         $to = TrainingOrganisation::first();
         if($student_id == null){
             $student = Student::where('student_id', '!=', null)->latest()->first();
-            $student_id = $student->student_id;
+            if($student == null){
+                $student_id = 0;
+            }else{
+                $student_id = $student->student_id;
+            }
+            
+            
         }
         $next_id = abs(str_replace($to->student_id_prefix,"",$student_id));
         $next_id++;

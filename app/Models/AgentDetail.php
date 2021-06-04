@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Student\OfferLetter\OfferLetter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
@@ -59,5 +60,12 @@ class AgentDetail extends Model implements AuditableContract
        return $this->hasMany(AgentAttachment::class,'agent_id');
     }
 
+    public function offer_letters(){
+        return $this->hasMany(OfferLetter::class,'agent_id');
+    }
+
+    public function commissions(){
+        return $this->hasMany(AgentCommissionCutoff::class,'agent_id')->orderBy('id','DESC');
+    }
 
 }
