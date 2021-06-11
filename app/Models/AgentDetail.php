@@ -64,5 +64,8 @@ class AgentDetail extends Model implements AuditableContract
         return $this->hasMany(OfferLetter::class,'agent_id');
     }
 
+    public function commissions(){
+        return $this->hasMany(AgentCommissionCutoff::class,'agent_id')->orderBy('id','DESC');
+    }
 
 }

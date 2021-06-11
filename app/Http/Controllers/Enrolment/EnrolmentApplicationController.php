@@ -190,6 +190,11 @@ class EnrolmentApplicationController extends Controller
             $studentContactDetails['emer_address'] = $this->nullchecker('e_address', $enrolmentForm);
             $studentContactDetails['emer_telephone'] = $this->nullchecker('e_telephone', $enrolmentForm);
             $studentContactDetails['emer_relationship'] = $this->nullchecker('e_relationship', $enrolmentForm);
+            if($enrolmentForm['currently_in_australia'] === false){
+                $studentContactDetails['currently_in_australia'] = false;
+                $studentContactDetails['home_country_res_addr'] = $enrolmentForm['home_country_res_addr'];
+
+            }
 
             $studentDetails['highest_school_level_completed_id'] = $enrolmentForm['highest_school_level_completed_id']['value'];
             $studentDetails['indigenous_status_id'] = $indigenous_status;  //usabon
@@ -1421,6 +1426,11 @@ class EnrolmentApplicationController extends Controller
             $studentContactDetails['emer_address'] = $this->nullchecker('e_address', $enrolmentForm);
             $studentContactDetails['emer_telephone'] = $this->nullchecker('e_telephone', $enrolmentForm);
             $studentContactDetails['emer_relationship'] = $this->nullchecker('e_relationship', $enrolmentForm);
+            if($enrolmentForm['currently_in_australia'] === false){
+                $studentContactDetails['currently_in_australia'] = false;
+                $studentContactDetails['home_country_res_addr'] = $enrolmentForm['home_country_res_addr'];
+
+            }
 
             $studentDetails['highest_school_level_completed_id'] = $enrolmentForm['highest_school_level_completed_id']['value'];
             $studentDetails['indigenous_status_id'] = $indigenous_status;  //usabon
@@ -1626,6 +1636,11 @@ class EnrolmentApplicationController extends Controller
         $studentContactDetails['emer_address'] = $this->nullchecker('e_address', $enrolmentForm);
         $studentContactDetails['emer_telephone'] = $this->nullchecker('e_telephone', $enrolmentForm);
         $studentContactDetails['emer_relationship'] = $this->nullchecker('e_relationship', $enrolmentForm);
+        if($enrolmentForm['currently_in_australia'] === false){
+            $studentContactDetails['currently_in_australia'] = false;
+            $studentContactDetails['home_country_res_addr'] = $enrolmentForm['home_country_res_addr'];
+
+        }
 
         $studentDetails['highest_school_level_completed_id'] = $enrolmentForm['highest_school_level_completed_id']['value'];
         $studentDetails['indigenous_status_id'] = $indigenous_status;  //usabon
