@@ -209,7 +209,8 @@ export default {
       balance : function (){
             let balance = 0
             if(this.detail != undefined){
-                if(this.payment_sched.length < 0){
+              console.log(this.payment_sched.length);
+                if(this.payment_sched.length == 0){
                   balance  =  this.course_fee
                 }else{
                   let temp_balance = this.payment_sched.map(function(item){
