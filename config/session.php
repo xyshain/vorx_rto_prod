@@ -123,7 +123,7 @@ return [
     | new session cookie is created by the framework for every driver.
     |
     */
-    'cookie' => 'RTO_laravel_session',
+    // 'cookie' => 'RTO_laravel_session',
 
 // <<<<<<< HEAD
     // 'cookie' => env(
@@ -131,11 +131,11 @@ return [
     //     Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
     // ),
 // =======
-//    'cookie' => 'RTO_laravel_session',
-//     'cookie' => env(
-//         'SESSION_COOKIE',
-//         Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
-//     ),
+   'cookie' => 'RTO_laravel_session',
+    'cookie' => env(
+        'SESSION_COOKIE',
+        Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
+    ),
 // >>>>>>> eaaa26c068e1d1e91edb1fdf0819c1c76fc2e041
 
     /*
