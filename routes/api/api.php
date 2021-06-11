@@ -29,7 +29,7 @@ Route::get('/check-rto/{org_id}', 'Auth\LoginController@check_rto');
 Route::post('login',[LoginController::class,'login']);
 Route::delete('logout',[LoginController::class,'logout']);
 
-Route::get('/test/student/{student}',[ StudentController::class, 'show' ]);
+Route::get('/test/student/{user}',[ StudentController::class, 'index' ]);
 Route::get('/test/student/{student}/course',[ StudentController::class, 'course' ]);
 
 Route::middleware(['auth:sanctum'])->group(function(){

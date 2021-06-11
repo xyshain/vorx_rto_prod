@@ -19,13 +19,16 @@ class StudentController extends Controller
     public function index($username){
         // $user = User::where('username',$username)->first();
         $user = Auth::user();
+        // dd($user);
         $students = [];
         if($user->id == 1){
             $rstudent = Student::orderBy('id','desc')->get();
             foreach($rstudent as $student){
                 $funded_course = $student->funded_course->load('course');
+
                 $course = [];
                 foreach($funded_course as $fcourse){
+                    $balance = 0;
                     $status_color = 'positive';
                     if($fcourse->status_id == 1){
                         $status_color = 'warning';
@@ -36,19 +39,41 @@ class StudentController extends Controller
                     }else{
                         $status_color = 'negative';
                     }
+                    $balance = (float)$fcourse->course_fee - $fcourse->payment_details->sum('amount');
                     if($fcourse->course  == null){
-                        $course[] = [
-                            'code' => $fcourse->course_code,
-                            'name' => 'NO COURSE NAME',
-                            'status' => $fcourse->status->description,
-                            'status_color' => $status_color
-                        ];
+                        if($fcourse->course_code == '@@@@'){
+                            $course[] = [
+                                'code' => '',
+                                'name' => 'Unit of Compentency',
+                                'status' => $fcourse->status->description,
+                                'status_color' => $status_color,
+                                'payment_details' => number_format($fcourse->payment_details->sum('amount'),2),
+                                'course_fee' => $fcourse->course_fee,
+                                'balance' => $balance > 0 ? number_format($balance,2) : 0.00
+                                
+                            ];
+                        }else{
+                            
+                            $course[] = [
+                                'code' => $fcourse->course_code,
+                                'name' => 'NO COURSE NAME',
+                                'status' => $fcourse->status->description,
+                                'status_color' => $status_color,
+                                'payment_details' => number_format($fcourse->payment_details->sum('amount'),2),
+                                'course_fee' => $fcourse->course_fee,
+                                'balance' =>  $balance > 0 ? number_format($balance,2) : 0.00
+                            ];
+                        }
+                        
                     }else{
                         $course[] = [
                             'code' => $fcourse->course_code,
                             'name' => $fcourse->course->name,
                             'status' => $fcourse->status->description,
-                            'status_color' => $status_color
+                            'status_color' => $status_color,
+                            'payment_details' => number_format($fcourse->payment_details->sum('amount'),2),
+                            'course_fee' => $fcourse->course_fee,
+                            'balance' =>  $balance > 0 ? number_format($balance,2) : 0.00
                         ];
 
                     }
@@ -223,7 +248,6 @@ class StudentController extends Controller
     public function course(Student $student){
         
         $data = $student->load('funded_course.status','funded_course.offer_detail','funded_course.course_details');
-      
         $course = [];
         foreach($data->funded_course as $funded_course){
             $course_fee_type = '';
@@ -238,34 +262,65 @@ class StudentController extends Controller
                     $course_fee_type = 'Full Fee';
                     break;
             }
-            $d = [
-                'code' => $funded_course->course->code,
-                'name' => $funded_course->course->name,
-                'status' => $funded_course->status != null ?  $funded_course->status->description : '',
-                'start_date' => Carbon::parse($funded_course->start_date)->format('d/m/Y'), 
-                'end_date' => Carbon::parse($funded_course->end_date)->format('d/m/Y'), 
-                'eligibility' => $funded_course->eligibility == 'E' ? 'Eligible' : 'Not Eligible',
-                'fee' => $funded_course->course_fee, 
-                'course_fee_type' => $course_fee_type, 
-                'state' => $funded_course->location, 
-                'funding_type' => $funded_course->course_details->fundingtype != null ? $funded_course->course_details->fundingtype->name : '', 
-                'national_funding' => $funded_course->course_details->fund_national != null ? $funded_course->course_details->fund_national->description : '', 
-                'state_funding' => $funded_course->course_details->fund_state != null ? $funded_course->course_details->fund_state->description : '', 
-                'specific_funding' => $funded_course->course_details->specficit_funding != null ? $funded_course->course_details->specficit_funding->description : '', 
-                'study_reasons' => $funded_course->course_details->study_reason != null ? $funded_course->course_details->study_reason->description : '', 
-                'delivery_mode' => $funded_course->course_details->delivery_mode != null ? $funded_course->course_details->delivery_mode->description  : '', 
-                'training_contract' => $funded_course->course_details->training_contract_id, 
-                'apprenticeships' => $funded_course->course_details->client_id_apprenticeships, 
-                'purchasing_contract_id' => $funded_course->course_details->purchasing_contract_id, 
-                'purchasing_contract_schedule_id' => $funded_course->course_details->purchasing_contract_schedule_id, 
-                'associated_course_id' => $funded_course->course_details->associated_course_id, 
-                'full_time_leaning_option' => $funded_course->course_details->full_time_leaning_option, 
-                'full_time_leaning_option' => $funded_course->course_details->full_time_leaning_option, 
-                'outcome_id_national' => $funded_course->course_details->outcome_id_national, 
-                'commencing_course' => $funded_course->course_details->commencing_course != null ? $funded_course->course_details->commencing_course->description : '', 
-                
-            ];
+            if($funded_course->course_code == '@@@@'){
+                $d = [
+                    'code' => $funded_course->course_code,
+                    'name' => 'Unit of Competency',
+                    'status' => $funded_course->status != null ?  $funded_course->status->description : '',
+                    'start_date' => Carbon::parse($funded_course->start_date)->format('d/m/Y'), 
+                    'end_date' => Carbon::parse($funded_course->end_date)->format('d/m/Y'), 
+                    'eligibility' => $funded_course->eligibility == 'E' ? 'Eligible' : 'Not Eligible',
+                    'fee' => $funded_course->course_fee, 
+                    'course_fee_type' => $course_fee_type, 
+                    'state' => $funded_course->location, 
+                    'funding_type' => $funded_course->course_details->fundingtype != null ? $funded_course->course_details->fundingtype->name : '', 
+                    'national_funding' => $funded_course->course_details->fund_national != null ? $funded_course->course_details->fund_national->description : '', 
+                    'state_funding' => $funded_course->course_details->fund_state != null ? $funded_course->course_details->fund_state->description : '', 
+                    'specific_funding' => $funded_course->course_details->specficit_funding != null ? $funded_course->course_details->specficit_funding->description : '', 
+                    'study_reasons' => $funded_course->course_details->study_reason != null ? $funded_course->course_details->study_reason->description : '', 
+                    'delivery_mode' => $funded_course->course_details->delivery_mode != null ? $funded_course->course_details->delivery_mode->description  : '', 
+                    'training_contract' => $funded_course->course_details->training_contract_id, 
+                    'apprenticeships' => $funded_course->course_details->client_id_apprenticeships, 
+                    'purchasing_contract_id' => $funded_course->course_details->purchasing_contract_id, 
+                    'purchasing_contract_schedule_id' => $funded_course->course_details->purchasing_contract_schedule_id, 
+                    'associated_course_id' => $funded_course->course_details->associated_course_id, 
+                    'full_time_leaning_option' => $funded_course->course_details->full_time_leaning_option, 
+                    'full_time_leaning_option' => $funded_course->course_details->full_time_leaning_option, 
+                    'outcome_id_national' => $funded_course->course_details->outcome_id_national, 
+                    'commencing_course' => $funded_course->course_details->commencing_course != null ? $funded_course->course_details->commencing_course->description : '', 
+                ];
+            }else{
+
+            
+                $d = [
+                    'code' => $funded_course->course->code,
+                    'name' => $funded_course->course->name,
+                    'status' => $funded_course->status != null ?  $funded_course->status->description : '',
+                    'start_date' => Carbon::parse($funded_course->start_date)->format('d/m/Y'), 
+                    'end_date' => Carbon::parse($funded_course->end_date)->format('d/m/Y'), 
+                    'eligibility' => $funded_course->eligibility == 'E' ? 'Eligible' : 'Not Eligible',
+                    'fee' => $funded_course->course_fee, 
+                    'course_fee_type' => $course_fee_type, 
+                    'state' => $funded_course->location, 
+                    'funding_type' => $funded_course->course_details->fundingtype != null ? $funded_course->course_details->fundingtype->name : '', 
+                    'national_funding' => $funded_course->course_details->fund_national != null ? $funded_course->course_details->fund_national->description : '', 
+                    'state_funding' => $funded_course->course_details->fund_state != null ? $funded_course->course_details->fund_state->description : '', 
+                    'specific_funding' => $funded_course->course_details->specficit_funding != null ? $funded_course->course_details->specficit_funding->description : '', 
+                    'study_reasons' => $funded_course->course_details->study_reason != null ? $funded_course->course_details->study_reason->description : '', 
+                    'delivery_mode' => $funded_course->course_details->delivery_mode != null ? $funded_course->course_details->delivery_mode->description  : '', 
+                    'training_contract' => $funded_course->course_details->training_contract_id, 
+                    'apprenticeships' => $funded_course->course_details->client_id_apprenticeships, 
+                    'purchasing_contract_id' => $funded_course->course_details->purchasing_contract_id, 
+                    'purchasing_contract_schedule_id' => $funded_course->course_details->purchasing_contract_schedule_id, 
+                    'associated_course_id' => $funded_course->course_details->associated_course_id, 
+                    'full_time_leaning_option' => $funded_course->course_details->full_time_leaning_option, 
+                    'full_time_leaning_option' => $funded_course->course_details->full_time_leaning_option, 
+                    'outcome_id_national' => $funded_course->course_details->outcome_id_national, 
+                    'commencing_course' => $funded_course->course_details->commencing_course != null ? $funded_course->course_details->commencing_course->description : '', 
+                ];
+            }
             array_push($course,$d);
+
            
         }
         return $course;
