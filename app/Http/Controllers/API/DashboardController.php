@@ -112,10 +112,9 @@ class DashboardController extends Controller
             'commission_earnings' => $earnings > 0 ? number_format($earnings,2) : 0.00,
             'studentList'   => $students,
             'activities'    => $this->activities_details(),
-            'notifications'    => $this->notifications(),
             'total_activities'    => count($this->activities_details()),
         ];
-        // dd($dashboard);
+
        return $dashboard;
     }
 
