@@ -5,6 +5,7 @@ use App\Http\Controllers\API\Agent\CommissionController;
 use App\Http\Controllers\API\Auth\LoginController;
 use App\Http\Controllers\API\Student\StudentController;
 use App\Http\Controllers\API\Student\StudentAttachmentController;
+use App\Http\Controllers\API\DashboardController;
 use App\Models\Agent;
 use Illuminate\Http\Request;
 
@@ -67,4 +68,8 @@ Route::middleware(['auth:sanctum'])->group(function(){
     /* Commission */
     Route::get('commission',[ CommissionController::class, 'index']);
     Route::get('commission/{commission_serial}',[ CommissionController::class, 'commission']);
+
+    /* Dashboard */
+    Route::get('dashboard',[ DashboardController::class, 'index']);
+    Route::get('notifications',[ DashboardController::class, 'notifications']);
 });
