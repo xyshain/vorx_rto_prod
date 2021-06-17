@@ -5,6 +5,7 @@ use App\Http\Controllers\API\Agent\CommissionController;
 use App\Http\Controllers\API\Auth\LoginController;
 use App\Http\Controllers\API\Student\StudentController;
 use App\Http\Controllers\API\Student\StudentAttachmentController;
+use App\Http\Controllers\API\DashboardController;
 use App\Models\Agent;
 use Illuminate\Http\Request;
 
@@ -31,6 +32,7 @@ Route::delete('logout',[LoginController::class,'logout']);
 
 Route::get('/test/student/{user}',[ StudentController::class, 'index' ]);
 Route::get('/test/student/{student}/course',[ StudentController::class, 'course' ]);
+Route::get('/dashboard/{user}',[ DashboardController::class, 'index']);
 
 Route::middleware(['auth:sanctum'])->group(function(){
     // default fetching 
@@ -63,4 +65,7 @@ Route::middleware(['auth:sanctum'])->group(function(){
     /* Commission */
     Route::get('commission',[ CommissionController::class, 'index']);
     Route::get('commission/{commission_serial}',[ CommissionController::class, 'commission']);
+
+    /* Dashboard */
+    Route::get('dashboard',[ DashboardController::class, 'index']);
 });
