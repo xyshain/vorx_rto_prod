@@ -36,11 +36,12 @@ class PaymentScheduleTemplate extends Model implements AuditableContract
     }
     public function payment_detail()
     {
-        return $this->hasMany(PaymentScheduleDetail::class);
+        return $this->hasMany(FundedStudentPaymentDetails::class,'payment_schedule_template_id');
+        // return $this->hasMany(PaymentScheduleDetail::class);
     }
     public function getAmountPaidAttribute()
     {
-        $amount = PaymentScheduleDetail::where('payment_schedule_template_id', $this->id)->get();
+        $amount = FundedStudentPaymentDetails::where('payment_schedule_template_id', $this->id)->get();
         $t = 0;
         foreach ($amount as $v) {
             if ($v->payment_status_id == 1) {

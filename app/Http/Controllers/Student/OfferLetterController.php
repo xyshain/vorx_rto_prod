@@ -890,11 +890,10 @@ class OfferLetterController extends Controller
             // }
 
 
-            $pdf = Storage::size('/public/student/new/attachments/' . $course->offer_letter->student_id . '/' . $hashFileName . '.pdf');
-
+            
             $existattachment = StudentAttachment::where('student_id', $course->offer_letter->student_id)->where('_input', 'offer_letter')->first();
-
             if ($existattachment == null) {
+                $pdf = Storage::size('/public/student/new/attachments/' . $course->offer_letter->student_id . '/' . $hashFileName . '.pdf');
                 $studentAttachment = new StudentAttachment([
                     'name'      => 'offer-letter-and-enrolment-acceptance-agreement.pdf',
                     'hash_name' => 'offer-letter-and-enrolment-acceptance-agreement',
