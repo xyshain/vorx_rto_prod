@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Student\OfferLetter\OfferLetter;
+use App\Models\FundedStudentCourse;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
@@ -68,4 +69,7 @@ class AgentDetail extends Model implements AuditableContract
         return $this->hasMany(AgentCommissionCutoff::class,'agent_id')->orderBy('id','DESC');
     }
 
+    public function funded_course(){
+        return $this->hasMany(FundedStudentCourse::class,'agent_id');
+    }
 }

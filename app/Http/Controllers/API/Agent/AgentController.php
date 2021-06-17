@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use File;
 use Storage;
+use App\Models\AgentTempUpdate;
 
 class AgentController extends Controller
 {
@@ -37,12 +38,16 @@ class AgentController extends Controller
     }
     public function update(Request $request, $agent)
     {
+        $data = $request->all();
         try {
             DB::beginTransaction();
-            $data = $request->all();
-            AgentDetail::where('id',$agent)->update($data);
+            AgentTempUpdate::updateOrCreate([
+                'student_id' => '',
+                'module' => 'agent_details',
+                'agent_id'=> Auth::user()->id
+            ],['inputs' => $data]);
             DB::commit();
-            return response(['status'=>'success','message'=> 'Updated Successfully'],200);
+            return response(['status'=>'success','message'=> 'Changes will be verified by the admin'],200);
         } catch (\Throwable $th) {
             DB::rollback();
             throw $th;
