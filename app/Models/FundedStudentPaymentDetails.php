@@ -24,6 +24,7 @@ class FundedStudentPaymentDetails extends Model implements AuditableContract
         'stripe_payments_id',
         'customer_id',
         'transaction_code',
+        'payment_schedule_template_id',
         'note',
         'payment_date',
         'amount',

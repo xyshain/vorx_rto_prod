@@ -117,6 +117,10 @@ class FundedStudentCourse extends Model implements AuditableContract
         return $this->hasOne(Attendance::class, 'course_code','course_code');
     }
 
+    public function commission(){
+        return $this->hasOne(AgentCommissionSettingSub::class,'student_course_id');
+    }
+
     public static function boot()
     {
         parent::boot();
