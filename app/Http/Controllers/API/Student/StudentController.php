@@ -546,6 +546,20 @@ class StudentController extends Controller
                
                 
 
+                $pd = [];
+                foreach($psched->payment_detail as $payment_detail){
+                    
+                    $pd[] = [
+                        'id' => $payment_detail->id,  
+                        'transaction_code' => $payment_detail->transaction_code,  
+                        'payment_date' =>  Carbon::parse($payment_detail->payment_date)->format('d/m/Y'),  
+                        'amount' => $payment_detail->amount,  
+                        'pre_deduc_comm' => $payment_detail->pre_deduc_comm,  
+                        'verified' => $payment_detail->verified,  
+                        'note' => $payment_detail->note,  
+                    ];
+                }
+                
                 $pl[]= [
                     'number'             => $ctr++,
                     'id'                 => $psched->id,
