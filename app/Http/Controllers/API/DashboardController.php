@@ -112,8 +112,10 @@ class DashboardController extends Controller
             'commission_earnings' => $earnings > 0 ? number_format($earnings,2) : 0.00,
             'studentList'   => $students,
             'activities'    => $this->activities_details(),
+            'notifications'    => $this->notifications(),
             'total_activities'    => count($this->activities_details()),
         ];
+        // dd($dashboard);
        return $dashboard;
     }
 
@@ -197,5 +199,82 @@ class DashboardController extends Controller
         }
         // dd($activity);
         return $activity;
+    }
+
+    public function notifications(){
+
+        $logout = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]/user/logout";
+        $audits = Audit::with('user.party.person')->select(DB::raw('event, user_id, auditable_id, auditable_type, old_values, new_values, url, MINUTE(created_at) AS created_min, created_at'))->where('url', '!=', $logout)->groupBy('event', 'url', 'user_id', 'created_min')->orderBy('id', 'desc')->limit(20)->get();
+
+        $notification = [];
+        foreach ($audits as $k => $v) {
+            
+            $url = explode('/', $v->url);
+            $dname = '';
+            $student_details = [];
+
+            // Student Module Audits
+            if($url[3] == 'student'){
+
+                $student_status = '';
+                $studentID = '';
+                $audit_type = '';
+                $collection_status = "";
+                
+
+                $old_v = json_decode($v->old_values, true);
+                $new_v = json_decode($v->new_values, true);
+                if(isset($old_v['verified'])){
+                    if(isset($new_v['verified'])){
+                        if($new_v['verified'] == 1){
+                            $collection_status = 'Approved';
+                        }elseif($new_v['verified'] == 0){
+                            $collection_status = 'Disapproved';
+                        }
+                    }
+                }
+                
+                if($v->auditable_type == 'App\Models\FundedStudentPaymentDetails'){
+                    $audit_type = 'Payment';
+                }
+                if(isset($new_v['student_id'])){
+                    $stud_idx = Student::where('student_id', $new_v['student_id'])->first();
+                    $studentID = $stud_idx->id;
+                }
+                $student = Student::with('party.person')->where('id',isset($url[5]) ? $url[5] : $studentID)->first();
+                if($student !== null){
+                    $student_details = [
+                        'student_id' => $student->student_id,
+                        'name' => isset($student->party->name) ? $student->party->name : '',
+                        'firstname' => $student->party->person->firstname,
+                        'lastname' => $student->party->person->lastname,
+                        'audit_type' => $audit_type,
+                        'collection_status' => $collection_status,
+                    ];
+                }
+
+                // with collection updates only
+                if (isset($v->user->party->person) && count($student_details) > 0){
+                    if($student_details['collection_status'] !== ''){
+                        array_push($notification, [
+                            'name' => isset($v->user->party->name) ? $v->user->party->name : '',
+                            'firstname' => $v->user->party->person->firstname,
+                            'lastname' => $v->user->party->person->lastname,
+                            'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
+                            'url' => $url,
+                            'old_values' => $old_v,
+                            'new_values' => $new_v,
+                            'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
+                            'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
+                            'event' => $v->event,
+                            'dname' => $dname,
+                            'student' => $student_details,
+                        ]);
+                    }
+                }
+            }
+        }
+        // dd($notification);
+        return $notification;
     }
 }
