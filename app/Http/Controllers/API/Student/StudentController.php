@@ -469,7 +469,8 @@ class StudentController extends Controller
             $fees = $funded_course->offer_detail->offer_letter->fees;
             $nontuition = $fees->materials_fee + $fees->application_fee;
             $balance = $nontuition;
-            $attain = false;
+            $attain = true;
+            $x = false;
             foreach($funded_course->payment_sched as $key => $psched){
                 $commission = 0;
                 $prev_balance = $balance;
@@ -559,7 +560,18 @@ class StudentController extends Controller
                         'note' => $payment_detail->note,  
                     ];
                 }
-                
+
+                if($psched->payable_amount == $psched->amount_paid){
+                    $attain = false;
+                }else{
+                    if(!$x){
+                        $attain = true;
+                        $x = true;
+                    }else{
+                        $attain = false;
+                    }
+                }
+
                 $pl[]= [
                     'number'             => $ctr++,
                     'id'                 => $psched->id,
@@ -625,20 +637,57 @@ class StudentController extends Controller
                         $funded_payments = new FundedStudentPaymentDetails;
                         if($balance > 0){
                             if($balance > $plans->payable_amount){
-                                $data = [
-                                    'transaction_code' => $request->trxncode,
-                                    'payment_date' => Carbon::parse($request->colletion_date)->format('Y-m-d'),
-                                    'amount' => $plans->payable_amount,
-                                    'student_id'=> $student_id,
-                                    'pre_deduc_comm' => $key == 0 ? $request->deducted_commission_amount : 0,
-                                    'student_course_id' => $funded_course,
-                                    'payment_schedule_template_id' => $plans->id,
-                                    'offer_letter_course_detail_id' => $offer_detail_course,
-                                    'user_id' => Auth::user()->id,
-                                    'note' => $request->notes,
-                                ];
-                                $funded_payments->fill($data);
-                                $funded_payments->save();
+                                if($plans->amount_paid > 0){
+                                    $newPayableAmount = $plans->payable_amount - $plans->amount_paid;
+                                    if($balance > $newPayableAmount){
+                                        $data = [
+                                            'transaction_code' => $request->trxncode,
+                                            'payment_date' => Carbon::parse($request->colletion_date)->format('Y-m-d'),
+                                            'amount' => $newPayableAmount,
+                                            'student_id'=> $student_id,
+                                            'pre_deduc_comm' => $key == 0 ? $request->deducted_commission_amount : 0,
+                                            'student_course_id' => $funded_course,
+                                            'payment_schedule_template_id' => $plans->id,
+                                            'offer_letter_course_detail_id' => $offer_detail_course,
+                                            'user_id' => Auth::user()->id,
+                                            'note' => $request->notes,
+                                        ];
+                                    }else{
+                                        $data = [
+                                            'transaction_code' => $request->trxncode,
+                                            'payment_date' => Carbon::parse($request->colletion_date)->format('Y-m-d'),
+                                            'amount' => $balance,
+                                            'student_id'=> $student_id,
+                                            'pre_deduc_comm' => $key == 0 ? $request->deducted_commission_amount : 0,
+                                            'student_course_id' => $funded_course,
+                                            'payment_schedule_template_id' => $plans->id,
+                                            'offer_letter_course_detail_id' => $offer_detail_course,
+                                            'user_id' => Auth::user()->id,
+                                            'note' => $request->notes,
+                                        ];
+                                    }
+                                    
+                                    $funded_payments->fill($data);
+                                    $funded_payments->save();
+                                    $balance = $balance - $newPayableAmount;
+                                }else{
+                                    $data = [
+                                        'transaction_code' => $request->trxncode,
+                                        'payment_date' => Carbon::parse($request->colletion_date)->format('Y-m-d'),
+                                        'amount' => $plans->payable_amount,
+                                        'student_id'=> $student_id,
+                                        'pre_deduc_comm' => $key == 0 ? $request->deducted_commission_amount : 0,
+                                        'student_course_id' => $funded_course,
+                                        'payment_schedule_template_id' => $plans->id,
+                                        'offer_letter_course_detail_id' => $offer_detail_course,
+                                        'user_id' => Auth::user()->id,
+                                        'note' => $request->notes,
+                                    ];
+                                    $funded_payments->fill($data);
+                                    $funded_payments->save();
+                                    $balance = $balance - $plans->payable_amount;
+                                }
+                                
                             }else{
                                 $data = [
                                     'transaction_code' => $request->trxncode,
@@ -654,9 +703,10 @@ class StudentController extends Controller
                                 ];
                                 $funded_payments->fill($data);
                                 $funded_payments->save();
+                                $balance = $balance - $plans->payable_amount;
                             }
 
-                            $balance = $balance - $plans->payable_amount;
+                         
                            
 
                         }
