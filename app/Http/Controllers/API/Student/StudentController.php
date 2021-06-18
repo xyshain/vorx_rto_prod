@@ -600,7 +600,8 @@ class StudentController extends Controller
                     'status'            => $funded_course->status != null ?  $funded_course->status->description : '',
                     'fee'               => $funded_course->course_fee, 
                     'course_fee_type'   => $course_fee_type, 
-                    'payment_plan'      => $pl
+                    'payment_plan'      => $pl,
+                    'collections'        => $funded_course->payment_details
                 ];
             }else{
 
@@ -611,7 +612,8 @@ class StudentController extends Controller
                     'status'            => $funded_course->status != null ?  $funded_course->status->description : '',
                     'fee'               => $funded_course->course_fee, 
                     'course_fee_type'   => $course_fee_type, 
-                    'payment_plan'      => $pl
+                    'payment_plan'      => $pl,
+                    'collections'        => $funded_course->payment_details
                 ];
             }
             array_push($course,$d);
