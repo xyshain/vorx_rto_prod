@@ -74,4 +74,6 @@ Route::middleware(['auth:sanctum'])->group(function(){
     /* Dashboard */
     Route::get('dashboard',[ DashboardController::class, 'index']);
     Route::get('notifications',[ DashboardController::class, 'notifications']);
+    // student top - search
+    Route::get('/search/{search}',[ DashboardController::class, 'top_search']);
 });
