@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\PaymentAttachment;
 use App\Models\StudentAttachment;
 use App\Models\Student\Student;
 use Carbon\Carbon;
@@ -189,5 +190,36 @@ class StudentAttachmentController extends Controller
             // Storage::delete($path);
             dd($e->getMessage());
         }
+    }
+
+    public function previewPayment($hash)
+    {
+        $file = PaymentAttachment::where('hash_name',$hash)->first();
+        
+        $path_old = null;
+        $path_new = null;
+        $path = null;
+        // file path
+        // if ($file->path_id == $file->student_id) {
+            $path_new = storage_path() . '/app/public/student/new/attachments/' . $file->path_id . '/payments/' . $file->hash_name . '.' . $file->ext;
+        // } else {
+            $path_old = storage_path() . '/app/public/student/old/attachments/' . $file->path_id . '/payments/' . $file->hash_name . '.' . $file->ext;
+        // }
+
+        $path = file_exists($path_old) ? $path_old : $path_new;
+        // raw file contents
+        $fileContent = File::get($path);
+
+        if(in_array($file->ext, ['zip', 'rar'])) {
+            $filetype=filetype($path);
+            // $filename=basename($path);
+            header ("Content-Type: ".$filetype);
+            header ("Content-Length: ".filesize($path));
+            header ("Content-Disposition: attachment; filename=".$file->name);
+            readfile($path);
+        }else{
+            return response($fileContent)->header('Content-Type', $file->mime_type);
+        }
+
     }
 }
