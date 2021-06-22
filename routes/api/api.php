@@ -34,7 +34,6 @@ Route::delete('logout',[LoginController::class,'logout']);
 // Route::get('/test/student/{student}/course',[ StudentController::class, 'course' ]);
 Route::get('/test/student/{student}/payments',[ StudentController::class, 'payments' ]);
 
-
 Route::middleware(['auth:sanctum'])->group(function(){
     // default fetching 
     Route::get('defaults/all',[AgentController::class,'defaults']);
@@ -72,4 +71,6 @@ Route::middleware(['auth:sanctum'])->group(function(){
     /* Dashboard */
     Route::get('dashboard',[ DashboardController::class, 'index']);
     Route::get('notifications',[ DashboardController::class, 'notifications']);
+    // student top - search
+    Route::get('/search/{search}',[ DashboardController::class, 'top_search']);
 });
