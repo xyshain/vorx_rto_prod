@@ -32,7 +32,8 @@ Route::delete('logout',[LoginController::class,'logout']);
 
 // Route::get('/test/student/{user}',[ StudentController::class, 'index' ]);
 // Route::get('/test/student/{student}/course',[ StudentController::class, 'course' ]);
-Route::get('/test/student/{student}/payments',[ StudentController::class, 'payments' ]);
+// Route::get('/test/student/{student}/payments',[ StudentController::class, 'payments' ]);
+Route::get('student/attachment/payment/preview/{hash}',[ StudentAttachmentController::class, 'previewPayment']);
 
 Route::middleware(['auth:sanctum'])->group(function(){
     // default fetching 
@@ -53,12 +54,14 @@ Route::middleware(['auth:sanctum'])->group(function(){
     Route::get('/student/{student}/course',[ StudentController::class, 'course' ]);
     Route::get('/student/{student}/payments',[ StudentController::class, 'payments' ]);
     Route::post('/student/payments/{student_id}',[ StudentController::class, 'paymentsStore' ]);
+    Route::post('/student/payments/update/{student_id}', [ StudentController::class, 'paymentsUpdate' ]);
     Route::get('/students/{user}',[ StudentController::class, 'index' ]);
     Route::patch('/student/info/{student}',[ StudentController::class, 'update' ]);
 
     /* Student attachment */
     Route::get('student/attachment/fetch/{student_id}',[ StudentAttachmentController::class, 'fetchAllAttachment']);
     Route::get('student/attachment/preview/{id}',[ StudentAttachmentController::class, 'preview']);
+  
     Route::post('student/attachment/save/{student_id}',[ StudentAttachmentController::class, 'saveAttachment']);
     Route::delete('student/attachment/delete/{id}', [ StudentAttachmentController::class, 'destroy']);
     Route::put('student/attachment/rename/{id}', [ StudentAttachmentController::class, 'rename']);

@@ -355,7 +355,7 @@ export default {
         })
     },
     cancelUpdate(){
-       this.payment_details =  {
+       this.payment_detail =  {
         id: "",
         note: "",
         payment_date: "",
