@@ -7,6 +7,7 @@ use App\Models\AgentTempUpdate;
 use App\Models\AvtPostcode;
 use App\Models\AvtStateIdentifier;
 use App\Models\FundedStudentPaymentDetails;
+use App\Models\PaymentAttachment;
 use App\Models\PaymentScheduleTemplate;
 use App\Models\Student\Student;
 use App\Models\User;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
 {
@@ -445,7 +447,6 @@ class StudentController extends Controller
        
     }
 
-
     public function payments(Student $student){
         $data = $student->load('funded_course.status','funded_course.offer_detail','funded_course.payment_details','funded_course.payment_sched');
         $course = [];
@@ -471,6 +472,9 @@ class StudentController extends Controller
             $balance = $nontuition;
             $attain = true;
             $x = false;
+            $att = null;
+            $attachment = null;
+            $pdetails = [];
             foreach($funded_course->payment_sched as $key => $psched){
                 $commission = 0;
                 $prev_balance = $balance;
@@ -548,19 +552,56 @@ class StudentController extends Controller
                 
 
                 $pd = [];
+              
                 foreach($psched->payment_detail as $payment_detail){
+                    if($att == null){
+                       $att =  $payment_detail->transaction_code;
+                       if($payment_detail->attachment != null){
+                            $attachment = $payment_detail->attachment->hash_name;
+                        }
+                    }else{
+                        if($att == $payment_detail->transaction_code){
+                            if($payment_detail->attachment != null){
+                                $attachment = $payment_detail->attachment->hash_name;
+                            }else{
+                                $attachment = $attachment;
+                            }
+                        }else{
+                            $att = $payment_detail->transaction_code;
+                            if($payment_detail->attachment != null){
+                                $attachment = $payment_detail->attachment->hash_name;
+                            }else{
+                                $attachment = $attachment;
+                            }
+                        }
+
+                    }
+                    
+
+
                     
                     $pd[] = [
                         'id' => $payment_detail->id,  
                         'transaction_code' => $payment_detail->transaction_code,  
                         'payment_date' =>  Carbon::parse($payment_detail->payment_date)->format('d/m/Y'),  
                         'amount' => $payment_detail->amount,  
-                        'pre_deduc_comm' => $payment_detail->pre_deduc_comm,  
+                        'pre_deduc_comm' => number_format($payment_detail->pre_deduc_comm,2),  
                         'verified' => $payment_detail->verified,  
                         'note' => $payment_detail->note,  
+                        'attachment' => $attachment
+                    ];
+                    $pdetails[] = [
+                        'id' => $payment_detail->id,  
+                        'transaction_code' => $payment_detail->transaction_code,  
+                        'payment_date' =>  Carbon::parse($payment_detail->payment_date)->format('d/m/Y'),  
+                        'amount' => $payment_detail->amount,  
+                        'pre_deduc_comm' => number_format($payment_detail->pre_deduc_comm,2),  
+                        'verified' => $payment_detail->verified,  
+                        'note' => $payment_detail->note,  
+                        'attachment' => $attachment
                     ];
                 }
-
+               
                 if($psched->payable_amount == $psched->amount_paid){
                     $attain = false;
                 }else{
@@ -581,11 +622,12 @@ class StudentController extends Controller
                     'payable_amount'     => $psched->payable_amount,
                     'payment_details'    => $pd,
                     'total_paid'         => $psched->amount_paid,
+                    'total_paid_approved'         => $psched->approved_amount_paid,
                     'balance'            => $balance ,
                     'prev_balance'       => $prev_balance ,
                     'attain'             => $attain ,
                     'commission'         => $commission,
-                    'percentage'         => ( $psched->payment_detail->sum('amount') / $psched->payable_amount ) * 100,
+                    'percentage'         => ( $psched->approved_amount_paid / $psched->payable_amount ) * 100,
                 ];
                
                 
@@ -601,7 +643,7 @@ class StudentController extends Controller
                     'fee'               => $funded_course->course_fee, 
                     'course_fee_type'   => $course_fee_type, 
                     'payment_plan'      => $pl,
-                    'collections'        => $funded_course->payment_details
+                    'collections'        => $pdetails
                 ];
             }else{
 
@@ -613,7 +655,7 @@ class StudentController extends Controller
                     'fee'               => $funded_course->course_fee, 
                     'course_fee_type'   => $course_fee_type, 
                     'payment_plan'      => $pl,
-                    'collections'        => $funded_course->payment_details
+                    'collections'        => $pdetails
                 ];
             }
             array_push($course,$d);
@@ -623,17 +665,136 @@ class StudentController extends Controller
         return $course;
     }
 
-    public function paymentsStore(Request $request,$student_id){
-        // return $request->all();
+    public function paymentsStore(Request $request, $student_id){
+        $file = $request->file('file');
         $pl =  PaymentScheduleTemplate::find($request->payment_plan);
         $funded_course =  $pl->funded_student_course_id;
         $offer_detail_course =  $pl->offer_letter_course_detail_id;
+        $path  = null;
         try {
             DB::beginTransaction();
+            $funded_payments = new FundedStudentPaymentDetails;
+            $data = [
+                'transaction_code' => $request->trxncode,
+                'payment_date' => Carbon::parse($request->colletion_date)->format('Y-m-d'),
+                'amount' => $request->deposited_amount,
+                'student_id'=> $student_id,
+                'pre_deduc_comm' => $request->deducted_commission_amount,
+                'student_course_id' => $funded_course,
+                'payment_schedule_template_id' => $pl->id,
+                'offer_letter_course_detail_id' => $offer_detail_course,
+                'user_id' => Auth::user()->id,
+                'note' => $request->notes,
+            ];
+            $funded_payments->fill($data);
+            $funded_payments->save();
+            DB::commit();
+            
+            if($file != null){
+                $path = $file->store('public/student/new/attachments/' . $student_id . '/payments/');
+                $hashFileName = preg_replace('/\\.[^.\\s]{3,4}$/', '', $file->hashName());
+                $studentAttachment = new PaymentAttachment([
+                    'name'      => $file->getClientOriginalName(),
+                    'hash_name' => $hashFileName,
+                    'size'      => $file->getSize(),
+                    'mime_type' => $file->getMimeType(),
+                    'ext'       => $file->guessClientExtension(),
+                    'path_id'   => $student_id,
+                    '_input'       => 'payment_attachment',
+                ]);
+                $studentAttachment->user()->associate(Auth::user());
+                $studentAttachment->payment()->associate($funded_payments);
+                $studentAttachment->save();
+                DB::commit();
+            }
+
+
+            DB::commit();
+            return response(['status'=>'success']);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            Storage::delete($path);
+            return response(['status'=>'error' ,'message'=>$th->getMessage()]);
+        } 
+    }
+
+    public function paymentsUpdate(Request $request, $student_id){
+        $file = $request->file('file');
+        $pd = FundedStudentPaymentDetails::find($request->payment_plan);
+        try {
+            DB::beginTransaction();
+            $data = [
+                'transaction_code' => $request->trxncode,
+                'payment_date' => Carbon::parse($request->colletion_date)->format('Y-m-d'),
+                'amount' => $request->deposited_amount,
+                'student_id'=> $student_id,
+                'pre_deduc_comm' => $request->deducted_commission_amount,
+                'user_id' => Auth::user()->id,
+                'note' => $request->notes,
+            ];
+            FundedStudentPaymentDetails::where('id',$pd->id)
+                ->update($data);
+
+            if($file != null){
+                $exist = PaymentAttachment::where('funded_student_payment_detail_id',$pd->id)->first();
+                if($exist != null){
+                    $exist->delete();
+                    $path = $file->store('public/student/new/attachments/' . $student_id . '/payments/');
+                    $hashFileName = preg_replace('/\\.[^.\\s]{3,4}$/', '', $file->hashName());
+                    $studentAttachment = new PaymentAttachment([
+                        'name'      => $file->getClientOriginalName(),
+                        'hash_name' => $hashFileName,
+                        'size'      => $file->getSize(),
+                        'mime_type' => $file->getMimeType(),
+                        'ext'       => $file->guessClientExtension(),
+                        'path_id'   => $student_id,
+                        '_input'       => 'payment_attachment',
+                    ]);
+                    $studentAttachment->user()->associate(Auth::user());
+                    $studentAttachment->payment()->associate($pd);
+                    $studentAttachment->save();
+                }else{
+                    $path = $file->store('public/student/new/attachments/' . $student_id . '/payments/');
+                    $hashFileName = preg_replace('/\\.[^.\\s]{3,4}$/', '', $file->hashName());
+                    $studentAttachment = new PaymentAttachment([
+                        'name'      => $file->getClientOriginalName(),
+                        'hash_name' => $hashFileName,
+                        'size'      => $file->getSize(),
+                        'mime_type' => $file->getMimeType(),
+                        'ext'       => $file->guessClientExtension(),
+                        'path_id'   => $student_id,
+                        '_input'       => 'payment_attachment',
+                    ]);
+                    $studentAttachment->user()->associate(Auth::user());
+                    $studentAttachment->payment()->associate($pd);
+                    $studentAttachment->save();
+                }
+            }
+            DB::commit();
+            return response(['status'=>'success']);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            throw $th->getMessage();
+        }
+
+       
+        
+    }
+
+    public function paymentsStoreBACK(Request $request,$student_id){
+        $file = $request->file('file');
+        $pl =  PaymentScheduleTemplate::find($request->payment_plan);
+        $funded_course =  $pl->funded_student_course_id;
+        $offer_detail_course =  $pl->offer_letter_course_detail_id;
+        $path  = null;
+        try {
+            DB::beginTransaction();
+            
            
             if($request->deposited_amount > $pl->payable_amount){
                 $mpl = PaymentScheduleTemplate::where('funded_student_course_id',$funded_course)->get();
                 $balance = $request->deposited_amount;
+                $cntr = 0;
                 foreach($mpl as $key=>$plans){
                     if($plans->payable_amount != $plans->amount_paid){
                         $funded_payments = new FundedStudentPaymentDetails;
@@ -672,6 +833,7 @@ class StudentController extends Controller
                                     $funded_payments->fill($data);
                                     $funded_payments->save();
                                     $balance = $balance - $newPayableAmount;
+                                    DB::commit();
                                 }else{
                                     $data = [
                                         'transaction_code' => $request->trxncode,
@@ -688,6 +850,7 @@ class StudentController extends Controller
                                     $funded_payments->fill($data);
                                     $funded_payments->save();
                                     $balance = $balance - $plans->payable_amount;
+                                    DB::commit();
                                 }
                                 
                             }else{
@@ -706,17 +869,37 @@ class StudentController extends Controller
                                 $funded_payments->fill($data);
                                 $funded_payments->save();
                                 $balance = $balance - $plans->payable_amount;
+                                DB::commit();
                             }
-
-                         
-                           
-
+                            if($file != null){
+                                if($funded_payments->id != null){
+                                   if($cntr == 0){
+                                    $path = $file->store('public/student/new/attachments/' . $student_id . '/payments/');
+                                    $hashFileName = preg_replace('/\\.[^.\\s]{3,4}$/', '', $file->hashName());
+                                    $studentAttachment = new PaymentAttachment([
+                                        'name'      => $file->getClientOriginalName(),
+                                        'hash_name' => $hashFileName,
+                                        'size'      => $file->getSize(),
+                                        'mime_type' => $file->getMimeType(),
+                                        'ext'       => $file->guessClientExtension(),
+                                        'path_id'   => $student_id,
+                                        '_input'       => 'payment_attachment',
+                                    ]);
+                                    $studentAttachment->user()->associate(Auth::user());
+                                    $studentAttachment->payment()->associate($funded_payments);
+                                    $studentAttachment->save();
+                                    $cntr++;
+                                    DB::commit();
+                                   }
+                                }
+                            }
                         }
                     }
+                    
                 }
             }else{
-                $funded_payments = new FundedStudentPaymentDetails;
                 if($pl->amount_paid == 0  ){
+                    $funded_payments = new FundedStudentPaymentDetails;
                     $data = [
                         'transaction_code' => $request->trxncode,
                         'payment_date' => Carbon::parse($request->colletion_date)->format('Y-m-d'),
@@ -731,12 +914,32 @@ class StudentController extends Controller
                     ];
                     $funded_payments->fill($data);
                     $funded_payments->save();
+                    DB::commit();
+                    
+                    if($file != null){
+                        $path = $file->store('public/student/new/attachments/' . $student_id . '/payments/');
+                        $hashFileName = preg_replace('/\\.[^.\\s]{3,4}$/', '', $file->hashName());
+                        $studentAttachment = new PaymentAttachment([
+                            'name'      => $file->getClientOriginalName(),
+                            'hash_name' => $hashFileName,
+                            'size'      => $file->getSize(),
+                            'mime_type' => $file->getMimeType(),
+                            'ext'       => $file->guessClientExtension(),
+                            'path_id'   => $student_id,
+                            '_input'       => 'payment_attachment',
+                        ]);
+                        $studentAttachment->user()->associate(Auth::user());
+                        $studentAttachment->payment()->associate($funded_payments);
+                        $studentAttachment->save();
+                        DB::commit();
+                    }
+
                 }else{
                     $balance = $pl->payable_amount - $pl->amount_paid;
                     if($request->deposited_amount > $balance){
                         $mpl = PaymentScheduleTemplate::where('funded_student_course_id',$funded_course)->get();
                         $balance = $request->deposited_amount;
-                        $damount = $request->deposited_amount;
+                        $cntr = 0;
                         foreach($mpl as $key=>$plans){
                             if($plans->payable_amount != $plans->amount_paid){
                                 $funded_payments = new FundedStudentPaymentDetails;
@@ -757,6 +960,7 @@ class StudentController extends Controller
                                         $funded_payments->fill($data);
                                         $funded_payments->save();
                                         $balance = $balance - $plans->payable_amount;
+                                        DB::commit();
                                     }else{
                                         if($plans->amount_paid > 0){
                                             $newPayableAmount = $plans->payable_amount - $plans->amount_paid;
@@ -775,6 +979,7 @@ class StudentController extends Controller
                                                 ];
                                                 $funded_payments->fill($data);
                                                 $funded_payments->save();
+                                                DB::commit();
                                             }else{
                                                 $data = [
                                                     'transaction_code' => $request->trxncode,
@@ -790,6 +995,7 @@ class StudentController extends Controller
                                                 ];
                                                 $funded_payments->fill($data);
                                                 $funded_payments->save();
+                                                DB::commit();
                                             }
                                             $balance = $balance - $newPayableAmount;
                                         }else{
@@ -808,14 +1014,39 @@ class StudentController extends Controller
                                             $funded_payments->fill($data);
                                             $funded_payments->save();
                                             $balance = $balance - $plans->payable_amount;
+                                            DB::commit();
                                         }
                                         
+                                    }
+                                }
+                                
+                                if($file != null){
+                                    if($funded_payments->id != null){
+                                       if($cntr == 0){
+                                        $path = $file->store('public/student/new/attachments/' . $student_id . '/payments/');
+                                        $hashFileName = preg_replace('/\\.[^.\\s]{3,4}$/', '', $file->hashName());
+                                        $studentAttachment = new PaymentAttachment([
+                                            'name'      => $file->getClientOriginalName(),
+                                            'hash_name' => $hashFileName,
+                                            'size'      => $file->getSize(),
+                                            'mime_type' => $file->getMimeType(),
+                                            'ext'       => $file->guessClientExtension(),
+                                            'path_id'   => $student_id,
+                                            '_input'       => 'payment_attachment',
+                                        ]);
+                                        $studentAttachment->user()->associate(Auth::user());
+                                        $studentAttachment->payment()->associate($funded_payments);
+                                        $studentAttachment->save();
+                                        $cntr++;
+                                        DB::commit();
+                                       }
                                     }
                                 }
                             }
                         }
                         
                     }else{
+                        $funded_payments = new FundedStudentPaymentDetails;
                         $data = [
                             'transaction_code' => $request->trxncode,
                             'payment_date' => Carbon::parse($request->colletion_date)->format('Y-m-d'),
@@ -830,6 +1061,24 @@ class StudentController extends Controller
                         ];
                         $funded_payments->fill($data);
                         $funded_payments->save();
+                        DB::commit();
+                        if($file != null){
+                            $path = $file->store('public/student/new/attachments/' . $student_id . '/payments/');
+                            $hashFileName = preg_replace('/\\.[^.\\s]{3,4}$/', '', $file->hashName());
+                            $studentAttachment = new PaymentAttachment([
+                                'name'      => $file->getClientOriginalName(),
+                                'hash_name' => $hashFileName,
+                                'size'      => $file->getSize(),
+                                'mime_type' => $file->getMimeType(),
+                                'ext'       => $file->guessClientExtension(),
+                                'path_id'   => $student_id,
+                                '_input'       => 'payment_attachment',
+                            ]);
+                            $studentAttachment->user()->associate(Auth::user());
+                            $studentAttachment->payment()->associate($funded_payments);
+                            $studentAttachment->save();
+                            DB::commit();
+                        }
                     }
                    
                 }
@@ -837,13 +1086,16 @@ class StudentController extends Controller
     
              
             }
-            DB::commit();
+            
+       
             //code...
             return response(['status'=>'success']);
         } catch (\Throwable $th) {
             DB::rollback();
+            Storage::delete($path);
+            // return $th;
             return response(['status'=>'error' ,'message'=>$th->getMessage()]);
         } 
-        return $funded_course;
+        // return $funded_course;
     }
 }
