@@ -19,6 +19,7 @@ class FundedStudentPaymentDetails extends Model implements AuditableContract
 
     protected $fillable = [
         'student_id',
+        'agent_id',
         'student_course_id',
         'offer_letter_course_detail_id',
         'stripe_payments_id',

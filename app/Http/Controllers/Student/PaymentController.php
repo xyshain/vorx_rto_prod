@@ -944,4 +944,40 @@ class PaymentController extends Controller
         $payment->delete();
         return ['status'=> 'success'];
     }
+
+    public function paymentDetailVerify(Request $request){
+        // return $request->all();
+        $name = $request['user']['party']['name'];
+        $trnx_id = $request['transaction_code'];
+        $emailsTo[] = $request['user']['username'];
+        // return $request->all();
+        $org = TrainingOrganisation::first();
+
+        $payment_detail = FundedStudentPaymentDetails::where('id',$request->id)->first();
+
+        try{
+            DB::beginTransaction();
+
+            $payment_detail->verified = 1;
+            $payment_detail->update();
+
+            $send = new EmailSendingController;
+
+            $content = '<b>Dear ' . $name . ',</b><br><br>Your payment has been verified and accepted.<br>Trxn no: '.$trnx_id;
+
+            $s = $send->send_automate('Payment Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
+            
+            if($s['status']=='success'){
+                DB::commit();
+            }else{
+                DB::rollback();
+            }
+
+            return response()->json(['status'=>'success','message'=>$s]);
+        }catch(Exception $e){
+            DB::rollback();
+            return response()->json(['status'=>'error','message'=>$e->getMessage()]);
+        }
+
+    }
 }

@@ -32,7 +32,7 @@ Route::delete('logout',[LoginController::class,'logout']);
 
 // Route::get('/test/student/{user}',[ StudentController::class, 'index' ]);
 // Route::get('/test/student/{student}/course',[ StudentController::class, 'course' ]);
-// Route::get('/test/student/{student}/payments',[ StudentController::class, 'payments' ]);
+Route::get('/test/student/{student}/payments',[ StudentController::class, 'payments' ]);
 Route::get('student/attachment/payment/preview/{hash}',[ StudentAttachmentController::class, 'previewPayment']);
 
 Route::middleware(['auth:sanctum'])->group(function(){

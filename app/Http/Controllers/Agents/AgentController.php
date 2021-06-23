@@ -13,6 +13,7 @@ use App\Models\AgentApplication;
 use App\Http\Controllers\Send\EmailSendingController;
 use App\Models\EmailAutomation;
 use App\Models\Course;
+use App\Models\FundedStudentPaymentDetails;
 use App\Models\Student\Party;
 use App\Models\TrainingOrganisation;
 use App\Models\User;
@@ -624,5 +625,12 @@ class AgentController extends Controller
         } else {
             return $random_string;
         }
+    }
+
+    public function agentCollection($id){
+        $agent_collections = FundedStudentPaymentDetails::with('attachment','student.party','funded_student_course')->where('agent_id',$id)
+        ->orderBy('id','desc')->get();
+
+        return $agent_collections;
     }
 }
