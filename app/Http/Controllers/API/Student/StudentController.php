@@ -7,6 +7,7 @@ use App\Models\AgentTempUpdate;
 use App\Models\AvtPostcode;
 use App\Models\AvtStateIdentifier;
 use App\Models\FundedStudentPaymentDetails;
+use App\Models\Notification;
 use App\Models\PaymentAttachment;
 use App\Models\PaymentScheduleTemplate;
 use App\Models\Student\Student;
@@ -552,7 +553,21 @@ class StudentController extends Controller
                 
 
                 $pd = [];
-              
+                $ptotalAmount = 0;
+                $compiledDetails =  $psched->payment_detail->groupBy('transaction_code');
+                foreach($compiledDetails as $trnx =>$details){
+                    $pdetails[] = [
+                        'id' => $details[0]->id,  
+                        'transaction_code' => $trnx,  
+                        'payment_date' => Carbon::parse($details[0]->payment_date)->format('d/m/Y'),  
+                        'amount' => $details->sum('amount'),  
+                        'pre_deduc_comm' => $details->sum('pre_deduc_comm') ,  
+                        'verified' =>  $details[0]->verified,  
+                        'note' => $details[0]->note,  
+                        'attachment' => $details[0]->attachment != null ? $details[0]->attachment->hash_name : null
+                    ];
+
+                }                
                 foreach($psched->payment_detail as $payment_detail){
                     if($att == null){
                        $att =  $payment_detail->transaction_code;
@@ -576,21 +591,7 @@ class StudentController extends Controller
                         }
 
                     }
-                    
-
-
-                    
                     $pd[] = [
-                        'id' => $payment_detail->id,  
-                        'transaction_code' => $payment_detail->transaction_code,  
-                        'payment_date' =>  Carbon::parse($payment_detail->payment_date)->format('d/m/Y'),  
-                        'amount' => $payment_detail->amount,  
-                        'pre_deduc_comm' => number_format($payment_detail->pre_deduc_comm,2),  
-                        'verified' => $payment_detail->verified,  
-                        'note' => $payment_detail->note,  
-                        'attachment' => $attachment
-                    ];
-                    $pdetails[] = [
                         'id' => $payment_detail->id,  
                         'transaction_code' => $payment_detail->transaction_code,  
                         'payment_date' =>  Carbon::parse($payment_detail->payment_date)->format('d/m/Y'),  
@@ -684,11 +685,26 @@ class StudentController extends Controller
                 'payment_schedule_template_id' => $pl->id,
                 'offer_letter_course_detail_id' => $offer_detail_course,
                 'user_id' => Auth::user()->id,
+                'agent_id' => Auth::user()->id,
                 'note' => $request->notes,
             ];
             $funded_payments->fill($data);
             $funded_payments->save();
-            DB::commit();
+            $notify = new Notification;
+
+            $notify->fill([
+                'type' => 'agent',
+                'table_name' => 'funded_student_payment_details',
+                'reference_id' => Auth::user()->agent_details->id,
+                'date_recorded' => Carbon::now()->format('Y-m-d H:i:s'),
+                'message' => '<b>' . Auth::user()->party->name . '</b> added collection on student id '.$student_id ,
+                'is_seen' => 0,
+                'action' => 'created',
+                'link' => '/agent/'.Auth::user()->agent_details->id
+            ]);
+            $notify->user()->associate(Auth::user());
+            $notify->save();
+
             
             if($file != null){
                 $path = $file->store('public/student/new/attachments/' . $student_id . '/payments/');
@@ -707,6 +723,7 @@ class StudentController extends Controller
                 $studentAttachment->save();
                 DB::commit();
             }
+
 
 
             DB::commit();
@@ -730,6 +747,7 @@ class StudentController extends Controller
                 'student_id'=> $student_id,
                 'pre_deduc_comm' => $request->deducted_commission_amount,
                 'user_id' => Auth::user()->id,
+                'agent_id' => Auth::user()->id,
                 'note' => $request->notes,
             ];
             FundedStudentPaymentDetails::where('id',$pd->id)
