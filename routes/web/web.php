@@ -15,6 +15,7 @@ Auth::routes();
 // Route::get('/', function () {
     //     return view('welcome');
     // });
+    Route::get('agent/generate/commission', 'Agent\CommissionController@index');
 Route::middleware(['rto'])->group(function () {
     //student login
     Route::get('/student-login','Auth\LoginController@student_login');
