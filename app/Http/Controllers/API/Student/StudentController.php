@@ -685,6 +685,7 @@ class StudentController extends Controller
                 'payment_schedule_template_id' => $pl->id,
                 'offer_letter_course_detail_id' => $offer_detail_course,
                 'user_id' => Auth::user()->id,
+                'agent_id' => Auth::user()->id,
                 'note' => $request->notes,
             ];
             $funded_payments->fill($data);
@@ -746,6 +747,7 @@ class StudentController extends Controller
                 'student_id'=> $student_id,
                 'pre_deduc_comm' => $request->deducted_commission_amount,
                 'user_id' => Auth::user()->id,
+                'agent_id' => Auth::user()->id,
                 'note' => $request->notes,
             ];
             FundedStudentPaymentDetails::where('id',$pd->id)
