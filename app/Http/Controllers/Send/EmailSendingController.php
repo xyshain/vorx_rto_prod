@@ -30,7 +30,7 @@ class EmailSendingController extends Controller
         // $mail->Password = env('MAIL_PASSWORD');                                 // SMTP password    k
         $mail->Host = "mail.vorx.com.au";
         $mail->Username = "request@vorx.com.au";
-        $mail->Password ="9}9jgR(~Y^Tp";
+        $mail->Password ="pnR2wFLTDQ@o";
         $mail->SMTPSecure = 'tls';                                      // Enable TLS encryption, `ssl` also accepted
         $mail->Port = 587;                                              // TCP port to connect to
 

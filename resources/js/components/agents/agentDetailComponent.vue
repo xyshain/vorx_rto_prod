@@ -15,15 +15,16 @@
     </div>
     <nav>
       <div class="nav nav-tabs" id="nav-tab" role="tablist">
-        <a v-bind:class="'nav-item nav-link-'+app_color+' active'" id="nav-info-tab" data-toggle="tab" href="#nav-info" role="tab" aria-controls="nav-info" aria-selected="true" >Info</a>
+        <a v-bind:class="'nav-item nav-link-'+app_color+''" id="nav-info-tab" data-toggle="tab" href="#nav-info" role="tab" aria-controls="nav-info" aria-selected="true" >Info</a>
         <a v-bind:class="'nav-item nav-link-'+app_color" id="nav-attachments-tab" data-toggle="tab" href="#nav-attachments" role="tab" aria-controls="nav-attachments" aria-selected="false" >Attachments</a>
         <a v-bind:class="'nav-item nav-link-'+app_color" id="nav-commission-settings-tab" data-toggle="tab" href="#nav-commission-settings" role="tab" aria-controls="nav-prospectus" aria-selected="false">Commission Settings</a>
+        <a v-bind:class="'nav-item nav-link-'+app_color+' active'" id="nav-collections-tab" data-toggle="tab" href="#nav-collections" role="tab" aria-controls="nav-collections" aria-selected="false">Collections</a>
         <!-- <a v-bind:class="'nav-item nav-link-'+app_color" id="nav-commission-report-tab" data-toggle="tab" href="#nav-commission-report" role="tab" aria-controls="nav-commission-report" aria-selected="false">Commission Report</a> -->
         <!-- <a v-bind:class="'nav-item nav-link-'+app_color" id="nav-release-commission-tab" data-toggle="tab" href="#nav-release-commission" role="tab" aria-controls="nav-release-commission" aria-selected="false">Release Commission</a> -->
       </div>
     </nav>
     <div class="tab-content" id="nav-tabContent">
-      <div class="tab-pane fade show active" id="nav-info" role="tabpanel" aria-labelledby="nav-info-tab">
+      <div class="tab-pane fade" id="nav-info" role="tabpanel" aria-labelledby="nav-info-tab">
         <agent-info></agent-info>
       </div>
       <div class="tab-pane fade" id="nav-attachments" role="tabpanel" aria-labelledby="nav-attachments-tab">
@@ -31,6 +32,9 @@
       </div>
       <div class="tab-pane fade" id="nav-commission-settings" role="tabpanel" aria-labelledby="nav-commission-settings-tab">
         <agent-commission></agent-commission>
+      </div>
+      <div class="tab-pane fade show active" id="nav-collections" role="tabpanel" aria-labelledby="nav-collections-tab">
+        <agent-collections />
       </div>
       <!-- <div class="tab-pane fade" id="nav-commission-report" role="tabpanel" aria-labelledby="nav-commission-report-tab">
         <agent-commission-report></agent-commission-report>
@@ -50,6 +54,7 @@ import AgentAttachment from "./agentAttachmentComponent.vue";
 import AgentCommission from "./agentCommissionComponent.vue";
 import AgentCommissionReport from "./agentCommissionReportComponent.vue";
 import AgentReleaseCommission from "./agentReleaseCommissionComponent.vue";
+import AgentCollections from "./agentCollectionsComponent.vue"
 
 export default {
   // mounted() {
@@ -62,6 +67,7 @@ export default {
       AgentCommission,
       AgentCommissionReport,
       AgentReleaseCommission,
+      AgentCollections
   },
   data() {
     return {
