@@ -1,5 +1,6 @@
 <template>
     <div class="card card-body"> 
+        <verify-modal :data="trxn"/>
         <table
             class="table custom-table"
             id="dataTable"
@@ -21,7 +22,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="pd in payment_details" :key="pd.id">
+                <tr v-for="(pd,index) in payment_details" :key="pd.id">
                     <td class="text-center">{{pd.transaction_code}}</td>
                     <td class="text-center">{{pd.student_id}}</td>
                     <td class="text-center">{{pd.amount}}</td>
@@ -42,9 +43,9 @@
                         </span>
                     </td>
                     <td class='text-center'>
-                        <select @change="passActionPayment(index,$event)" class="form-control custominput" id="exampleFormControlSelect1">
+                        <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1">
                             <option value="">Actions</option>
-                            <option value="Edit">Verify</option>
+                            <option value="Verify">Verify</option>
                             <option value="Delete">Decline</option>
                         </select>
                     </td>
@@ -55,12 +56,17 @@
 </template>
 <script>
 import moment from 'moment'
+import verifyModal from './agent-collection/verifyCollectionModal.vue'
 export default {
+    components:{
+        verifyModal
+    },
     data(){
         return{
             app_color:app_color,
             agent_id:window.agent.id,
-            payment_details:[]
+            payment_details:[],
+            trxn:[],
         }
     },
     created(){
@@ -78,6 +84,20 @@ export default {
                     this.payment_details = response.data;
                 }
             );
+        },
+        passAction(index,event){
+            // console.log(index,event);
+            let action = event.target.value
+            let vm = this;
+            if(action == 'Verify'){
+                this.trxn = this.payment_details[index];
+                this.$modal.show('verifyModal');
+                event.target.value = ''
+            }
+            else if(action == 'Decline'){
+                this.deletePaymentTemplate(this.payment_sched[index].id)
+                event.target.value = ''
+            }
         }
     }
 }
