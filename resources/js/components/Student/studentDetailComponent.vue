@@ -1,9 +1,8 @@
 <template>
   <div>
     <toolbar-actions
-      v-if="this.add_on('email-warning.fees') == 1"
+      
       v-bind:back-url="`/student`"
-      v-bind:warning-letter="`/student/warning-letters/${id}`"
     ></toolbar-actions>
     <!-- <div class="row mb-2 d-flex justify-content-between">
       <div class="col-md-6">

@@ -6,7 +6,9 @@ Route::middleware(['rto'])->group(function () {
     route::post('payment_attachment','Student\PaymentController@paymentAttachment');
     route::get('payment_attachment/{id}', 'Student\PaymentController@paymentAttachmentView');
     
-    
+    // verify payment detail
+    Route::post('payment/detail/verify', 'Student\PaymentController@paymentDetailVerify');
+
     // generate initial payment receipt pdf
     Route::get('/pdf/generate-initial-payment-recept', 'Student\StudentAttachmentController@generate_reciept');
     // generate initial payment reciept pdf (Shortcut)

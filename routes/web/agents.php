@@ -59,6 +59,9 @@ Route::middleware(['rto'])->group(function () {
     Route::get('agent/application-email/{id}/send', 'Agents\AgentController@application_email'); // Resend Agent application Verification Email (with agent's signature)
     Route::get('agent/preview-agent-agreement/{id}', 'Agents\AgentController@agentAgreementView'); 
     
+    // agent collection
+    Route::get('agent/{id}/collections','Agents\AgentController@agentCollection');
+
     // Resource
     Route::resource('agent', 'Agents\AgentController');
 });

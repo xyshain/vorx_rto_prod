@@ -133,6 +133,9 @@
                     <th class='text-center'>Amount</th>
                     <th class='text-center'>Post Date</th>
                     <th class='text-center'>Notes</th>
+                    <th class='text-center'>User</th>
+                    <th class='text-center'>Attachment</th>
+                    <th class='text-center'>Verified</th>
                     <!-- <th class='text-center'>Amount Paid</th> -->
                     <!-- <th class='text-center'>Post Date</th> -->
                     <th class='text-center'></th>
@@ -143,10 +146,26 @@
                     <td class='text-center'>{{ sched.amount }}</td>
                     <td class='text-center'>{{ sched.payment_date | dateFormat }}</td>
                     <td class='text-center'>{{ sched.note}}</td>
+                    <td class='text-center'>{{sched.user.party.name}}</td>
+                    <td class='text-center'>
+                      <a :href="'/payment_attachment/'+sched.attachment.id"  v-if="sched.attachment !== null"><span class="fa fa-paperclip"></span></a>
+                      <span v-else>
+                        No attachment
+                      </span>
+                    </td>
+                    <td class='text-center'>
+                      <span v-if="sched.verified === 1" >
+                          <i class="fas fa-check-circle" style="color:green"></i>
+                      </span>
+                      <span v-else title="Pending">
+                          <i class="fas fa-clock"></i>
+                      </span>
+                    </td>
                     <td class='text-center'>
                         <div class="form-group mt-3">
                             <select class="form-control custominput"  @change="passAction(index,$event)" id="exampleFormControlSelect1">
                             <option value="">Actions</option>
+                            <option value="Accept" v-if="sched.verified===0">Accept Payment</option>
                             <option value="Edit">Edit</option>
                             <option value="Delete">Delete</option>
                             </select>
@@ -222,9 +241,14 @@ export default {
                 if(this.payment_details.length > 0){
                     let payment_details = this.payment_details;
                     let paid = payment_details.map(function(item){
-
-                      return item.amount;
+                      if(item.verified == 1){
+                        return item.amount;
+                      }else{
+                        return "0"
+                      }
                     });
+                    console.log('mawni');
+                    console.log(paid);
                     this.paid =  paid.reduce((a,b)=> parseFloat(a)+ parseFloat(b));
                     balance = balance - paid.reduce((a,b)=> parseFloat(a)+ parseFloat(b));
                 }
@@ -270,6 +294,7 @@ export default {
         this.deletePaymentTemplate(this.payment_sched[index].id)
         event.target.value = ''
       }
+      
     },
     deletePaymentTemplate(id){
        swal
@@ -332,6 +357,46 @@ export default {
         this.remove(data,this.payment_details[data].id)
         event.target.value = ''
       }
+      else if(action == 'Accept'){
+        this.acceptPayment(data);
+        event.target.value = ''
+      }
+    },
+    acceptPayment(idx){
+      let data = this.payment_details[idx];
+      let dis = this;
+      swal.fire({
+        title: 'Accept Payment?',
+        showCancelButton: true,
+        confirmButtonText : 'Ok'
+      }).then((result) => {
+        if(result.value==true){
+          swal.fire({
+            title: "Please wait...",
+            // html: '',// add html attribute if you want or remove
+            allowOutsideClick: false,
+            onBeforeOpen: () => {
+              swal.showLoading();
+            },
+          });
+          axios.post('/payment/detail/verify',data).then(
+            response=>{
+              if(response.data.status=='success'){
+                if(window.student_type == 2){
+                  dis.$parent.fetchData();
+                  swal.close();
+                }else{
+                  dis.$parent.$parent.fetchStudent();
+                }
+              }
+            }
+          ).catch(
+            err=>{
+              console.log(err);
+            }
+          );
+        }
+      })
     },
     edit_due(detail) {
       detail.due_date = moment(detail.due_date)._d;
@@ -355,7 +420,7 @@ export default {
         })
     },
     cancelUpdate(){
-       this.payment_details =  {
+       this.payment_detail =  {
         id: "",
         note: "",
         payment_date: "",
