@@ -17,7 +17,8 @@ class Notification extends Model
         'date_recorded',
         'message',
         'is_seen',
-        'link'
+        'link',
+        'table_id',
     ];
 
     public function user(){
