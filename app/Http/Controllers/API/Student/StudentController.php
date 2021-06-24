@@ -603,7 +603,7 @@ class StudentController extends Controller
                     ];
                 }
                
-                if($psched->payable_amount == $psched->amount_paid){
+                if($psched->payable_amount == $psched->approved_amount_paid){
                     $attain = false;
                 }else{
                     if(!$x){
@@ -685,7 +685,7 @@ class StudentController extends Controller
                 'payment_schedule_template_id' => $pl->id,
                 'offer_letter_course_detail_id' => $offer_detail_course,
                 'user_id' => Auth::user()->id,
-                'agent_id' => Auth::user()->id,
+                'agent_id' => Auth::user()->agent_details->id,
                 'note' => $request->notes,
             ];
             $funded_payments->fill($data);
