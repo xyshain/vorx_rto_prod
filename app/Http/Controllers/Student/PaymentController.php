@@ -24,6 +24,7 @@ use App\Models\FundedStudentPaymentDetails;
 use App\Models\EmailWarningTrail;
 use App\Models\PaymentAttachment;
 use App\Models\TrainingOrganisation;
+use App\Models\Notification;
 
 use File;
 use Illuminate\Http\Request;
@@ -946,20 +947,23 @@ class PaymentController extends Controller
     }
 
     public function paymentDetailVerify(Request $request){
-        // return $request->all();
+        
         $name = $request['user']['party']['name'];
         $trnx_id = $request['transaction_code'];
         $emailsTo[] = $request['user']['username'];
-        // return $request->all();
-        $org = TrainingOrganisation::first();
 
-        $payment_detail = FundedStudentPaymentDetails::where('id',$request->id)->first();
+        $org = TrainingOrganisation::first();
+        
+        $payment_detail = FundedStudentPaymentDetails::with(['funded_student_course.course'])->where('id',$request->id)->first();
+        
 
         try{
             DB::beginTransaction();
 
             $payment_detail->verified = 1;
             $payment_detail->update();
+
+            $this->notifyAgent($payment_detail);
 
             $send = new EmailSendingController;
 
@@ -979,5 +983,51 @@ class PaymentController extends Controller
             return response()->json(['status'=>'error','message'=>$e->getMessage()]);
         }
 
+    }
+
+    public function notifyAgent($payments){
+
+        $student = Student::with(['party.person'])->where('student_id', $payments->student_id)->first();
+        $funded_course = $payments->funded_student_course;
+        $course = '';
+        if($funded_course->course_code == '@@@@'){
+            $course = 'Unit of Compentency';
+        }else{
+            $course = $funded_course->course_code.' - '. $funded_course->course->name;
+        }
+
+        $collection_status = "";
+        if($payments->verified == 1){
+            $collection_status = 'Verified';
+        }elseif($payments->verified == 0){
+            $collection_status = 'Pending';
+        }elseif($payments->verified == 2){
+            $collection_status = 'Declined';
+        } 
+
+        try {
+            DB::beginTransaction();
+            
+            $notify = new Notification;
+            $notify->fill([
+                'type' => 'payment_collection',
+                'table_name' => 'funded_student_payment_details',
+                'table_id' => $payments->id,
+                'reference_id' => $payments->agent_id !== null ? $payments->agent_id : $student->student_id, 
+                'date_recorded' => Carbon::now()->setTimezone('Australia/Melbourne')->format('Y-m-d H:i:s'),
+                'message' => 'Payment collection has been '. $collection_status .' under '. $course . ' course.',
+                'is_seen' => 0,
+                'action' => 'updated',
+                'link' => $student->student_type_id == 1 ? '/student/' . $student->id : '/student/domestic/' . $student->id
+            ]);
+            $notify->user()->associate(\Auth::user());
+            $notify->save();
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            throw $th;
+        }
     }
 }

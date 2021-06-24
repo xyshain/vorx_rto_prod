@@ -76,4 +76,6 @@ Route::middleware(['auth:sanctum'])->group(function(){
     Route::get('notifications',[ DashboardController::class, 'notifications']);
     // student top - search
     Route::get('/search/{search}',[ DashboardController::class, 'top_search']);
+    
+    Route::post('/notification/update/{id}',[ DashboardController::class, 'updateNotification' ]);
 });

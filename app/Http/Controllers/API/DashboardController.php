@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Notification;
 
 class DashboardController extends Controller
 {
@@ -39,7 +40,7 @@ class DashboardController extends Controller
         }else{
             $agent = $user->agent_details;
             $funded_course = $agent->funded_course->load(['student','course','payment_details','payment_sched','offer_detail','status'])->sortByDesc('id');
-            $earnings = FundedStudentPaymentDetails::where('user_id', $agent->user_id)->where('verified', 1)->sum('pre_deduc_comm');
+            $earnings = FundedStudentPaymentDetails::where('agent_id', $agent->id)->where('verified', 1)->sum('pre_deduc_comm');
             $arr_students = [];
             foreach($funded_course as $fc){
                 $agent_com = $fc->payment_details->where('verified', 1)->sum('pre_deduc_comm');
@@ -217,80 +218,61 @@ class DashboardController extends Controller
     }
 
     public function notifications(){
-
-        $logout = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]/user/logout";
-        $audits = Audit::with('user.party.person')->select(DB::raw('event, user_id, auditable_id, auditable_type, old_values, new_values, url, MINUTE(created_at) AS created_min, created_at'))->where('url', '!=', $logout)->groupBy('event', 'url', 'user_id', 'created_min')->orderBy('id', 'desc')->limit(20)->get();
-
-        $notification = [];
-        foreach ($audits as $k => $v) {
-            
-            $url = explode('/', $v->url);
-            $dname = '';
-            $student_details = [];
-
-            // Student Module Audits
-            if($url[3] == 'student'){
-
-                $student_status = '';
-                $studentID = '';
-                $audit_type = '';
-                $collection_status = "";
-                
-
-                $old_v = json_decode($v->old_values, true);
-                $new_v = json_decode($v->new_values, true);
-                if(isset($old_v['verified'])){
-                    if(isset($new_v['verified'])){
-                        if($new_v['verified'] == 1){
-                            $collection_status = 'Approved';
-                        }elseif($new_v['verified'] == 0){
-                            $collection_status = 'Disapproved';
-                        }
-                    }
-                }
-                
-                if($v->auditable_type == 'App\Models\FundedStudentPaymentDetails'){
-                    $audit_type = 'Payment';
-                }
-                if(isset($new_v['student_id'])){
-                    $stud_idx = Student::where('student_id', $new_v['student_id'])->first();
-                    $studentID = $stud_idx->id;
-                }
-                $student = Student::with('party.person')->where('id',isset($url[5]) ? $url[5] : $studentID)->first();
-                if($student !== null){
-                    $student_details = [
-                        'student_id' => $student->student_id,
-                        'name' => isset($student->party->name) ? $student->party->name : '',
-                        'firstname' => $student->party->person->firstname,
-                        'lastname' => $student->party->person->lastname,
-                        'audit_type' => $audit_type,
-                        'collection_status' => $collection_status,
-                    ];
-                }
-
-                // with collection updates only
-                if (isset($v->user->party->person) && count($student_details) > 0){
-                    if($student_details['collection_status'] !== ''){
-                        array_push($notification, [
-                            'name' => isset($v->user->party->name) ? $v->user->party->name : '',
-                            'firstname' => $v->user->party->person->firstname,
-                            'lastname' => $v->user->party->person->lastname,
-                            'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
-                            'url' => $url,
-                            'old_values' => $old_v,
-                            'new_values' => $new_v,
-                            'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
-                            'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
-                            'event' => $v->event,
-                            'dname' => $dname,
-                            'student' => $student_details,
-                        ]);
-                    }
-                }
-            }
+        // $user = User::where('username',$username)->first();
+        $user = \Auth::user();
+        $user_id = '';
+        $agent = $user->agent_details;
+        if($agent){
+            $user_id = $agent->id;
+            $notifications = Notification::where('type', 'payment_collection')->where('reference_id', $user_id)->where('is_seen', 0)->get();
+        }else{
+            $user_id = $user->id;
+            $notifications = Notification::where('type', 'payment_collection')->where('is_seen', 0)->get();
         }
-        // dd($notification);
-        return $notification;
+
+       $n = [];
+        foreach($notifications as $notif){
+            $course = [];
+            $payments = FundedStudentPaymentDetails::with('student.party','funded_student_course.course')->where('id', $notif->table_id)->first();
+            $funded_course = $payments->funded_student_course;
+
+            $collection_status = "";
+
+            if($payments->verified == 1){
+                $collection_status = 'Verified';
+            }elseif($payments->verified == 0){
+                $collection_status = 'Pending';
+            }elseif($payments->verified == 2){
+                $collection_status = 'Declined';
+            }              
+
+            if($funded_course->course_code == '@@@@'){
+                $course = [
+                    'name' => 'Unit of Compentency',
+                    'code' => $funded_course->course_code,
+                    'collection_status' => $collection_status
+                ];
+            }else{
+                $course = [
+                    'name' => $funded_course->course->name,
+                    'code' => $funded_course->course_code,
+                    'collection_status' => $collection_status
+                ];
+            }
+
+            $n[] = [
+                'id' => $notif->id,
+                'label' => $notif->message,
+                'is_seen' => $notif->is_seen,
+                'student_id' => $payments->student_id,
+                'student_name' => $payments->student->party->name,
+                'created_at' => Carbon::parse($notif->created_at)->format('Y-m-d H:m:s'),
+                'created_min' =>  Carbon::parse($notif->created_at)->diffForHumans(),
+                'course' => $course
+            ];                                
+        }
+        
+        return $n;
     }
 
     public function top_search($search){
@@ -427,5 +409,21 @@ class DashboardController extends Controller
         $closest = key($interval);
         // dump($array[$closest]);
         return $array[$closest];
+    }
+
+    public function updateNotification($id)
+    {
+
+        try {
+            DB::beginTransaction();
+            $notif = Notification::where('id',$id)->first();
+            $notif->is_seen = 1;
+            $notif->update();
+            DB::commit();
+            return response(['status'=>'success'],200);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            throw $th;
+        }
     }
 }
