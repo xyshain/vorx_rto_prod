@@ -340,7 +340,7 @@ class DashboardController extends Controller
         foreach($funded_course->payment_sched as $key => $psched){
 
             $balance = 0;
-            $balance = (float)$psched->payable_amount - $psched->amount_paid;
+            $balance = (float)$psched->payable_amount - $psched->approved_amount_paid;
 
             $pd = [];
             foreach($psched->payment_detail as $payment_detail){
@@ -365,28 +365,48 @@ class DashboardController extends Controller
                 'payable_amount'     => $psched->payable_amount,
                 'payment_details'    => $pd,
                 'total_paid'         => $psched->amount_paid,
+                'total_paid_approved'=> $psched->approved_amount_paid,
                 'balance'            => $balance,
             ];
             
             //get priority payment sched
             $due_date = Carbon::parse($psched->due_date)->format('d/m/Y');
-            if($date_now >= $due_date && $psched->amount_paid < $psched->payable_amount){
-                array_push($due_dates_arr, $due_date);
-                $next_sched = $this->find_closest($due_dates_arr, $date_now);
-                if($next_sched == $due_date){
-                    $cp = [
-                        'number'             => $ctr++,
-                        'id'                 => $psched->id,
-                        'name'               => $psched->id,
-                        'due_date'           => Carbon::parse($psched->due_date)->format('d/m/Y'),
-                        'adjusted_date'      => $psched->adjusted_date != '' ? Carbon::parse($psched->adjusted_date)->format('d/m/Y') : null,
-                        'payable_amount'     => $psched->payable_amount,
-                        'payment_details'    => $pd,
-                        'total_paid'         => $psched->amount_paid,
-                        'balance'            => $balance,
-                    ];  
-                } 
+            if($psched->approved_amount_paid < $psched->payable_amount){
+                if($date_now <= $due_date || $date_now >= $due_date){
+                    array_push($due_dates_arr, $due_date);
+                    $next_sched = $this->find_closest($due_dates_arr, $date_now);
+                    if($next_sched == $due_date){
+                        $cp = [
+                            'id'                 => $psched->id,
+                            'name'               => $psched->id,
+                            'due_date'           => Carbon::parse($psched->due_date)->format('d/m/Y'),
+                            'adjusted_date'      => $psched->adjusted_date != '' ? Carbon::parse($psched->adjusted_date)->format('d/m/Y') : null,
+                            'payable_amount'     => $psched->payable_amount,
+                            'payment_details'    => $pd,
+                            'total_paid'         => $psched->amount_paid,
+                            'total_paid_approved'=> $psched->approved_amount_paid,
+                            'balance'            => $balance,
+                        ];     
+                    }
+                }elseif($date_now >= $due_date){
+                    array_push($due_dates_arr, $due_date);
+                    $next_sched = $this->find_closest($due_dates_arr, $date_now);
+                    if($next_sched == $due_date){
+                        $cp = [
+                            'id'                 => $psched->id,
+                            'name'               => $psched->id,
+                            'due_date'           => Carbon::parse($psched->due_date)->format('d/m/Y'),
+                            'adjusted_date'      => $psched->adjusted_date != '' ? Carbon::parse($psched->adjusted_date)->format('d/m/Y') : null,
+                            'payable_amount'     => $psched->payable_amount,
+                            'payment_details'    => $pd,
+                            'total_paid'         => $psched->amount_paid,
+                            'total_paid_approved'=> $psched->approved_amount_paid,
+                            'balance'            => $balance,
+                        ];  
+                    } 
+                }
             }
+            
         }
 
         $data = [
