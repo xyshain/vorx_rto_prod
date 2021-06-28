@@ -139,35 +139,57 @@ class DashboardController extends Controller
     public function activities_details(){
         $user = \Auth::user();
         $logout = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]/user/logout";
-        $audits = Audit::with('user.party.person')->select(DB::raw('event, user_id, auditable_id, auditable_type, old_values, new_values, url, MINUTE(created_at) AS created_min, created_at'))->where('url', '!=', $logout)->groupBy('event', 'url', 'user_id', 'created_min')->orderBy('id', 'desc')->limit(20)->get();
+        $audits = Audit::with('user.party.person')->select(DB::raw('id, event, user_id, auditable_id, auditable_type, old_values, new_values, url, MINUTE(created_at) AS created_min, created_at'))->where('url', '!=', $logout)->groupBy('event', 'url', 'user_id', 'created_min')->orderBy('id', 'desc')->limit(20)->get();
+        $agent_id = '';
+        if($user->hasRole('Agent')){
+            $agent = $user->agent_details; 
+            $agent_id = $agent->id;
+        }
 
         $activity = [];
         foreach ($audits as $k => $v) {
-            // dump($v);
+            
             $url = explode('/', $v->url);
             $dname = '';
             $student_details = [];
             // Student Module Audits
             if($url[3] == 'student' || $url[3] == 'payment'){
-                
+
                 $student_status = '';
                 $studentID = '';
                 $audit_type = '';
+                $student_id = '';
+                $collection_status = "";
+                $agent_stud = false;
 
                 $old_v = json_decode($v->old_values, true);
                 $new_v = json_decode($v->new_values, true);
+                // student status
                 if(isset($old_v['status_id'])){
                     if(isset($new_v['status_id'])){
                         $status = OfferLetterStatus::where('id',$new_v['status_id'])->first();
                         $student_status = $status->description;
                     }
                 }
-                $stud_id = '';
-                $collection_status = "";
-                if($v->auditable_type == 'App\Models\FundedStudentCourse' || $v->auditable_type == 'App\Models\StudentCompletionDetail'){
+                
+                if($v->auditable_type == 'App\Models\FundedStudentCourse'){
                     $audit_type = 'Course';
+                    $funded_c = FundedStudentCourse::with('student')->where('id', $v->auditable_id)->first();
+                    if($funded_c){
+                        $student_id = $funded_c->student->student_id;
+                        if($funded_c->agent_id !== null && $funded_c->agent_id == $agent_id){
+                            $agent_stud = true;
+                        }
+                    }
                 }elseif($v->auditable_type == 'App\Models\FundedStudentPaymentDetails'){
                     $audit_type = 'Payment';
+                    $payment_details = FundedStudentPaymentDetails::with('student')->where('id', $v->auditable_id)->first();
+                    if($payment_details){
+                        $student_id = $payment_details->student->student_id;
+                        if($payment_details->agent_id !== null && $payment_details->agent_id == $agent_id){
+                            $agent_stud = true;
+                        }
+                    }
                     if(isset($old_v['verified'])){
                         if(isset($new_v['verified'])){
                             if($new_v['verified'] == 1){
@@ -181,25 +203,14 @@ class DashboardController extends Controller
                     }
                 }elseif($v->auditable_type == 'App\Models\Student\Student'){
                     $audit_type = 'Student';
-                    if(isset($new_v['student_id'])){
-                        $stud_idx = Student::where('student_id', $new_v['student_id'])->first();
-                        $studentID = $stud_idx->id;
+                    $stud_idx = Student::where('id', $v->auditable_id)->first();
+                    if($stud_idx){
+                        $student_id = $stud_idx->student_id;
                     }
                 }
 
-                $student = Student::with('party.person')->where('id', isset($url[5]) ? $url[5] : $studentID)->first();
+                $student = Student::with('party.person', 'funded_course')->where('student_id', $student_id)->first();
                 if($student !== null){
-                    $agent_stud = false;
-                    $funded_course = $student->funded_course;
-                    if($user->hasRole('Agent')){
-                        $agent = $user->agent_details; 
-                        $agent_id = $agent->id;
-                        foreach($funded_course as $fc){
-                            if($fc->agent_id !== null && $fc->agent_id == $agent_id){
-                                $agent_stud = true;
-                            }
-                        } 
-                    }
                     $student_details = [
                         'student_id' => $student->student_id,
                         'name' => isset($student->party->name) ? $student->party->name : '',
@@ -212,55 +223,76 @@ class DashboardController extends Controller
                 }
             }
             // dump(count($student_details));
-            // Student Module Audits
+            // Student Module Audits            
             // if (isset($v->user->party->person) && $v->user->id != 1) {
                 if (isset($v->user->party->person)){
                     if($url[3] == 'student' || $url[3] == 'payment'){
-                        if(count($student_details) > 0 ){
+                        if($agent_id !== ''){
                             //under agent students only
-                            if($student_details['agent_stud'] == true){
-                                array_push($activity, [
-                                    'name' => isset($v->user->party->name) ? $v->user->party->name : '',
-                                    'firstname' => $v->user->party->person->firstname,
-                                    'lastname' => $v->user->party->person->lastname,
-                                    'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
-                                    'url' => $url,
-                                    'old_values' => $old_v,
-                                    'new_values' => $new_v,
-                                    'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
-                                    'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
-                                    'event' => $v->event,
-                                    'dname' => $dname,
-                                    'student' => $student_details,
-                                    'collection_status' => $collection_status
-                                ]);
+                            if(count($student_details) > 0 && $student_details['agent_stud'] == true){
+                                // if($student_details['agent_stud'] == true){
+                                    array_push($activity, [
+                                        'id' => $v->id,
+                                        'name' => isset($v->user->party->name) ? $v->user->party->name : '',
+                                        'firstname' => $v->user->party->person->firstname,
+                                        'lastname' => $v->user->party->person->lastname,
+                                        'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
+                                        'url' => $url,
+                                        'old_values' => $old_v,
+                                        'new_values' => $new_v,
+                                        'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
+                                        'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
+                                        'event' => $v->event,
+                                        'dname' => $dname,
+                                        'student' => $student_details,
+                                        'collection_status' => $collection_status
+                                    ]);
+                                // }
+                            }else{
+                                // new enrolled isset($new_v['name'])
+                                if($v->event == 'created'){
+                                    array_push($activity, [
+                                        'id' => $v->id,
+                                        'name' => isset($v->user->party->name) ? $v->user->party->name : '',
+                                        'firstname' => $v->user->party->person->firstname,
+                                        'lastname' => $v->user->party->person->lastname,
+                                        'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
+                                        'url' => $url,
+                                        'old_values' => $old_v,
+                                        'new_values' => $new_v,
+                                        'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
+                                        'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
+                                        'event' => $v->event,
+                                        'dname' => $dname,
+                                        'student' => $student_details,
+                                        'collection_status' => $collection_status
+                                    ]);
+                                }
                             }
                         }else{
-                            // new enrolled and verification of payments
-                            if($collection_status !== '' || $v->event == 'created'){
-                                array_push($activity, [
-                                    'name' => isset($v->user->party->name) ? $v->user->party->name : '',
-                                    'firstname' => $v->user->party->person->firstname,
-                                    'lastname' => $v->user->party->person->lastname,
-                                    'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
-                                    'url' => $url,
-                                    'old_values' => $old_v,
-                                    'new_values' => $new_v,
-                                    'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
-                                    'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
-                                    'event' => $v->event,
-                                    'dname' => $dname,
-                                    'student' => $student_details,
-                                    'collection_status' => $collection_status
-                                ]);
-                            }
-
+                            array_push($activity, [
+                                'id' => $v->id,
+                                'name' => isset($v->user->party->name) ? $v->user->party->name : '',
+                                'firstname' => $v->user->party->person->firstname,
+                                'lastname' => $v->user->party->person->lastname,
+                                'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
+                                'url' => $url,
+                                'old_values' => $old_v,
+                                'new_values' => $new_v,
+                                'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
+                                'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
+                                'event' => $v->event,
+                                'dname' => $dname,
+                                'student' => $student_details,
+                                'collection_status' => $collection_status
+                            ]);
                         }
+                        
                     }
                 }
             // }
         }
-
+        // dd($activity);
         return $activity;
     }
 
@@ -478,9 +510,7 @@ class DashboardController extends Controller
         return $array[$closest];
     }
 
-    public function updateNotification($id)
-    {
-
+    public function updateNotification($id){
         try {
             DB::beginTransaction();
             $notif = Notification::where('id',$id)->first();
