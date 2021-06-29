@@ -30,7 +30,7 @@ Route::get('/check-rto/{org_id}', 'Auth\LoginController@check_rto');
 Route::post('login',[LoginController::class,'login']);
 Route::delete('logout',[LoginController::class,'logout']);
 
-// Route::get('/test/student/{user}',[ StudentController::class, 'index' ]);
+Route::get('/test/student/{user}',[ StudentController::class, 'index' ]);
 // Route::get('/test/student/{student}/course',[ StudentController::class, 'course' ]);
 Route::get('/test/student/{student}/payments',[ StudentController::class, 'payments' ]);
 Route::get('student/attachment/payment/preview/{hash}',[ StudentAttachmentController::class, 'previewPayment']);
