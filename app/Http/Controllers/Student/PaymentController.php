@@ -14,6 +14,7 @@ use App\Models\CashPayment;
 use App\Models\OnlinePayment;
 use App\Models\OfferLetterFee;
 use App\Models\PaymentScheduleDetail;
+use App\Models\AgentDetail;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Send\EmailSendingController;
@@ -947,10 +948,15 @@ class PaymentController extends Controller
     }
 
     public function paymentDetailVerify(Request $request){
-        
         $name = $request['user']['party']['name'];
         $trnx_id = $request['transaction_code'];
-        $emailsTo[] = $request['user']['username'];
+        $agent = AgentDetail::where('id',$request->agent_id)->first();
+
+        if(isset($agent->email)){
+            $emailsTo[] = $agent->email;
+        }else{
+            return response()->json(['status'=>'error','message'=>'Agent email not found']);
+        }
 
         $org = TrainingOrganisation::first();
         
