@@ -62,7 +62,7 @@ class AgentDetail extends Model implements AuditableContract
     }
 
     public function offer_letters(){
-        return $this->hasMany(OfferLetter::class,'agent_id');
+        return $this->hasMany(OfferLetter::class,'agent_id')->groupBy('student_id');
     }
 
     public function commissions(){
