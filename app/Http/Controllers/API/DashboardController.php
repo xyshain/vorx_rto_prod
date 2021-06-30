@@ -41,14 +41,25 @@ class DashboardController extends Controller
             $agent = $user->agent_details;
             $funded_course = $agent->funded_course->load(['student','course','payment_details','payment_sched','offer_detail','status'])->sortByDesc('id');
             $earnings = FundedStudentPaymentDetails::where('agent_id', $agent->id)->where('verified', 1)->sum('pre_deduc_comm');
+            $offer_letter = $agent->offer_letters->load('student');
             $arr_students = [];
-            foreach($funded_course as $fc){
-                $agent_com = $fc->payment_details->where('verified', 1)->sum('pre_deduc_comm');
-                array_push($arr_students, $fc->student_id);
+            // get offerletter under agent na 
+            if(count($offer_letter) > 0){
+                foreach($offer_letter as $ol){
+                    array_push($arr_students, $ol->student_id);
+                }
             }
+            // get fundedcourse under agent
+            if(count($funded_course) > 0){
+                foreach($funded_course as $fc){
+                    //$agent_com = $fc->payment_details->where('verified', 1)->sum('pre_deduc_comm');
+                    array_push($arr_students, $fc->student_id);
+                }
+            }
+            // get unique student_id (total students)
             $total_students = count(array_unique($arr_students));
         }
-        // dd($earnings);
+
         $funded_course_ = $funded_course->whereIn('status_id', [2,3,4]);
         foreach($funded_course_ as $fcourse){
             $balance = 0;
