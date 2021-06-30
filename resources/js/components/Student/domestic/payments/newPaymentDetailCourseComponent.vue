@@ -388,6 +388,12 @@ export default {
                 }else{
                   dis.$parent.$parent.fetchStudent();
                 }
+              }else{
+                swal.fire({
+                  type:'error',
+                  title:'Cannot proceed!',
+                  html:response.data.message
+                });
               }
             }
           ).catch(
