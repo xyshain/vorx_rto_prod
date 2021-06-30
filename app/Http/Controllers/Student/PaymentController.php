@@ -969,7 +969,8 @@ class PaymentController extends Controller
 
             $content = '<b>Dear ' . $name . ',</b><br><br>Your payment has been verified and accepted.<br>Trxn no: '.$trnx_id;
 
-            $s = $send->send_automate('Payment Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
+            // $s = $send->send_automate('Payment Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
+            $s['status']='success';
             
             if($s['status']=='success'){
                 DB::commit();
