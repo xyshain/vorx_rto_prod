@@ -61,6 +61,9 @@ Route::middleware(['rto'])->group(function () {
     
     // agent collection
     Route::get('agent/{id}/collections','Agents\AgentController@agentCollection');
+    Route::get('agent/{id}/collections','Agents\AgentController@agentCollection');
+    Route::get('agent/student-payments/{id}/{amount}','Agents\AgentController@studentPayments');
+    Route::post('agent/collection/accept','Agents\AgentController@acceptCollection');
 
     // Resource
     Route::resource('agent', 'Agents\AgentController');

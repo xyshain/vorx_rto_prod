@@ -29,24 +29,31 @@
                     <td class="text-center">{{pd.payment_date | dateFormat}}</td>
                     <td class="text-center">{{pd.note}}</td>
                     <td class="text-center">
-                        <a :href="'/payment_attachment/'+pd.attachment.id"  v-if="pd.attachment !== null"><span class="fa fa-paperclip"></span></a>
+                        <a :href="'/payment_attachment/'+pd.attachment.id"  v-if="pd.attachment !== null" target="_blank"><span class="fa fa-paperclip"></span></a>
                         <span v-else>
                             No attachment
                         </span>
                     </td>
                     <td class="text-center">
-                        <span v-if="pd.verified === 1" >
+                        <span v-if="pd.verified === 1" title="Verified">
                           <i class="fas fa-check-circle" style="color:green"></i>
+                        </span>
+                        <span v-else-if="pd.verified === 2" title="Declined">
+                          <i class="fab fa-creative-commons-nc" style="color:red"></i>
                         </span>
                         <span v-else title="Pending">
                             <i class="fas fa-clock"></i>
                         </span>
                     </td>
                     <td class='text-center'>
-                        <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1">
+                        <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1" v-if="pd.verified===0">
                             <option value="">Actions</option>
                             <option value="Verify">Verify</option>
-                            <option value="Delete">Decline</option>
+                            <option value="Decline">Decline</option>
+                        </select>
+                        <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1" v-else>
+                            <option value="">Actions</option>
+                            <option value="View">View Transaction</option>
                         </select>
                     </td>
                 </tr>
@@ -95,9 +102,30 @@ export default {
                 event.target.value = ''
             }
             else if(action == 'Decline'){
-                this.deletePaymentTemplate(this.payment_sched[index].id)
+                this.declineCollection(index);
                 event.target.value = ''
             }
+            else if(action == 'View'){
+                event.target.value = ''
+            }
+        },
+        declineCollection(idx){
+            swal.fire({
+                title: "Decline this pending payment collection?",
+                showCancelButton:true,
+            }).then((result)=>{
+                console.log(result);
+            });
+
+            // axios.get(`/agent/collections/${this.payment_details[idx].id}/decline`).then(
+            //     response=>{
+            //         this.getAgentCollections();
+            //     }
+            // ).then(
+            //     err=>{
+            //         console.log(err);
+            //     }
+            // );
         }
     }
 }
