@@ -130,12 +130,13 @@
             >
             <thead>
                 <tr>
+                    <th></th>
                     <th class='text-center'>Amount</th>
+                    <th class='text-center'>Transaction #</th>
                     <th class='text-center'>Post Date</th>
                     <th class='text-center'>Notes</th>
-                    <th class='text-center'>User</th>
+                    <th class='text-center'>Agent</th>
                     <th class='text-center'>Attachment</th>
-                    <th class='text-center'>Verified</th>
                     <!-- <th class='text-center'>Amount Paid</th> -->
                     <!-- <th class='text-center'>Post Date</th> -->
                     <th class='text-center'></th>
@@ -143,22 +144,23 @@
             </thead>
             <tbody>
                 <tr v-for="(sched,index) in payment_details" :key="index"> 
-                    <td class='text-center'>{{ sched.amount }}</td>
-                    <td class='text-center'>{{ sched.payment_date | dateFormat }}</td>
-                    <td class='text-center'>{{ sched.note}}</td>
-                    <td class='text-center'>{{sched.user.party.name}}</td>
-                    <td class='text-center'>
-                      <a :href="'/payment_attachment/'+sched.attachment.id"  v-if="sched.attachment !== null"><span class="fa fa-paperclip"></span></a>
-                      <span v-else>
-                        No attachment
-                      </span>
-                    </td>
                     <td class='text-center'>
                       <span v-if="sched.verified === 1" >
                           <i class="fas fa-check-circle" style="color:green"></i>
                       </span>
                       <span v-else title="Pending">
                           <i class="fas fa-clock"></i>
+                      </span>
+                    </td>
+                    <td class='text-center'>{{ sched.amount }}</td>
+                    <td class='text-center'>{{ sched.transaction_code }}</td>
+                    <td class='text-center'>{{ sched.payment_date | dateFormat }}</td>
+                    <td class='text-center'>{{ sched.note }}</td>
+                    <td class='text-center'>{{ sched.agent!=null ? sched.agent.agent_name : '' }}</td>
+                    <td class='text-center'>
+                      <a :href="'/payment_attachment/'+sched.attachment.id"  v-if="sched.attachment !== null" target="_blank"><span class="fa fa-paperclip"></span></a>
+                      <span v-else>
+                        No attachment
                       </span>
                     </td>
                     <td class='text-center'>
@@ -363,7 +365,10 @@ export default {
       }
     },
     acceptPayment(idx){
-      let data = this.payment_details[idx];
+      let data = {
+        payment_details : this.payment_details[idx],
+        payment_schedule:this.payment_sched
+      }
       let dis = this;
       swal.fire({
         title: 'Accept Payment?',
@@ -398,7 +403,11 @@ export default {
             }
           ).catch(
             err=>{
-              console.log(err);
+              swal.fire({
+                  type:'error',
+                  title:'Cannot proceed!',
+                  html: err.response.data.message
+                });
             }
           );
         }

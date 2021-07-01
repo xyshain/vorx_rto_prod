@@ -141,7 +141,7 @@ class DomesticController extends Controller
 
         $student_details = FundedStudentDetails::with('contact', 'course')->where('student_id', $student_id)->first();
         // dd($student_details);
-        $offerData = $student->offer_letter()->with('student_details', 'course_details.payments', 'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->orderBy('id', 'DESC')->get();
+        $offerData = $student->offer_letter()->with('student_details', 'course_details.payments','course_details.payments.agent', 'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->orderBy('id', 'DESC')->get();
         $contact = $student_details->contact;
         $course_details = $student_details->course;
         $visa_info = FundedStudentVisaDetails::where('student_id', $student_id)->first();
