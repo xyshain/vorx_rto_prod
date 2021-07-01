@@ -93,7 +93,6 @@ class StudentController extends Controller
         }else{
             $agent = $user->agent_details;
             $offer_letter = $agent->offer_letters->load('student');
-            
             foreach($offer_letter as $key=>$offer){
                 $funded_course = $offer->student->funded_course->load('course');
                 $course = [];
@@ -467,7 +466,7 @@ class StudentController extends Controller
             $pl = [];
             $ctr = 1;
             $commission_settings  = $funded_course->commission;
-
+            
             $fees = $funded_course->offer_detail->offer_letter->fees;
             $nontuition = $fees->materials_fee + $fees->application_fee;
             $balance = $nontuition;
@@ -603,7 +602,7 @@ class StudentController extends Controller
                     ];
                 }
                
-                if($psched->payable_amount == $psched->amount_paid){
+                if($psched->payable_amount == $psched->approved_amount_paid){
                     $attain = false;
                 }else{
                     if(!$x){
@@ -613,7 +612,6 @@ class StudentController extends Controller
                         $attain = false;
                     }
                 }
-
                 $pl[]= [
                     'number'             => $ctr++,
                     'id'                 => $psched->id,
@@ -628,7 +626,7 @@ class StudentController extends Controller
                     'prev_balance'       => $prev_balance ,
                     'attain'             => $attain ,
                     'commission'         => $commission,
-                    'percentage'         => ( $psched->approved_amount_paid / $psched->payable_amount ) * 100,
+                    'percentage'         => ( (float)$psched->approved_amount_paid / (float)$psched->payable_amount ) * 100,
                 ];
                
                 
@@ -685,7 +683,7 @@ class StudentController extends Controller
                 'payment_schedule_template_id' => $pl->id,
                 'offer_letter_course_detail_id' => $offer_detail_course,
                 'user_id' => Auth::user()->id,
-                'agent_id' => Auth::user()->id,
+                'agent_id' => Auth::user()->agent_details->id,
                 'note' => $request->notes,
             ];
             $funded_payments->fill($data);

@@ -52,7 +52,7 @@ Route::middleware(['rto'])->group(function () {
     Route::post('agent/commission-release-save/{id}', 'Agents\AgentCommissionController@agent_release_commission_save');
     
     Route::get('agent/{agent}/generate/commission', 'Agent\CommissionController@agent_commission_generate');
-    Route::get('agent/generate/commission', 'Agent\CommissionController@index');
+
     
     //Agent Agreement
     Route::get('agent/{id}/generate_agent_agreement', 'Agents\AgentController@generate_agreement'); //generate after agent signed agent agreement (with agent's signature)
