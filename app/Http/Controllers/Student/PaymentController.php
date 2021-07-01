@@ -948,40 +948,52 @@ class PaymentController extends Controller
     }
 
     public function paymentDetailVerify(Request $request){
-        $name = $request['user']['party']['name'];
+        // return $request->all();
+        $payment_details = $request->payment_details;
+        $payment_schedule = $request->payment_schedule;
         $trnx_id = $request['transaction_code'];
-        $agent = AgentDetail::where('id',$request->agent_id)->first();
-
-        if(isset($agent->email)){
-            $emailsTo[] = $agent->email;
+        // return $payment_details['agent'];
+        if(isset($payment_details['agent'])){
+            $emailsTo[] = $payment_details['agent']['email'];
+            $name = $payment_details['agent']['agent_name'];
         }else{
             return response()->json(['status'=>'error','message'=>'Agent email not found']);
         }
-
+        
         $org = TrainingOrganisation::first();
         
-        $payment_detail = FundedStudentPaymentDetails::with(['funded_student_course.course'])->where('id',$request->id)->first();
+        $payment_detail = FundedStudentPaymentDetails::with(['funded_student_course.course'])->where('id',$payment_details['id'])->first();
         
 
         try{
             DB::beginTransaction();
+
+            $unverified_amount = $payment_details['amount'];
+
+            // if(isset($payment_schedule)){ //pag naay payment plan   
+            //     foreach(){
+                    
+            //     }
+            // }else{
+
+            // }
 
             $payment_detail->verified = 1;
             $payment_detail->update();
 
             $this->notifyAgent($payment_detail);
 
-            $send = new EmailSendingController;
+            // $send = new EmailSendingController;
 
-            $content = '<b>Dear ' . $name . ',</b><br><br>Your payment has been verified and accepted.<br>Trxn no: '.$trnx_id;
+            // $content = '<b>Dear ' . $name . ',</b><br><br>Your payment has been verified and accepted.<br>Trxn no: '.$trnx_id;
 
-            $s = $send->send_automate('Payment Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
-            
-            if($s['status']=='success'){
+            // $s = $send->send_automate('Payment Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
+            $s = 'Success';
+            // if($s['status']=='success'){
                 DB::commit();
-            }else{
+            // }else{
                 DB::rollback();
-            }
+            // }
 
             return response()->json(['status'=>'success','message'=>$s]);
         }catch(Exception $e){

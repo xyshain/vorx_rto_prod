@@ -261,7 +261,7 @@ class OfferLetterController extends Controller
         // 
         // dd($id);
 
-        $offerLetter = OfferLetter::with('student_details','course_details.payment_template', 'course_details.payments.attachment','course_details.payments.user.roles','course_details.payments.user.party' ,'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
+        $offerLetter = OfferLetter::with('student_details','course_details.payment_template', 'course_details.payments.attachment','course_details.payments.agent' ,'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
         // $offerLetter->course_details->payments->user->roles = $offerLetter->course_details->payments->user->roles[0]->name;
         
         

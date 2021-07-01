@@ -11,6 +11,7 @@ use App\Models\CourseProspectus;
 use App\Models\StudentCompletion as CourseCompletion;
 use App\Models\StudentCompletionDetail as CourseCompletionDetail;
 use App\Models\CertificateIssuanceDetail;
+use App\Models\FundedStudentCourse;
 use App\Models\CompletionStudentCourse;
 use App\Models\Course\Course;
 use App\Models\FundedStudentExtraUnits;
@@ -266,6 +267,18 @@ class CourseCompletionController extends Controller
                         ]);
                     }
 
+                    if (in_array($unit['status'], [2])) {
+                        $completion = CourseCompletion::where('id',$request->course_completion['id'])->with(['student_course'=>function($q) use($request){
+                            $q->where('course_code',$request->course);
+                        }])->first();
+
+                        $funded_id = $completion->student_course[0]->id;
+                        // return $funded_id;
+                        $funded_course = FundedStudentCourse::where('id',$funded_id)->first();
+                        $funded_course->status_id = 7;
+                        $funded_course->update();
+                    }  
+
                     if ($unit['dates']['start'] !== null && $unit['dates']['end'] !== null) {
                         $completion_details = new CourseCompletionDetail;
                         $completion_details->fill([
@@ -313,6 +326,18 @@ class CourseCompletionController extends Controller
                             'partial_completion' => 1,
                         ]);
                     }
+                    
+                    if (in_array($unit['status'], [2])) {
+                        $completion = CourseCompletion::where('id',$request->course_completion['id'])->with(['student_course'=>function($q) use($request){
+                            $q->where('course_code',$request->course);
+                        }])->first();
+
+                        $funded_id = $completion->student_course[0]->id;
+                        // return $funded_id;
+                        $funded_course = FundedStudentCourse::where('id',$funded_id)->first();
+                        $funded_course->status_id = 7;
+                        $funded_course->update();
+                    }   
 
                     if ($latestCompletion == null && $unit['dates']['end'] != null) {
                         // dump('hah');

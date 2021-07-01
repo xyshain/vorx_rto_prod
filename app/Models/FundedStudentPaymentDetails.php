@@ -64,5 +64,8 @@ class FundedStudentPaymentDetails extends Model implements AuditableContract
     public function commission(){
         return $this->hasOne(CommissionDetail::class,'payment_id');
     }
+    public function agent(){
+        return $this->belongsTo(AgentDetail::class,'agent_id');
+    }
 
 }
