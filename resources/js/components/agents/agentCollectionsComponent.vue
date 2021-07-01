@@ -1,6 +1,7 @@
 <template>
     <div class="card card-body"> 
         <verify-modal :data="trxn"/>
+        <view-transaction-modal :data="trxn"/>
         <table
             class="table custom-table"
             id="dataTable"
@@ -64,9 +65,11 @@
 <script>
 import moment from 'moment'
 import verifyModal from './agent-collection/verifyCollectionModal.vue'
+import viewTransactionModal from './agent-collection/viewTransactionModal.vue'
 export default {
     components:{
-        verifyModal
+        verifyModal,
+        viewTransactionModal
     },
     data(){
         return{
@@ -74,6 +77,7 @@ export default {
             agent_id:window.agent.id,
             payment_details:[],
             trxn:[],
+            trxn_code:''
         }
     },
     created(){
@@ -98,7 +102,12 @@ export default {
             let vm = this;
             if(action == 'Verify'){
                 this.trxn = this.payment_details[index];
-                this.$modal.show('verifyModal');
+                if(this.payment_details[index].payment_schedule_template_id!==null){
+                    this.$modal.show('verifyModal');
+                }else{
+                    this.acceptWithoutSchedule(index);
+                    console.log('chovuhr');
+                }
                 event.target.value = ''
             }
             else if(action == 'Decline'){
@@ -106,26 +115,86 @@ export default {
                 event.target.value = ''
             }
             else if(action == 'View'){
+                this.trxn = this.payment_details[index];
+                this.trxn_code = this.payment_details[index].transaction_code;
+                this.$modal.show('viewTransactionModal');
                 event.target.value = ''
             }
+        },
+        acceptWithoutSchedule(idx){
+            swal.fire({
+                title: "This has no payment schedule.",
+                html:'Accept collection?',
+                showCancelButton:true,
+            }).then((result)=>{
+                if(result.value===true){
+                    swal.fire({
+                        title: "Loading please wait...",
+                        // html: '',// add html attribute if you want or remove
+                        allowOutsideClick: false,
+                        onBeforeOpen: () => {
+                            swal.showLoading();
+                        },
+                    });
+                    let dataz = {
+                        student_payment:this.payment_details[idx],
+                        payment_schedule:null
+                    }
+                    
+                    axios.post(`/agent/collection/accept`,dataz).then(
+                        response=>{
+                            if(response.data.status==='success'){
+                                this.getAgentCollections();
+                                Toast.fire({
+                                    position: "top-end",
+                                    type: "success",
+                                    title: 'Collection verified',
+                                });
+                            }else{
+                                Toast.fire({
+                                    position: "top-end",
+                                    type: "error",
+                                    title: response.data.message,
+                                });
+                            }
+                        }
+                    );
+                }
+            });
         },
         declineCollection(idx){
             swal.fire({
                 title: "Decline this pending payment collection?",
                 showCancelButton:true,
             }).then((result)=>{
-                console.log(result);
+                console.log(result.value==true)
+                if(result.value===true){
+                    swal.fire({
+                        title: "Loading please wait...",
+                        // html: '',// add html attribute if you want or remove
+                        allowOutsideClick: false,
+                        onBeforeOpen: () => {
+                            swal.showLoading();
+                        },
+                    });
+                    axios.get(`/agent/collection/${this.payment_details[idx].id}/decline`).then(
+                        response=>{
+                            this.getAgentCollections();
+                            Toast.fire({
+                            position: "top-end",
+                            type: "success",
+                            title: 'Collection declined!',
+                        });
+                        }
+                    ).then(
+                        err=>{
+                            console.log(err);
+                        }
+                    );
+                }
             });
 
-            // axios.get(`/agent/collections/${this.payment_details[idx].id}/decline`).then(
-            //     response=>{
-            //         this.getAgentCollections();
-            //     }
-            // ).then(
-            //     err=>{
-            //         console.log(err);
-            //     }
-            // );
+            
         }
     }
 }

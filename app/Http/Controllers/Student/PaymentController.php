@@ -992,9 +992,9 @@ class PaymentController extends Controller
             
             if($s['status']=='success'){
                 DB::commit();
-            // }else{
+            }else{
                 DB::rollback();
-            // }
+            }
 
             return response()->json(['status'=>'success','message'=>$s]);
         }catch(Exception $e){

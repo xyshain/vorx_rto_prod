@@ -87,9 +87,35 @@ export default {
     },
     methods:{
         accept(){
-            axios.post(`/agent/collection/accept`,this.data).then(
+            swal.fire({
+                title: "Loading please wait...",
+                // html: '',// add html attribute if you want or remove
+                allowOutsideClick: false,
+                onBeforeOpen: () => {
+                    swal.showLoading();
+                },
+            });
+            let dataz = {
+                student_payment:this.data,
+                payment_schedule:this.student_payment.funded_payment_sched_template
+            }
+            axios.post(`/agent/collection/accept`,dataz).then(
                 response=>{
-                    console.log(response.data)
+                    if(response.data.status==='success'){
+                        this.$parent.getAgentCollections();
+                        this.$modal.hide();
+                        Toast.fire({
+                            position: "top-end",
+                            type: "success",
+                            title: 'Collection verified',
+                        });
+                    }else{
+                        Toast.fire({
+                            position: "top-end",
+                            type: "error",
+                            title: response.data.message,
+                        });
+                    }
                 }
             );
         },
