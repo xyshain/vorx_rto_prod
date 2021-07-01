@@ -103,7 +103,7 @@ export default {
                 response=>{
                     if(response.data.status==='success'){
                         this.$parent.getAgentCollections();
-                        this.$modal.hide();
+                        this.$modal.hide('verifyModal');
                         Toast.fire({
                             position: "top-end",
                             type: "success",

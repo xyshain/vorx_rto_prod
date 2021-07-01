@@ -705,31 +705,33 @@ class AgentController extends Controller
             DB::beginTransaction();
             if($payment_schedule!=null){
                 foreach($payment_schedule as $ps){
-                    if($ps['unverified_amount']!=0){
-                        if($student_payment['payment_schedule_template_id'] == $ps['id']){
-                            $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
-                            $payment_details->amount = $ps['unverified_amount'];
-                            $payment_details->verified = 1;
-                            $payment_details->update();
-                            $prededuct_com = 0;
-                        }else{
-                            $new_payment = new FundedStudentPaymentDetails;
-                            $new_payment->student_id = $student_payment['student_id'];
-                            $new_payment->agent_id = $student_payment['agent_id'];
-                            $new_payment->student_course_id = $student_payment['student_course_id'];
-                            $new_payment->offer_letter_course_detail_id = $student_payment['offer_letter_course_detail_id'];
-                            $new_payment->transaction_code = $student_payment['transaction_code'];
-                            $new_payment->payment_schedule_template_id = $ps['id'];
-                            $new_payment->payment_date = $student_payment['payment_date'];
-                            $new_payment->amount = $ps['unverified_amount'];
-                            $new_payment->verified = 1;
-                            $new_payment->user_id = $student_payment['user_id'];
-                            $new_payment->pre_deduc_comm = $prededuct_com;
-                            $new_payment->save();
-    
-                            $prededuct_com = 0;
+                    if(isset($ps['unverified_amount'])){
+                        if($ps['unverified_amount']!=0){
+                            if($student_payment['payment_schedule_template_id'] == $ps['id']){
+                                $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
+                                $payment_details->amount = $ps['unverified_amount'];
+                                $payment_details->verified = 1;
+                                $payment_details->update();
+                                $prededuct_com = 0;
+                            }else{
+                                $new_payment = new FundedStudentPaymentDetails;
+                                $new_payment->student_id = $student_payment['student_id'];
+                                $new_payment->agent_id = $student_payment['agent_id'];
+                                $new_payment->student_course_id = $student_payment['student_course_id'];
+                                $new_payment->offer_letter_course_detail_id = $student_payment['offer_letter_course_detail_id'];
+                                $new_payment->transaction_code = $student_payment['transaction_code'];
+                                $new_payment->payment_schedule_template_id = $ps['id'];
+                                $new_payment->payment_date = $student_payment['payment_date'];
+                                $new_payment->amount = $ps['unverified_amount'];
+                                $new_payment->verified = 1;
+                                $new_payment->user_id = $student_payment['user_id'];
+                                $new_payment->pre_deduc_comm = $prededuct_com;
+                                $new_payment->save();
+        
+                                $prededuct_com = 0;
+                            }
                         }
-                    }
+                    }                    
                 }
             }else{
                 $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
