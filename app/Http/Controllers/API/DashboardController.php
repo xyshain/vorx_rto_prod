@@ -314,10 +314,10 @@ class DashboardController extends Controller
         $agent = $user->agent_details;
         if($agent){
             $user_id = $agent->id;
-            $notifications = Notification::where('type', 'payment_collection')->where('reference_id', $user_id)->where('is_seen', 0)->get();
+            $notifications = Notification::where('type', 'payment_collection')->where('reference_id', $user_id)->where('is_seen', 0)->orderBy('id','desc')->get();
         }else{
             $user_id = $user->id;
-            $notifications = Notification::where('type', 'payment_collection')->where('is_seen', 0)->get();
+            $notifications = Notification::where('type', 'payment_collection')->where('is_seen', 0)->orderBy('id','desc')->get();
         }
 
        $n = [];
