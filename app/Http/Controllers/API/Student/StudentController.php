@@ -745,8 +745,9 @@ class StudentController extends Controller
                 'student_id'=> $student_id,
                 'pre_deduc_comm' => $request->deducted_commission_amount,
                 'user_id' => Auth::user()->id,
-                'agent_id' => Auth::user()->id,
+                'agent_id' => Auth::user()->agent_details->id,
                 'note' => $request->notes,
+                'verified' => 0,
             ];
             FundedStudentPaymentDetails::where('id',$pd->id)
                 ->update($data);
