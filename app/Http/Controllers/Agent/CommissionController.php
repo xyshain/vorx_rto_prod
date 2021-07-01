@@ -51,7 +51,7 @@ class CommissionController extends Controller
                     // $funded_course = $student->funded_course()->where('course_code', $subsetting->course->code)->first();
                     $offer_details = $funded_course->offer_detail;
                     // $payment_details = $funded_course->payment_details()->get(['id as payment_id', 'payment_date', 'amount', 'pre_deduc_comm', 'comm_release_status', 'note'])->toArray();
-                    $payment_details = $funded_course->payment_details()->doesntHave('commission')->get(['id as payment_id','payment_date','amount','pre_deduc_comm','comm_release_status','note'])->toArray();
+                    $payment_details = $funded_course->payment_details()->where('verified',1)->doesntHave('commission')->get(['id as payment_id','payment_date','amount','pre_deduc_comm','comm_release_status','note','verified'])->toArray();
 
                     $non_tuition = $offer_details->offer_letter->fees->application_fee + $offer_details->offer_letter->fees->materials_fee;
                     $nontuition = $non_tuition;
@@ -367,6 +367,7 @@ class CommissionController extends Controller
                     $payment_details[$pkey] = $pdata['p'];
                     $com_holder = $pdata['c'];
                 }
+                
             
         }
         return $payment_details;

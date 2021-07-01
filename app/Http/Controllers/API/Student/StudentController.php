@@ -612,7 +612,6 @@ class StudentController extends Controller
                         $attain = false;
                     }
                 }
-
                 $pl[]= [
                     'number'             => $ctr++,
                     'id'                 => $psched->id,
@@ -627,7 +626,7 @@ class StudentController extends Controller
                     'prev_balance'       => $prev_balance ,
                     'attain'             => $attain ,
                     'commission'         => $commission,
-                    'percentage'         => ( $psched->approved_amount_paid / $psched->payable_amount ) * 100,
+                    'percentage'         => ( (float)$psched->approved_amount_paid / (float)$psched->payable_amount ) * 100,
                 ];
                
                 

@@ -67,5 +67,8 @@ class FundedStudentPaymentDetails extends Model implements AuditableContract
     public function agent(){
         return $this->belongsTo(AgentDetail::class,'agent_id');
     }
+    public function payment_schedule_template(){
+        return $this->belongsTo(PaymentScheduleTemplate::class,'payment_schedule_template_id');
+    }
 
 }

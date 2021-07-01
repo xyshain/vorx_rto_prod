@@ -14,6 +14,7 @@ use App\Http\Controllers\Send\EmailSendingController;
 use App\Models\EmailAutomation;
 use App\Models\Course;
 use App\Models\FundedStudentPaymentDetails;
+use App\Models\PaymentScheduleTemplate;
 use App\Models\Student\Party;
 use App\Models\TrainingOrganisation;
 use App\Models\User;
@@ -628,9 +629,96 @@ class AgentController extends Controller
     }
 
     public function agentCollection($id){
-        $agent_collections = FundedStudentPaymentDetails::with('attachment','student.party','funded_student_course')->where('agent_id',$id)
+        $agent_collections = FundedStudentPaymentDetails::with('attachment','student.party','funded_student_course','payment_schedule_template')->where('agent_id',$id)
         ->orderBy('id','desc')->get();
 
         return $agent_collections;
+    }
+
+    public function declineCollection($id){ //funded student payment detail id
+        $student_funded_payment_detail = FundedStudentPaymentDetails::where('id',$id)->first();
+
+        $student_funded_payment_detail->verified = 2;
+        $student_funded_payment_detail->update();
+    }
+
+    public function studentPayments($id,$amount){
+        $funded_student_payments = FundedStudentPaymentDetails::where('student_course_id',$id)->where('verified',1)->get();
+        $funded_payment_sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$id)->get();
+        $ret = [
+            'funded_student_payments'=>$funded_student_payments,
+            'funded_payment_sched_template'=>$funded_payment_sched_template
+        ];
+        
+        $unverified_amount = $amount;
+        foreach($funded_payment_sched_template as $fd){
+            $fd->approved_amount_paid = $fd->approved_amount_paid;
+            
+            $fd->balance = $fd->payable_amount - $fd->approved_amount_paid;
+
+            // if($fd->balance>0){
+            //     $fd->unverified_amount = $unverified_amount >= $fd->payable_amount ? $fd->balance :  $unverified_amount;
+            //     $unverified_amount = $unverified_amount - $fd->payable_amount;
+            // }
+                // breaking sa unverified amount 
+            if($fd->balance > 0){
+                if($unverified_amount > $fd->balance){
+                    $fd->unverified_amount = $fd->balance;
+                    $unverified_amount = $unverified_amount - $fd->balance;
+                }else if($unverified_amount < $fd->balance && $unverified_amount > 0){
+                    $fd->unverified_amount = $unverified_amount;
+                    $unverified_amount = $unverified_amount - $unverified_amount;
+                }else{
+                    $fd->unverified_amount = 0;
+                }
+                // dump($unverified_amount);
+            }
+        }
+
+        return $ret;
+    }
+
+    public function acceptCollection(Request $request){
+        // return $request->all();
+        $agent_collection = $request->amount;
+        $trxn_code = $request->transaction_code;
+        
+        // dd($request->id,$agent_collection,$trxn_code);
+        $student_funded_payment_detail = FundedStudentPaymentDetails::where('id',$request->id)->first();
+
+        $payment_schedule = PaymentScheduleTemplate::where('funded_student_course_id',$request->student_course_id)->get();
+        
+        $unfinished_payments = [];
+
+        // foreach($payment_schedule as $ps){
+        //     $payable = 0;
+        //     $ps->approved_amount_paid = $ps->approved_amount_paid;
+        //     if($ps->approved_amount_paid < $ps->payable_amount){
+        //         if($ps->id == $student_funded_payment_detail->payment_schedule_template_id){
+        //             $payable = $agent_collection > $ps->payable_amount ? $ps->payable_amount  - $ps->approved_amount : $agent_collection - $ps->approved_amount ;
+        //             $agent_collection = $agent_collection - $payable;
+        //             dump($payable,$agent_collection);
+        //         }else{
+        //             $payable = $agent_collection > $ps->payable_amount ? $ps->payable_amount  - $ps->approved_amount : $agent_collection - $ps->approved_amount ;
+        //             $agent_collection = $agent_collection - $payable;
+        //             dump($payable,$agent_collection);
+        //         }
+        //     }
+        $first = true;
+        foreach($payment_schedule as $ps){
+            $payable = 0;
+            if($ps->approved_amount_paid < $ps->payable_amount){
+                if($first == true){
+                    $student_funded_payment_detail->
+                }
+                $payable = ;
+                $student_funded_payment_detail->amount = $ps->
+            }
+        }
+        
+
+
+        return response()->json([$unfinished_payments,$student_funded_payment_detail]);
+
     }
 }

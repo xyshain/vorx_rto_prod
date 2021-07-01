@@ -48,7 +48,7 @@ class PaymentScheduleTemplate extends Model implements AuditableContract
                 $t = $t + $v->amount;
             }
         }
-        return number_format($t, 2);
+        return number_format($t, 2,'.','');
     }
 
     public function getAmountPaidAttribute()

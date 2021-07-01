@@ -1,5 +1,6 @@
 <template>
     <div class="card card-body"> 
+        <verify-modal :data="trxn"/>
         <table
             class="table custom-table"
             id="dataTable"
@@ -21,31 +22,38 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="pd in payment_details" :key="pd.id">
+                <tr v-for="(pd,index) in payment_details" :key="pd.id">
                     <td class="text-center">{{pd.transaction_code}}</td>
                     <td class="text-center">{{pd.student_id}}</td>
                     <td class="text-center">{{pd.amount}}</td>
                     <td class="text-center">{{pd.payment_date | dateFormat}}</td>
                     <td class="text-center">{{pd.note}}</td>
                     <td class="text-center">
-                        <a :href="'/payment_attachment/'+pd.attachment.id"  v-if="pd.attachment !== null"><span class="fa fa-paperclip"></span></a>
+                        <a :href="'/payment_attachment/'+pd.attachment.id"  v-if="pd.attachment !== null" target="_blank"><span class="fa fa-paperclip"></span></a>
                         <span v-else>
                             No attachment
                         </span>
                     </td>
                     <td class="text-center">
-                        <span v-if="pd.verified === 1" >
+                        <span v-if="pd.verified === 1" title="Verified">
                           <i class="fas fa-check-circle" style="color:green"></i>
+                        </span>
+                        <span v-else-if="pd.verified === 2" title="Declined">
+                          <i class="fab fa-creative-commons-nc" style="color:red"></i>
                         </span>
                         <span v-else title="Pending">
                             <i class="fas fa-clock"></i>
                         </span>
                     </td>
                     <td class='text-center'>
-                        <select @change="passActionPayment(index,$event)" class="form-control custominput" id="exampleFormControlSelect1">
+                        <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1" v-if="pd.verified===0">
                             <option value="">Actions</option>
-                            <option value="Edit">Verify</option>
-                            <option value="Delete">Decline</option>
+                            <option value="Verify">Verify</option>
+                            <option value="Decline">Decline</option>
+                        </select>
+                        <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1" v-else>
+                            <option value="">Actions</option>
+                            <option value="View">View Transaction</option>
                         </select>
                     </td>
                 </tr>
@@ -55,12 +63,17 @@
 </template>
 <script>
 import moment from 'moment'
+import verifyModal from './agent-collection/verifyCollectionModal.vue'
 export default {
+    components:{
+        verifyModal
+    },
     data(){
         return{
             app_color:app_color,
             agent_id:window.agent.id,
-            payment_details:[]
+            payment_details:[],
+            trxn:[],
         }
     },
     created(){
@@ -78,6 +91,41 @@ export default {
                     this.payment_details = response.data;
                 }
             );
+        },
+        passAction(index,event){
+            // console.log(index,event);
+            let action = event.target.value
+            let vm = this;
+            if(action == 'Verify'){
+                this.trxn = this.payment_details[index];
+                this.$modal.show('verifyModal');
+                event.target.value = ''
+            }
+            else if(action == 'Decline'){
+                this.declineCollection(index);
+                event.target.value = ''
+            }
+            else if(action == 'View'){
+                event.target.value = ''
+            }
+        },
+        declineCollection(idx){
+            swal.fire({
+                title: "Decline this pending payment collection?",
+                showCancelButton:true,
+            }).then((result)=>{
+                console.log(result);
+            });
+
+            // axios.get(`/agent/collections/${this.payment_details[idx].id}/decline`).then(
+            //     response=>{
+            //         this.getAgentCollections();
+            //     }
+            // ).then(
+            //     err=>{
+            //         console.log(err);
+            //     }
+            // );
         }
     }
 }
