@@ -474,7 +474,6 @@ class StudentController extends Controller
             $x = false;
             $att = null;
             $attachment = null;
-            $pdetails = [];
             foreach($funded_course->payment_sched as $key => $psched){
                 $commission = 0;
                 $prev_balance = $balance;
@@ -553,20 +552,7 @@ class StudentController extends Controller
 
                 $pd = [];
                 $ptotalAmount = 0;
-                $compiledDetails =  $psched->payment_detail->groupBy('transaction_code');
-                foreach($compiledDetails as $trnx =>$details){
-                    $pdetails[] = [
-                        'id' => $details[0]->id,  
-                        'transaction_code' => $trnx,  
-                        'payment_date' => Carbon::parse($details[0]->payment_date)->format('d/m/Y'),  
-                        'amount' => $details->sum('amount'),  
-                        'pre_deduc_comm' => $details->sum('pre_deduc_comm') ,  
-                        'verified' =>  $details[0]->verified,  
-                        'note' => $details[0]->note,  
-                        'attachment' => $details[0]->attachment != null ? $details[0]->attachment->hash_name : null
-                    ];
-
-                }                
+                    
                 foreach($psched->payment_detail as $payment_detail){
                     if($att == null){
                        $att =  $payment_detail->transaction_code;
@@ -632,7 +618,21 @@ class StudentController extends Controller
                 
             }
 
+            $compiledDetails =  $funded_course->payment_details->groupBy('transaction_code');
+                $pdetails = [];
+                foreach($compiledDetails as $trnx =>$details){
+                    $pdetails[] = [
+                        'id' => $details[0]->id,  
+                        'transaction_code' => $trnx,  
+                        'payment_date' => Carbon::parse($details[0]->payment_date)->format('d/m/Y'),  
+                        'amount' => $details->sum('amount'),  
+                        'pre_deduc_comm' => $details->sum('pre_deduc_comm') ,  
+                        'verified' =>  $details[0]->verified,  
+                        'note' => $details[0]->note,  
+                        'attachment' => $details[0]->attachment != null ? $details[0]->attachment->hash_name : null
+                    ];
 
+                }  
 
             if($funded_course->course_code == '@@@@'){
                 $d = [

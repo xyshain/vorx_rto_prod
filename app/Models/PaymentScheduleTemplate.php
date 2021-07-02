@@ -51,6 +51,28 @@ class PaymentScheduleTemplate extends Model implements AuditableContract
         return number_format($t, 2,'.','');
     }
 
+    public function getApprovedCommissionAttribute(){
+        $amount = FundedStudentPaymentDetails::with('commission')->where('payment_schedule_template_id', $this->id)->get();
+        $t = 0;
+        foreach ($amount as $v) {
+            if ($v->verified == 1) {
+                $t = $t + $v->commission->computed_commission;
+            }
+        }
+        return number_format($t, 2,'.','');
+    }
+    public function getPredeductedComAttribute()
+    {
+        $amount = FundedStudentPaymentDetails::where('payment_schedule_template_id', $this->id)->get();
+        $t = 0;
+        foreach ($amount as $v) {
+            if ($v->verified  == 1) {
+                $t = $t + $v->pre_deduc_comm;
+            }
+        }
+        return number_format($t, 2);
+    }
+
     public function getAmountPaidAttribute()
     {
         $amount = FundedStudentPaymentDetails::where('payment_schedule_template_id', $this->id)->get();
@@ -64,17 +86,7 @@ class PaymentScheduleTemplate extends Model implements AuditableContract
         }
         return number_format($t, 2);
     }
-    public function getPredeductedComAttribute()
-    {
-        $amount = PaymentScheduleDetail::where('payment_schedule_template_id', $this->id)->get();
-        $t = 0;
-        foreach ($amount as $v) {
-            if ($v->agent_comm_status_id  == 1) {
-                $t = $t + $v->pre_deducted_amount;
-            }
-        }
-        return number_format($t, 2);
-    }
+   
     public function getLastPaymentDateAttribute()
     {
         $payment =  PaymentScheduleDetail::where('payment_schedule_template_id', $this->id)->where('payment_status_id', 0)->latest()->first();
