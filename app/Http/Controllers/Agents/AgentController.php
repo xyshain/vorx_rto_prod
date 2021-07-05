@@ -8,12 +8,14 @@ use App\Models\AgentAttachment;
 use App\Models\AgentCommissionSetting;
 use App\Models\AgentCommissionSettingMain;
 use App\Models\CommissionStatus;
+use App\Models\Notification;
 use App\Models\AgentDetail;
 use App\Models\AgentApplication;
 use App\Http\Controllers\Send\EmailSendingController;
 use App\Models\EmailAutomation;
 use App\Models\Course;
 use App\Models\FundedStudentPaymentDetails;
+use App\Models\Student\Student;
 use App\Models\PaymentScheduleTemplate;
 use App\Models\Student\Party;
 use App\Models\TrainingOrganisation;
@@ -629,27 +631,63 @@ class AgentController extends Controller
     }
 
     public function agentCollection($id){
-        $agent_collections = FundedStudentPaymentDetails::with('attachment','student.party','funded_student_course','payment_schedule_template')->where('agent_id',$id)
+        $agent_collections = FundedStudentPaymentDetails::with('agent','attachment','student.party','funded_student_course.course','payment_schedule_template')->where('agent_id',$id)
         ->orderBy('id','desc')->get();
 
         $tcodes = [];
-
+        $dup_codes = [];
+        $note_att = [];
         for($i = 0; $i < count($agent_collections); $i++){
             if(isset($agent_collections[$i]->transaction_code)){
                 if(in_array($agent_collections[$i]->transaction_code,$tcodes)){
-                    unset($agent_collections[$i]);
+                    // unset($agent_collections[$i]);
+                    array_push($dup_codes,$agent_collections[$i]->transaction_code);
                 }else{
                     $payment_details = FundedStudentPaymentDetails::where('transaction_code',$agent_collections[$i]->transaction_code)->get();
                     $amount = 0;
+                    $attachment = null;
+                    $note = null;
                     foreach($payment_details as $pd){
                         $amount += $pd->amount;
+                        // dump($pd->attachment);
+                        if(isset($pd->attachment)){
+                            $attachment = $pd->attachment;
+                        }
+                        if(isset($pd->note)){
+                            $note = $pd->note;
+                        }
                     }
-                    $agent_collections[$i]->amount = $amount;
-                    array_push($tcodes,$agent_collections[$i]->transaction_code);
+                    
+                    $note_att[$i] = ['tcode'=>$agent_collections[$i]->transaction_code,'note'=>$note,'attachment'=>$attachment,'amount'=>$amount];
+                    // $agent_collections[$i]->amount = $amount;
+                    // if(!in_array($agent_collections[$i]->transaction_code,$tcodes)){
+                        array_push($tcodes,$agent_collections[$i]->transaction_code);
+                    // }
+                }
+            }
+        }
+        
+        foreach($agent_collections as $ac){
+            foreach($note_att as $na){  
+                if($ac->transaction_code == $na['tcode']){
+                    $ac->attachments = $na['attachment'];
+                    $ac->note = $na['note'];
+                    $ac->amount = $na['amount'];
+                    // return response()->json(['ac'=>$ac,'ac_attachment'=>$ac->attachment,'na'=>$na['attachment']]);
                 }
             }
         }
 
+        for($i = 0; $i < count($agent_collections); $i++){
+            if(isset($agent_collections[$i]->transaction_code)){
+                if(in_array($agent_collections[$i]->transaction_code,$dup_codes)){
+                    if(($key = array_search($agent_collections[$i]->transaction_code,$dup_codes))!==false){
+                        unset($dup_codes[$key]);
+                    }
+                    unset($agent_collections[$i]);
+                }
+            }
+        }
         return $agent_collections;
     }
 
@@ -673,12 +711,7 @@ class AgentController extends Controller
             $fd->approved_amount_paid = $fd->approved_amount_paid;
             
             $fd->balance = $fd->payable_amount - $fd->approved_amount_paid;
-
-            // if($fd->balance>0){
-            //     $fd->unverified_amount = $unverified_amount >= $fd->payable_amount ? $fd->balance :  $unverified_amount;
-            //     $unverified_amount = $unverified_amount - $fd->payable_amount;
-            // }
-                // breaking sa unverified amount 
+            
             if($fd->balance > 0){
                 if($unverified_amount > $fd->balance){
                     $fd->unverified_amount = $fd->balance;
@@ -739,8 +772,35 @@ class AgentController extends Controller
                 $payment_details->update();
             }
 
-            DB::commit();
-            return response()->json(['status'=>'success']);
+            $this->notifyAgent($student_payment);
+            
+            $org = TrainingOrganisation::first();
+            $send = new EmailSendingController;
+            
+            if(isset($student_payment['agent'])){
+                $name = $student_payment['agent']['agent_name'];
+                if(isset($student_payment['agent']['email'])){
+                    $emailsTo[] = $student_payment['agent']['email'];
+                }else{   
+                    return response()->json(['status'=>'error','message'=>'Agent email not found']);
+                }
+            }else{
+                return response()->json(['status'=>'error','message'=>'Agent not found']);
+            }
+
+            $content = '<b>Dear ' . $name . ',</b><br><br>Your payment has been verified and accepted.<br>Trxn no: '.$trxn_code;
+
+            $s = $send->send_automate('Payment Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
+            // $s['status']='success';
+            
+            if($s['status']=='success'){
+                DB::commit();
+                return response()->json(['status'=>'success']);
+            }else{
+                DB::rollback();
+                return response()->json(['status'=>'error','message'=>'Email error']);
+            }
+            
             
         }catch(Exception $e){
             DB::rollback();
@@ -749,13 +809,69 @@ class AgentController extends Controller
 
     }
 
+    public function notifyAgent($payments){
+        
+        $student = Student::with(['party.person'])->where('student_id', $payments['student_id'])->first();
+        $funded_course = $payments['funded_student_course'];
+        $course = '';
+        if($funded_course['course_code'] == '@@@@'){
+            $course = 'Unit of Compentency';
+        }else{
+            $course = $funded_course['course_code'].' - '. $funded_course['course']['name'];
+        }
+
+        $collection_status = "";
+        if($payments['verified'] == 1){
+            $collection_status = 'Verified';
+        }elseif($payments['verified'] == 0){
+            $collection_status = 'Pending';
+        }elseif($payments['verified'] == 2){
+            $collection_status = 'Declined';
+        } 
+        // return $collection_status;
+        try {
+            DB::beginTransaction();
+            
+            $notify = new Notification;
+            $notify->fill([
+                'type' => 'payment_collection',
+                'table_name' => 'funded_student_payment_details',
+                'table_id' => $payments['id'],
+                'reference_id' => $payments['agent_id'] !== null ? $payments['agent_id'] : $student['student_id'], 
+                'date_recorded' => Carbon::now()->setTimezone('Australia/Melbourne')->format('Y-m-d H:i:s'),
+                'message' => 'Payment collection has been '. $collection_status .' under '. $course . ' course.',
+                'is_seen' => 0,
+                'action' => 'updated',
+                'link' => $student['student_type_id'] == 1 ? '/student/' . $student['id'] : '/student/domestic/' . $student['id']
+            ]);
+            $notify->user()->associate(\Auth::user());
+            $notify->save();
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            throw $th;
+        }
+    }
+
     public function getTransaction($id,$trxn_code){
         if($trxn_code!='null'){
             $student_funded_payment_detail = FundedStudentPaymentDetails::with('agent','payment_schedule_template')->where('transaction_code',$trxn_code)->get();
+            $payment_sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$student_funded_payment_detail[0]->student_course_id)->get();
+            
+            foreach($payment_sched_template as $fd){
+                $fd->approved_amount_paid = $fd->approved_amount_paid;
+                
+                $fd->balance = $fd->payable_amount - $fd->approved_amount_paid;
+            }
+
+            $res = json_encode(['student_funded_payment_detail'=>$student_funded_payment_detail,'payment_sched_template'=>$payment_sched_template]);
         }else{
             $student_funded_payment_detail = FundedStudentPaymentDetails::with('agent','payment_schedule_template')->where('id',$id)->get();
+            $res = json_encode(['student_funded_payment_detail'=>$student_funded_payment_detail,'payment_sched_template'=>null]);     
         }
 
-        return $student_funded_payment_detail;
+        return $res;
     }
 }

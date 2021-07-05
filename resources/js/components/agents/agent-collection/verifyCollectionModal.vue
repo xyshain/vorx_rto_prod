@@ -22,6 +22,22 @@
                 Payment Schedule Template
                 </div>
                 <div class="card card-body">
+                    <div class="card text-left" style="border:none">
+                        <span><strong>Student:</strong> {{toType(data.student) !== 'undefined' ? data.student.party.name : ''}}</span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span><strong>Course:</strong>
+                        <template v-if="toType(data.funded_student_course)!=='undefined'">
+                            <template v-if="data.funded_student_course.course_code=='@@@@'">
+                                Unit of Competency
+                            </template>
+                            <template v-else>
+                                {{data.funded_student_course.course_code}} - {{data.funded_student_course.course.name}}
+                            </template>
+                        </template>
+                        </span>
+                        
+                    </div>
                     <div class="card text-right"  style="border:none">
                         <p>
                             <span class="fas fa-circle " style="color:#f6c23e"></span> Amount : {{amount_paid.toFixed(2)}} 
@@ -86,6 +102,9 @@ export default {
         },
     },
     methods:{
+        toType(obj) {
+            return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+        },
         accept(){
             swal.fire({
                 title: "Loading please wait...",
@@ -116,6 +135,15 @@ export default {
                             title: response.data.message,
                         });
                     }
+                }
+            ).catch(
+                err=>{
+                    Toast.fire({
+                        position:'top-end',
+                        type:'error',
+                        title:'Cannot proceed!',
+                        html: err.response.data.message
+                    });
                 }
             );
         },

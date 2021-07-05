@@ -22,9 +22,25 @@
                 View Transaction
                 </div>
                 <div class="card card-body">
+                    <div class="card text-left" style="border:none">
+                        <span><strong>Student:</strong> {{toType(data.student) !== 'undefined' ? data.student.party.name : ''}}</span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span><strong>Course:</strong>
+                        <template v-if="toType(data.funded_student_course)!=='undefined'">
+                            <template v-if="data.funded_student_course.course_code=='@@@@'">
+                                Unit of Competency
+                            </template>
+                            <template v-else>
+                                {{data.funded_student_course.course_code}} - {{data.funded_student_course.course.name}}
+                            </template>
+                        </template>
+                        </span>
+                        
+                    </div>
                     <div class="card text-right"  style="border:none">
                         <p>
-                             Amount : {{amount_paid.toFixed(2)}} 
+                            <span class="fas fa-circle " style="color:#024b67"></span> Amount : {{amount_paid.toFixed(2)}} 
                         </p>
                     </div>
                     <table
@@ -32,10 +48,10 @@
                         id="dataTable"
                         width="100%"
                         cellspacing="0"
+                        v-if="payment_schedule==null"
                     >
                          <thead>
                             <tr>
-                                <th width="20%">Payment Template #</th>
                                 <th class='text-center' width="20%">Amount</th>
                                 <th class='text-center' width="30%">Transaction #</th>
                                 <th class='text-center' width="30%">Post Date</th>
@@ -44,16 +60,47 @@
                          </thead>
                          <tbody>
                              <tr v-for="(st,index) in student_payment" :key="index">
-                                 <td>{{st.payment_schedule_template_id}}</td>
                                  <td class="text-center">{{st.amount}}</td>
                                  <td class="text-center">{{st.transaction_code}}</td>
                                  <td class="text-center">{{st.payment_date | dateFormat}}</td>
                                  <td class="text-center">{{st.agent.agent_name}}</td>
                              </tr>
                          </tbody>
-                    </table>                    
+                    </table> 
+                    <table
+                        class="table custom-table"
+                        id="dataTable"
+                        width="100%"
+                        cellspacing="0"
+                        v-else
+                    >       
+                        <thead>
+                            <tr>
+                                <th width="20%"></th>
+                                <th class='text-center' width="20%">Order No</th>
+                                <th class='text-center' width="30%">Amount Due</th>
+                                <th class='text-center' width="30%">Amount Paid</th>
+                                <th class='text-center' width="30%">Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(ps,index) in payment_schedule" :key="index">
+                                <td class="text-center bg-primary text-white" v-if="toType(findPaymentDetail(ps.id))!=='undefined'">
+                                        {{findPaymentDetail(ps.id)}}
+                                </td>
+                                <td class="text-center" v-else>
+                                    <span v-if="parseFloat(ps.approved_amount_paid) >= parseFloat(ps.payable_amount)">
+                                         <i class="fas fa-check-circle" style="color:green"></i>
+                                     </span>
+                                </td>
+                                <td class="text-center">{{index+1}}</td>
+                                <td class="text-center">{{ps.payable_amount}}</td>
+                                <td class="text-center">{{ps.approved_amount_paid}}</td>
+                                <td class="text-center">{{ps.due_date | dateFormat}}</td>
+                            </tr>
+                        </tbody>
+                    </table>          
                 </div>
-
             </div>
         </div>
     </modal>
@@ -65,6 +112,7 @@ export default {
     data(){
         return{
             student_payment:[],
+            payment_schedule:[],
             amount_paid:0,
         }
     },
@@ -74,7 +122,26 @@ export default {
         },
     },
     methods:{
+        toType(obj) {
+            return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+        },
+        findPaymentDetail(id){
+            // return id;
+            for(let i = 0; i < this.student_payment.length; i++){
+                if(id == this.student_payment[i].payment_schedule_template_id){
+                   return this.student_payment[i].amount
+                }
+            }
+            // this.student_payment.forEach(function(sp){
+            //     if(sp.payment_schedule_template_id == id){
+            //         return sp.amount;
+            //     }else{
+            //         return ' shxt';
+            //     }
+            // });
+        },
         closed(){
+            this.payment_schedule = [];
             this.student_payment = [];
             this.amount_paid = 0;
         },
@@ -86,7 +153,8 @@ export default {
             axios.get(`/agent/get-transaction/${this.data.id}/${this.data.transaction_code}`).then(
                 response=>{
                     // console.log('gago');
-                     this.student_payment = response.data;  
+                    this.payment_schedule = response.data.payment_sched_template;
+                    this.student_payment = response.data.student_funded_payment_detail;  
                 }
             );
         }
