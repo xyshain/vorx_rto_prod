@@ -733,7 +733,7 @@ class AgentController extends Controller
         $student_payment    = $request->student_payment;
         $trxn_code          = $request->student_payment['transaction_code'];
         $prededuct_com      = $request->student_payment['pre_deduc_comm'];
-        
+
         try{
             DB::beginTransaction();
             if($payment_schedule!=null){
@@ -772,7 +772,6 @@ class AgentController extends Controller
                 $payment_details->update();
             }
 
-            $this->notifyAgent($student_payment);
             
             $org = TrainingOrganisation::first();
             $send = new EmailSendingController;
@@ -792,9 +791,10 @@ class AgentController extends Controller
 
             $s = $send->send_automate('Payment Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
             // $s['status']='success';
-            
             if($s['status']=='success'){
                 DB::commit();
+                $student_payment['verified'] = 1;
+                $this->notifyAgent($student_payment);
                 return response()->json(['status'=>'success']);
             }else{
                 DB::rollback();
