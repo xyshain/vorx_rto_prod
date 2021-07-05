@@ -37,8 +37,8 @@
         class=" d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search"
         v-else
       >
-        <h5 class="text-danger font-weight-bold" v-if="typeof stud.party !== 'undefined'">{{stud.party.name}} ({{stud.student_id}})</h5>
-        <h5 class="text-danger font-weight-bold" v-if="typeof trainer.firstname !== 'undefined'">{{trainer.firstname}} {{trainer.lastname}}</h5>
+        <h5 class="text-danger font-weight-bold" v-if="toType(stud.party) !== 'undefined'">{{stud.party.name}} ({{stud.student_id}})</h5>
+        <h5 class="text-danger font-weight-bold" v-if="toType(trainer.firstname) !== 'undefined'">{{trainer.firstname}} {{trainer.lastname}}</h5>
       </div>
 
       <!-- Topbar Navbar -->
@@ -267,6 +267,9 @@ export default {
     this.getAlerts();
   },
   methods: {
+    toType(obj) {
+        return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+    },
     enrol_notification() {
       let vm = this
       axios

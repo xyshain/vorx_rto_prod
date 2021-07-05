@@ -12,6 +12,7 @@
                 <tr>
                     <th class='text-center'>Trxn Code</th>
                     <th class='text-center'>Student ID</th>
+                    <th class='text-center'>Course</th>
                     <th class='text-center'>Amount</th>
                     <th class='text-center'>Post Date</th>
                     <th class='text-center'>Notes</th>
@@ -26,6 +27,7 @@
                 <tr v-for="(pd,index) in payment_details" :key="pd.id">
                     <td class="text-center">{{pd.transaction_code}}</td>
                     <td class="text-center">{{pd.student_id}}</td>
+                    <td class="text-center">{{pd.funded_student_course.course_code != '@@@@' ? pd.funded_student_course.course_code : 'Unit of Competency'}}</td>
                     <td class="text-center">{{pd.amount}}</td>
                     <td class="text-center">{{pd.payment_date | dateFormat}}</td>
                     <td class="text-center">{{pd.note}}</td>
