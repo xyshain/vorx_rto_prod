@@ -51,7 +51,7 @@ class CommissionController extends Controller
                     // $funded_course = $student->funded_course()->where('course_code', $subsetting->course->code)->first();
                     $offer_details = $funded_course->offer_detail;
                     // $payment_details = $funded_course->payment_details()->get(['id as payment_id', 'payment_date', 'amount', 'pre_deduc_comm', 'comm_release_status', 'note'])->toArray();
-                    $payment_details = $funded_course->payment_details()->where('verified',1)->doesntHave('commission')->get(['id as payment_id','payment_date','amount','pre_deduc_comm','comm_release_status','note','verified'])->toArray();
+                    $payment_details = $funded_course->payment_details()->where('verified',1)->doesntHave('commission')->get(['id as payment_id','payment_schedule_template_id as payment_sched_id','payment_date','amount','pre_deduc_comm','comm_release_status','note','verified'])->toArray();
 
                     $non_tuition = $offer_details->offer_letter->fees->application_fee + $offer_details->offer_letter->fees->materials_fee;
                     $nontuition = $non_tuition;
@@ -60,7 +60,7 @@ class CommissionController extends Controller
                     $_payment_details = collect($payment_details);
                     $total = $_payment_details->sum('computed_commission');
                     $total_pre_deducted = $_payment_details->sum(function($payments){
-                        if($payments['comm_release_status'] == 1){
+                        if($payments['verified'] == 1){
                             return $payments['pre_deduc_comm'];
                         }
                     });
@@ -177,6 +177,7 @@ class CommissionController extends Controller
                                     'amount_received'           => $payment['amount'],
                                     'actual_amount'             => $payment['actual_amount'],
                                     'accumulated'               => $payment['accumulated'],
+                                    'payment_sched_id'          => $payment['payment_sched_id'],
                                 ]
                             );
                             DB::commit();
@@ -198,7 +199,7 @@ class CommissionController extends Controller
         if ($settings->commission_type == '%') {
             if ($settings->gst_status == 0) {
                 $payment_details['computed_commission'] =  round($payment_details['actual_amount'] * ($settings->commision_value / 100), 2);
-                if ($details['comm_release_status'] == 1) {
+                if ($details['verified'] == 1) {
                     $com_holder += $details['pre_deduc_comm'] - $payment_details['computed_commission'];
                     $payment_details['actual_commission'] =  $details['pre_deduc_comm'] > $payment_details['computed_commission'] ? 0 : abs($payment_details['computed_commission'] - $details['pre_deduc_comm']);
                     if ($payment_details['computed_commission'] - $details['pre_deduc_comm'] > 0) {
@@ -223,7 +224,7 @@ class CommissionController extends Controller
                 }
             } else {
                 $payment_details['computed_commission'] =  round($payment_details['actual_amount'] * ($settings->commision_value / 100) - ($payment_details['actual_amount'] * ($settings->commision_value / 100) * .10), 2);
-                if ($details['comm_release_status'] == 1) {
+                if ($details['verified'] == 1) {
                     $com_holder += $details['pre_deduc_comm'] - $payment_details['computed_commission'];
                     $payment_details['actual_commission'] =  $details['pre_deduc_comm'] > $payment_details['computed_commission'] ? 0 : abs($payment_details['computed_commission'] - $details['pre_deduc_comm']);
                     if ($payment_details['computed_commission'] - $details['pre_deduc_comm'] > 0) {
@@ -259,14 +260,13 @@ class CommissionController extends Controller
     }
 
     public function commission_registered($settings,$payment_details,$details, $com_holder){
-        // dump($payment_detail);
         // dump($details);
         // dd($settings);
         // dd($settings->cutoff_period);
         if ($settings->commission_type == '%') {
             if ($settings->gst_status == 1) {
                 $payment_details['computed_commission'] =  round($payment_details['actual_amount'] * ($settings->commision_value / 100), 2);
-                if ($details['comm_release_status'] == 1) {
+                if ($details['verified'] == 1) {
                     $com_holder += $details['pre_deduc_comm'] - $payment_details['computed_commission'];
                     $payment_details['actual_commission'] =  $details['pre_deduc_comm'] > $payment_details['computed_commission'] ? 0 : abs($payment_details['computed_commission'] - $details['pre_deduc_comm']);
                     if ($payment_details['computed_commission'] - $details['pre_deduc_comm'] > 0) {
@@ -290,7 +290,7 @@ class CommissionController extends Controller
                 }
             }else{
                 $payment_details['computed_commission'] =  round($payment_details['actual_amount'] * ($settings->commision_value / 100) + ($payment_details['actual_amount']* ($settings->commision_value / 100) * .10), 2);
-                if ($details['comm_release_status'] == 1) {
+                if ($details['verified'] == 1) {
                     $com_holder += $details['pre_deduc_comm'] - $payment_details['computed_commission'];
                     $payment_details['actual_commission'] =  $details['pre_deduc_comm'] > $payment_details['computed_commission'] ? 0 : abs($com_holder);
                     if ($payment_details['computed_commission'] - $details['pre_deduc_comm'] > 0) {
@@ -374,8 +374,7 @@ class CommissionController extends Controller
     }
     
     public function agent_commission_generate(AgentDetail $agent){
-        $agent->load('commission_settings.sub_settings.student', 'commission_settings.cutoff_period', 'commission_settings.sub_settings.course', 'commission_settings.sub_settings.cutoff_period');
-        // dd($agent);
+        $agent->load('commission_settings.sub_settings.student', 'commission_settings.cutoff_period', 'commission_settings.sub_settings', 'commission_settings.sub_settings.cutoff_period');
         $list = [];
             $student_count = 0;
             $name = $agent->user->party->name;
@@ -383,7 +382,6 @@ class CommissionController extends Controller
             $list['agent_name'] = $agent->agent_name;
             $list['agent_user'] = $agent->id;
 
-            // dd($agent->commission_settings);
             foreach ($agent->commission_settings as $com_key => $commission_setting) {
                 $student_count += $commission_setting->sub_settings->groupBy('student_id')->count();
                 // dd($student_count);
@@ -403,10 +401,9 @@ class CommissionController extends Controller
                 foreach ($commission_setting->sub_settings as $subkey => $subsetting) {
                     $student = $subsetting->student;
                     // $funded_course = $student->funded_course()->where('course_code', $subsetting->course->code)->first();
-                    $funded_course = $student->student_course;
+                    $funded_course = $subsetting->student_course;
                     $offer_details = $funded_course->offer_detail;
-                    $payment_details = $funded_course->payment_details()->doesntHave('commission')->get(['id as payment_id', 'payment_date', 'amount', 'pre_deduc_comm', 'comm_release_status', 'note'])->toArray();
-
+                    $payment_details = $funded_course->payment_details()->where('verified',1)->doesntHave('commission')->get(['id as payment_id', 'payment_date', 'amount', 'pre_deduc_comm', 'comm_release_status', 'note','verified'])->toArray();
                     $non_tuition = $offer_details->offer_letter->fees->application_fee + $offer_details->offer_letter->fees->materials_fee;
                     $nontuition = $non_tuition;
                     $com_holder = 0;
@@ -449,7 +446,7 @@ class CommissionController extends Controller
             }
             if(isset($list['serial'])){
                 $settings = $this->view_commison_per_agent($list['serial'],$list['agent_user']);
-                // dd($settings);
+                dd($settings);
                 return \PDF::loadView('commissions.agent_commission_cutoff',['setting' =>$settings])->stream('hehe');
         
             }else{
@@ -468,7 +465,7 @@ class CommissionController extends Controller
         }
         $logo_url = url('/' . $logo);
         $student = [];
-        $payments = [];
+      
         foreach ($cutoff->commission_details as $key => $commission_detail) {
             // dd($commission_detail->commission_sub->student_course);
             $funded = $commission_detail->commission_sub->student_course;
@@ -481,17 +478,34 @@ class CommissionController extends Controller
             }else{
                 $tuition = $funded->course_fee;
             }
+            $_payments = $commission_detail->commission_sub->student_course->payment_sched->load('payment_detail.commission');
+            $payments = [];
+            foreach($_payments as $payment){
+                if($payment->payment_detail->count()> 0){
+                    $payments[] = [
+                        'due_date' => $payment->due_date->format('d/m/Y'),
+                        'due_amount' => $payment->payable_amount,
+                        'date_paid' => Carbon::parse($payment->payment_detail[0]->payment_date)->format('d/m/Y'),
+                        'amount_paid' => $payment->approved_amount_paid,
+                        'commission' => $payment->approved_commission,
+                        'deducted' => $payment->prededucted_com,
+                    ];
+                }
+            }
+            $payments = collect($payments);
             $student[$commission_detail->agent_commission_settings_sub_id] = [
                 'student_id'    => $commission_detail->commission_sub->student_id,
                 'name'          => $commission_detail->commission_sub->student->party->name,
                 'dob'          => $commission_detail->commission_sub->student->party->person->date_of_birth,
                 'course'        => $commission_detail->commission_sub->student_course->course_code. ' - ' .$commission_detail->commission_sub->student_course->course->name,
-                'payments'      => $commission_detail->commission_sub->commission_details,
+                'payments'      => $payments,
                 'tuition'       =>  $tuition,
                 'non_tuition'   => $non_tuition,
                 'course_start'   => $funded->start_date,
                 'course_end'   => $funded->end_date,
                 'commission_limit'   => $commission_detail->commission_sub->commission_limit,
+                'total_deducted'   => $payments->sum('deducted'),
+                'total_commission'   => $payments->sum('commission'),
                 'status'   => $funded->status->description
             ];
             // dump($commission_detail->commission_sub->student->party->name);

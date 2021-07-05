@@ -20,10 +20,15 @@ class CommissionDetail extends Model
         'amount_received',
         'accumulated',
         'cutoff',
+        'payment_sched_id'
     ];
 
     public function commission_sub(){
         return $this->hasOne(AgentCommissionSettingSub::class, 'id','agent_commission_settings_sub_id');
+    }
+
+    public function payment_detail(){
+        return $this->hasOne(FundedStudentPaymentDetails::class,'id','payment_id');
     }
 
 
