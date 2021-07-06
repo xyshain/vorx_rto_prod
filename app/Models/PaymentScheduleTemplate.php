@@ -70,7 +70,7 @@ class PaymentScheduleTemplate extends Model implements AuditableContract
                 $t = $t + $v->pre_deduc_comm;
             }
         }
-        return number_format($t, 2);
+        return number_format($t, 2,'.','');
     }
 
     public function getAmountPaidAttribute()
@@ -84,7 +84,7 @@ class PaymentScheduleTemplate extends Model implements AuditableContract
                 $t = $t + $v->amount;
             }
         }
-        return number_format($t, 2);
+        return number_format($t, 2,'.','');
     }
    
     public function getLastPaymentDateAttribute()
