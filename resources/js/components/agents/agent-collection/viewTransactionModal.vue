@@ -21,7 +21,7 @@
                 <div class="card card-header text-center">
                 View Transaction
                 </div>
-                <div class="card card-body">
+                <div class="card card-body" style="overflow:scroll;height:400px;">
                     <div class="card text-left" style="border:none">
                         <span><strong>Student:</strong> {{toType(data.student) !== 'undefined' ? data.student.party.name : ''}}</span>
                     </div>
@@ -76,8 +76,8 @@
                     >       
                         <thead>
                             <tr>
-                                <th width="20%"></th>
-                                <th class='text-center' width="20%">Order No</th>
+                                <th width="20%">Allocated Amount</th>
+                                <th class='text-center' width="20%">Month #</th>
                                 <th class='text-center' width="30%">Amount Due</th>
                                 <th class='text-center' width="30%">Amount Paid</th>
                                 <th class='text-center' width="30%">Due Date</th>

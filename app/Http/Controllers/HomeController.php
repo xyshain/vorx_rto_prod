@@ -56,7 +56,9 @@ class HomeController extends Controller
         // if(!$tdl) {
         //     return $this->rto_config();
         // }
-
+        \JavaScript::put([
+            'role'=>Auth::user()->roles->first()->name
+        ]);
         switch (\Auth::user()->roles[0]->name) {
             case 'Student':
                 return $this->student_dashboard();
@@ -555,6 +557,21 @@ class HomeController extends Controller
         ];
     }
 
+    public function notifs(){
+        $user = Auth::user();
+        $user_role = $user->roles->first()->name;
+        
+        if($user_role == 'Staff' || $user_role == 'Admin'){
+            $notifs = Notification::with(['user.party.person'])->where('type','agent')->orderBy('date_recorded', 'desc')->limit(7)->get();
+            foreach($notifs as $n){
+                $start = Carbon::parse($n->updated_at);
+                $n->timeDiff = $start->diffForHumans();
+            }
+        }
+
+        return $notifs;
+    }
+
     public function fetch_enrolments()
     {
         $e = EnrolmentPack::where('status', 'complete')->orderBy('created_at', 'desc')->get();
@@ -608,5 +625,11 @@ class HomeController extends Controller
         }else{
             return ['status' => 'error'];
         }
+    }
+    
+    public function view_notif($id){
+        $notif = Notification::find($id);
+        $notif->is_seen = 1;
+        $notif->update();
     }
 }

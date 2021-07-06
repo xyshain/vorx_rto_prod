@@ -24,7 +24,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(pd,index) in payment_details" :key="pd.id">
+                <tr v-for="(pd,index) in payment_details" :key="pd.id" >
                     <td class="text-center">{{pd.transaction_code}}</td>
                     <td class="text-center">{{pd.student_id}}</td>
                     <td class="text-center">{{pd.funded_student_course.course_code != '@@@@' ? pd.funded_student_course.course_code : 'Unit of Competency'}}</td>
@@ -59,6 +59,9 @@
                             <option value="View">View Transaction</option>
                         </select>
                     </td>
+                </tr>
+                <tr v-if="payment_details.length == 0">
+                    <td colspan="8" class="text-center">No data available</td>
                 </tr>
             </tbody>
         </table>
