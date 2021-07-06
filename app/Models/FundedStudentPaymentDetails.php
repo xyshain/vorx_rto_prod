@@ -34,7 +34,9 @@ class FundedStudentPaymentDetails extends Model implements AuditableContract
         'pre_deduc_comm',
         'comm_release_status',
         'refunded',
-        'sent_receipt'
+        'sent_receipt',
+        'verified',
+        'remarks'
     ];
 
     public function attachment(){

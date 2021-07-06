@@ -15,7 +15,7 @@
     </div>
     <nav>
       <div class="nav nav-tabs" id="nav-tab" role="tablist">
-        <a v-bind:class="'nav-item nav-link-'+app_color+' active'" id="nav-info-tab" data-toggle="tab" href="#nav-info" role="tab" aria-controls="nav-info" aria-selected="true" >Info</a>
+        <a v-bind:class="'nav-item nav-link-'+app_color+''" id="nav-info-tab" data-toggle="tab" href="#nav-info" role="tab" aria-controls="nav-info" aria-selected="true" >Info</a>
         <a v-bind:class="'nav-item nav-link-'+app_color" id="nav-attachments-tab" data-toggle="tab" href="#nav-attachments" role="tab" aria-controls="nav-attachments" aria-selected="false" >Attachments</a>
         <a v-bind:class="'nav-item nav-link-'+app_color" id="nav-commission-settings-tab" data-toggle="tab" href="#nav-commission-settings" role="tab" aria-controls="nav-prospectus" aria-selected="false">Commission Settings</a>
         <a v-bind:class="'nav-item nav-link-'+app_color+''" id="nav-collections-tab" data-toggle="tab" href="#nav-collections" role="tab" aria-controls="nav-collections" aria-selected="false">Collections</a>
@@ -24,7 +24,7 @@
       </div>
     </nav>
     <div class="tab-content" id="nav-tabContent">
-      <div class="tab-pane fade  show active" id="nav-info" role="tabpanel" aria-labelledby="nav-info-tab">
+      <div class="tab-pane fade" id="nav-info" role="tabpanel" aria-labelledby="nav-info-tab">
         <agent-info></agent-info>
       </div>
       <div class="tab-pane fade" id="nav-attachments" role="tabpanel" aria-labelledby="nav-attachments-tab">
@@ -73,6 +73,15 @@ export default {
     return {
       app_color: app_color,
     };
+  },
+  mounted(){
+    let tabId = localStorage.getItem('activeTab');
+    if(tabId !==null){
+      $(`#nav-tab a[href="#${tabId}"]`).tab('show');
+      localStorage.removeItem('activeTab');
+    }else{
+      $(`#nav-tab a[href="#nav-info"]`).tab('show');
+    }
   }
 };
 </script>
