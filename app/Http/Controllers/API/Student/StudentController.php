@@ -479,7 +479,6 @@ class StudentController extends Controller
             foreach($funded_course->payment_sched as $key => $psched){
                 $commission = 0;
                 $prev_balance = $balance;
-
                 if($balance <= 0){
                     if($balance != 0){
                         $prev_balance = $balance;
@@ -635,8 +634,9 @@ class StudentController extends Controller
                     'payable_amount'     => $psched->payable_amount - $psched->approved_amount_paid,
                     'payment_details'    => $pd,
                     'total_paid'         => $psched->amount_paid,
-                    'total_paid_approved'         => $psched->approved_amount_paid,
+                    'total_paid_approved'=> $psched->approved_amount_paid,
                     'balance'            => $balance ,
+                    'collection'         => $psched->collection->load('attachment'),   
                     'prev_balance'       => $prev_balance ,
                     'attain'             => $attain ,
                     'commission'         => $commission,

@@ -98,6 +98,11 @@ class PaymentScheduleTemplate extends Model implements AuditableContract
         }
     }
 
+
+    public function collection(){
+        return $this->hasMany(Collection::class);
+    }
+
     public static function boot()
     {
         parent::boot();
