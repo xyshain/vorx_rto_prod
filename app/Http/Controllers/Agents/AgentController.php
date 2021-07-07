@@ -9,6 +9,7 @@ use App\Models\AgentCommissionSetting;
 use App\Models\AgentCommissionSettingMain;
 use App\Models\CommissionStatus;
 use App\Models\Notification;
+use App\Models\Collection;
 use App\Models\AgentDetail;
 use App\Models\AgentApplication;
 use App\Http\Controllers\Send\EmailSendingController;
@@ -630,6 +631,8 @@ class AgentController extends Controller
     }
 
     public function agentCollection($id){
+        $agent_collections = Collection::where('agent_id',$id)->get();
+        return $agent_collections;
         $agent_collections = FundedStudentPaymentDetails::with('agent','attachment','student.party','funded_student_course.course','payment_schedule_template')->where('agent_id',$id)
         ->orderBy('id','desc')->get();
 
