@@ -50,12 +50,6 @@
                     </div>
                     <div class="card text-left" style="border:none">
                         <span>
-                            <strong>Payment Receipt: </strong>
-                            TBD
-                        </span>
-                    </div>
-                    <div class="card text-left" style="border:none">
-                        <span>
                             <strong>Notes: </strong>
                             {{data.note}}
                         </span>
@@ -117,9 +111,7 @@
                                         {{findPaymentDetail(ps.id)}}
                                 </td>
                                 <td class="text-center" v-else>
-                                    <span v-if="parseFloat(ps.approved_amount_paid) >= parseFloat(ps.payable_amount)">
-                                         <i class="fas fa-check-circle" style="color:green"></i>
-                                     </span>
+                                    0.00
                                 </td>
                                 <td class="text-center">{{index+1}}</td>
                                 <td class="text-center">{{ps.payable_amount}}</td>

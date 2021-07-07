@@ -23,7 +23,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(pd,index) in payment_details" :key="pd.id" :id="pd.id" :style="pd.id == notif_row ? 'background-color:#f0f8ff' : ''">
+                <tr v-for="(pd,index) in payment_details" :key="pd.id" :id="pd.id" :style="pd.id == notif_row ? 'background-color:#f0f8ff;' : ''">
                     <td class="text-center">{{pd.transaction_code}}</td>
                     <td class="text-center">{{pd.student_id}}</td>
                     <td class="text-center">{{pd.funded_student_course.course_code != '@@@@' ? pd.funded_student_course.course_code : 'Unit of Competency'}}</td>
@@ -50,7 +50,6 @@
                         <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1" v-if="pd.verified===0">
                             <option value="">Actions</option>
                             <option value="Verify">Verify</option>
-                            <option value="Decline">Decline</option>
                         </select>
                         <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1" v-else-if="pd.verified===1">
                             <option value="">Actions</option>
