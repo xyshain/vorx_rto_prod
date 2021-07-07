@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AgentTempUpdate;
 use App\Models\AvtPostcode;
 use App\Models\AvtStateIdentifier;
+use App\Models\Collection;
 use App\Models\FundedStudentPaymentDetails;
 use App\Models\Notification;
 use App\Models\PaymentAttachment;
@@ -704,34 +705,36 @@ class StudentController extends Controller
         $path  = null;
         try {
             DB::beginTransaction();
-            $funded_payments = new FundedStudentPaymentDetails;
+
+            $collection = new Collection;
+
+            // $funded_payments = new FundedStudentPaymentDetails;
             $data = [
                 'transaction_code' => $request->trxncode,
                 'payment_date' => Carbon::parse($request->colletion_date)->format('Y-m-d'),
                 'amount' => $request->deposited_amount,
                 'student_id'=> $student_id,
+                'payment_schedule_template_id' => $pl->id,
                 'pre_deduc_comm' => $request->deducted_commission_amount,
                 'student_course_id' => $funded_course,
-                'payment_schedule_template_id' => $pl->id,
-                'offer_letter_course_detail_id' => $offer_detail_course,
-                'user_id' => Auth::user()->id,
                 'agent_id' => Auth::user()->agent_details->id,
                 'note' => $request->notes,
+                'remarks' => '',
             ];
-            $funded_payments->fill($data);
-            $funded_payments->save();
+            $collection->fill($data);
+            $collection->save();
             $notify = new Notification;
 
             $notify->fill([
                 'type' => 'agent',
-                'table_name' => 'funded_student_payment_details',
+                'table_name' => 'collections',
                 'reference_id' => Auth::user()->agent_details->id,
                 'date_recorded' => Carbon::now()->format('Y-m-d H:i:s'),
                 'message' => '<b>' . Auth::user()->party->name . '</b> added collection on student id '.$student_id ,
                 'is_seen' => 0,
                 'action' => 'created',
                 'link' => '/agent/'.Auth::user()->agent_details->id,
-                'table_id' => $funded_payments->id
+                'table_id' => $collection->id
             ]);
             $notify->user()->associate(Auth::user());
             $notify->save();
@@ -750,7 +753,7 @@ class StudentController extends Controller
                     '_input'       => 'payment_attachment',
                 ]);
                 $studentAttachment->user()->associate(Auth::user());
-                $studentAttachment->payment()->associate($funded_payments);
+                $studentAttachment->payment()->associate($collection);
                 $studentAttachment->save();
                 DB::commit();
             }
