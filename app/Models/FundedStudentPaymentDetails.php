@@ -73,6 +73,10 @@ class FundedStudentPaymentDetails extends Model implements AuditableContract
         return $this->belongsTo(PaymentScheduleTemplate::class,'payment_schedule_template_id');
     }
 
+    public function collection(){
+        return $this->belongsTo(Collection::class,'collection_id');
+    }
+
     public static function boot()
     {
         parent::boot();
