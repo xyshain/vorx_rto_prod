@@ -569,20 +569,20 @@ class StudentController extends Controller
                 foreach($psched->payment_detail as $payment_detail){
                     if($att == null){
                        $att =  $payment_detail->transaction_code;
-                       if($payment_detail->attachment != null){
-                            $attachment = $payment_detail->attachment->hash_name;
+                       if($payment_detail->collection != null){
+                            $attachment = $payment_detail->collection->attachment;
                         }
                     }else{
                         if($att == $payment_detail->transaction_code){
-                            if($payment_detail->attachment != null){
-                                $attachment = $payment_detail->attachment->hash_name;
+                            if($payment_detail->collection != null){
+                                $attachment = $payment_detail->collection->attachment;
                             }else{
                                 $attachment = $attachment;
                             }
                         }else{
                             $att = $payment_detail->transaction_code;
-                            if($payment_detail->attachment != null){
-                                $attachment = $payment_detail->attachment->hash_name;
+                            if($payment_detail->collection != null){
+                                $attachment = $payment_detail->collection->attachment;
                             }else{
                                 $attachment = $attachment;
                             }
