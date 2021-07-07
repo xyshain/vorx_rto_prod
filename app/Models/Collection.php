@@ -35,6 +35,9 @@ class Collection extends Model implements AuditableContract
         return $this->belongsTo(PaymentScheduleTemplate::class);
     }
 
+    public function attachment(){
+        return $this->hasOne(PaymentAttachment::class);
+    }
 
     public function agent(){
         return $this->belongsTo(AgentDetail::class);
