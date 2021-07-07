@@ -699,7 +699,7 @@ class AgentController extends Controller
             $student_funded_payment_detail = FundedStudentPaymentDetails::where('id',$id)->first();
 
             $student_funded_payment_detail->verified = 2;
-            $student_funded_payment_detail->remarks = 2;
+            $student_funded_payment_detail->remarks = $request['remarks'];
             $student_funded_payment_detail->update();
             
             $org = TrainingOrganisation::first();
@@ -791,6 +791,7 @@ class AgentController extends Controller
         $student_payment    = $request['student_payment'];
         $trxn_code          = $request['student_payment']['transaction_code'];
         $prededuct_com      = $request['student_payment']['pre_deduc_comm'];
+        $remarks            = $request['remarks'];
         // return $payment_schedule;
         try{
             DB::beginTransaction();
@@ -802,6 +803,7 @@ class AgentController extends Controller
                                 $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
                                 $payment_details->amount = $ps['unverified_amount'];
                                 $payment_details->verified = 1;
+                                $payment_details->remarks = $remarks;
                                 $payment_details->update();
                                 $prededuct_com = 0;
                             }else{
@@ -815,6 +817,7 @@ class AgentController extends Controller
                                 $new_payment->payment_date = $student_payment['payment_date'];
                                 $new_payment->amount = $ps['unverified_amount'];
                                 $new_payment->verified = 1;
+                                $new_payment->remarks = $remarks;
                                 $new_payment->user_id = $student_payment['user_id'];
                                 $new_payment->pre_deduc_comm = $prededuct_com;
                                 $new_payment->save();
@@ -827,7 +830,7 @@ class AgentController extends Controller
             }else{
                 $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
                 $payment_details->verified = 1;
-                $payment_details->remarks = $request['remarks'];
+                $payment_details->remarks = $remarks;
                 $payment_details->update();
             }
 

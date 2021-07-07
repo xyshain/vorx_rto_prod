@@ -3,7 +3,7 @@
         name="verifyModal"
         transition="nice-modal-fade"
         classes="verify-collection"
-        :min-width="800"
+        :min-width="900"
         :min-height="200"
         :pivot-y="0.1"
         :adaptive="true"
@@ -19,9 +19,9 @@
         <div class="card">
             <div v-if="data.payment_schedule_template_id !== null">
                 <div class="card card-header text-center">
-                Payment Schedule Template
+                Payment Details
                 </div>
-                <div class="card card-body" style="overflow:scroll;height:400px;">
+                <div class="card card-body" style="overflow:auto;height:400px;">
                     <div class="card text-left" style="border:none">
                         <span><strong>Student:</strong> {{toType(data.student) !== 'undefined' ? data.student.party.name : ''}}</span>
                     </div>
@@ -38,6 +38,28 @@
                         </span>
                         
                     </div>
+                    <div class="card text-left" style="border:none">
+                        <span><strong>Attachment: </strong>
+                        <span v-if="toType(data.attachment)!=='undefined'">
+                            <a :href="'/payment_attachment/'+data.attachment.id" target="_blank"> Go to link</a>
+                        </span>
+                        <span v-else>
+                            No attachment found.
+                        </span>
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <strong>Payment Receipt: </strong>
+                            TBD
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <strong>Notes: </strong>
+                            {{data.notes}}
+                        </span>
+                    </div>
                     <div class="card text-right"  style="border:none">
                         <p>
                             <span class="fas fa-circle " style="color:#f6c23e"></span> Amount : {{amount_paid.toFixed(2)}} 
@@ -51,8 +73,8 @@
                     >
                          <thead>
                             <tr>
-                                <th width="20%">Allocated Amount</th>
-                                <th class='text-center' width="20%">Month #</th>
+                                <th width="25%">Allocated Amount</th>
+                                <th class='text-center' width="15%">Month #</th>
                                 <th class='text-center' width="30%">Amount Due</th>
                                 <th class='text-center' width="30%">Amount Paid</th>
                                 <th class='text-center' width="30%">Due Date</th>
@@ -78,7 +100,7 @@
                     </table>  
                     <div class="row">
                         <div class="col-md-12">
-                            <input type="textarea" class="form-control" placeholder="Remarks (Optional)" v-model="remarks">
+                            <textarea name="" id="" cols="30" rows="4" class="form-control" placeholder="Remarks (Optional)"></textarea>
                         </div>
                     </div>     <br>
                     <div class="row text-right">

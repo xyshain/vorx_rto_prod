@@ -15,7 +15,7 @@ class MakeRemarksColumnPayments extends Migration
     {
         if(!Schema::hasColumn('funded_student_payment_details','remarks')){
             Schema::table('funded_student_payment_details', function (Blueprint $table) {
-                $table->integer('remarks')->after('verified')->nullable();
+                $table->string('remarks')->after('verified')->nullable();
             });
         }
     }

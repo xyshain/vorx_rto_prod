@@ -15,7 +15,6 @@
                     <th class='text-center'>Course</th>
                     <th class='text-center'>Amount</th>
                     <th class='text-center'>Post Date</th>
-                    <th class='text-center'>Notes</th>
                     <th class='text-center'>Attachment</th>
                     <th class='text-center'>Verified</th>
                     <!-- <th class='text-center'>Amount Paid</th> -->
@@ -24,13 +23,12 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(pd,index) in payment_details" :key="pd.id" >
+                <tr v-for="(pd,index) in payment_details" :key="pd.id" :id="pd.id" :style="pd.id == notif_row ? 'background-color:#f0f8ff' : ''">
                     <td class="text-center">{{pd.transaction_code}}</td>
                     <td class="text-center">{{pd.student_id}}</td>
                     <td class="text-center">{{pd.funded_student_course.course_code != '@@@@' ? pd.funded_student_course.course_code : 'Unit of Competency'}}</td>
                     <td class="text-center">{{pd.amount}}</td>
                     <td class="text-center">{{pd.payment_date | dateFormat}}</td>
-                    <td class="text-center">{{pd.note}}</td>
                     <td class="text-center">
                         <a :href="'/payment_attachment/'+pd.attachment.id"  v-if="pd.attachment !== null" target="_blank"><span class="fa fa-paperclip"></span></a>
                         <span v-else>
@@ -54,7 +52,7 @@
                             <option value="Verify">Verify</option>
                             <option value="Decline">Decline</option>
                         </select>
-                        <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1" v-else>
+                        <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1" v-else-if="pd.verified===1">
                             <option value="">Actions</option>
                             <option value="View">View Transaction</option>
                         </select>
@@ -82,12 +80,19 @@ export default {
             agent_id:window.agent.id,
             payment_details:[],
             trxn:[],
-            trxn_code:''
+            trxn_code:'',
+            notif_row:''
         }
     },
     created(){
         this.getAgentCollections();
+
+        if(localStorage.getItem('row_id') != null){
+            this.notif_row = localStorage.getItem('row_id');
+            localStorage.removeItem('row_id');
+        }
     },
+    
     filters:{
         dateFormat : function(data){
           return moment(data).format('DD/MM/YYYY');

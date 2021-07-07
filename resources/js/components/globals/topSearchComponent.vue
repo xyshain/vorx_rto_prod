@@ -287,6 +287,7 @@ export default {
       axios.get(`/view-notif/${obj.id}`).then(
         response=>{
           localStorage.setItem('activeTab','nav-collections');
+          localStorage.setItem('row_id',obj.table_id);
           location.href = obj.link;
         }
       );
