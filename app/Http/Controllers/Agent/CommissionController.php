@@ -125,7 +125,7 @@ class CommissionController extends Controller
         $data = CommissionDetail::where('serial_no',$serial)->get();
         $summary = [
             'total_actual_amount_received' => $data->sum('actual_amount'),
-            'total_computed_commission' => $data->sum('computed_commission'),
+            'total_computed_commission' => $data->sum('computed_commission') -$data->sum('pre_deducted_comission'),
             'due_comission' => $data->sum('commission_payable'),
             'total_pre_deducted_comission' => $data->sum('pre_deducted_comission'),
             'total_over_payment' => $overpayment

@@ -73,4 +73,15 @@ class FundedStudentPaymentDetails extends Model implements AuditableContract
         return $this->belongsTo(PaymentScheduleTemplate::class,'payment_schedule_template_id');
     }
 
+    public static function boot()
+    {
+        parent::boot();
+        self::deleting(function ($payments) {
+            $payments->commission()->each(function ($details) {
+                $details->delete();
+            });
+            
+        });
+    }
+
 }
