@@ -42,7 +42,6 @@ class AgentController extends Controller
     public function index()
     {
         // dd();
-        
         $app_settings = TrainingOrganisation::first();
         // dd($app_settings->add_on('agent'));
         if($app_settings->add_on('agent') == 0){
@@ -691,20 +690,55 @@ class AgentController extends Controller
         return $agent_collections;
     }
 
-    public function declineCollection($id){ //funded student payment detail id
-        $student_funded_payment_detail = FundedStudentPaymentDetails::where('id',$id)->first();
+    public function declineCollection($request){ //funded student payment detail id
+        $id         = $request['id'];
+        $trxn_code  = $request['transaction_code'];
+        
+        try{
+            DB::beginTransaction();
+            $student_funded_payment_detail = FundedStudentPaymentDetails::where('id',$id)->first();
 
-        $student_funded_payment_detail->verified = 2;
-        $student_funded_payment_detail->update();
+            $student_funded_payment_detail->verified = 2;
+            $student_funded_payment_detail->remarks = $request['remarks'];
+            $student_funded_payment_detail->update();
+            
+            $org = TrainingOrganisation::first();
+            $send = new EmailSendingController;
+            
+            if(isset($request['agent'])){
+                $name = $request['agent']['agent_name'];
+                if(isset($request['agent']['email'])){
+                    $emailsTo[] = $request['agent']['email'];
+                }else{   
+                    return response()->json(['status'=>'error','message'=>'Agent email not found']);
+                }
+            }else{
+                return response()->json(['status'=>'error','message'=>'Agent not found']);
+            }
+
+            $content = '<b>Dear ' . $name . ',</b><br><br>Your collection has been declined.<br>Trxn no: '.$trxn_code;
+
+            $s = $send->send_automate('Collection Declined', $content, ['Vorx' => $org->email_address], $emailsTo);
+            // $s['status']='success';
+            if($s['status']=='success'){
+                DB::commit();
+                $this->notifyAgent($student_funded_payment_detail);
+                return response()->json(['status'=>'success']);
+            }else{
+                DB::rollback();
+                return response()->json(['status'=>'error','message'=>'Email error']);
+            }
+        }catch(Exception $e){
+            DB::rollback();
+            return response()->json(['status'=>'error','message'=>$e->getMessage()]);
+        }
     }
 
     public function studentPayments($id,$amount){
         $funded_student_payments = FundedStudentPaymentDetails::where('student_course_id',$id)->where('verified',1)->get();
         $funded_payment_sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$id)->get();
-        $ret = [
-            'funded_student_payments'=>$funded_student_payments,
-            'funded_payment_sched_template'=>$funded_payment_sched_template
-        ];
+
+        $sched_with_payment = [];
         
         $unverified_amount = $amount;
         foreach($funded_payment_sched_template as $fd){
@@ -725,15 +759,40 @@ class AgentController extends Controller
             }
         }
 
+        // foreach($funded_payment_sched_template as $ff){
+        //     if(isset($ff->unverified_amount) && $ff->unverified_amount!=0){
+        //         array_push($sched_with_payment,$ff);
+        //     }
+        // }
+        for($i = 0; $i < count($funded_payment_sched_template); $i++){
+            // dump($i);
+            if(isset($funded_payment_sched_template[$i]->unverified_amount) && $funded_payment_sched_template[$i]->unverified_amount != 0){
+                $sched_with_payment[$i] = $funded_payment_sched_template[$i];
+            }
+        }
+        //  return $sched_with_payment;        
+        $ret = [
+            'funded_student_payments'=>$funded_student_payments,
+            'funded_payment_sched_template'=>$sched_with_payment
+        ];
         return $ret;
     }
 
-    public function acceptCollection(Request $request){
-        $payment_schedule   = $request->payment_schedule;
-        $student_payment    = $request->student_payment;
-        $trxn_code          = $request->student_payment['transaction_code'];
-        $prededuct_com      = $request->student_payment['pre_deduc_comm'];
-        
+    public function collectionAction(Request $request){
+        if($request->action == 'accept'){
+            return $this->acceptCollection($request->all());
+        }else{
+            return $this->declineCollection($request->student_payment);
+        }
+    }
+
+    public function acceptCollection($request){
+        $payment_schedule   = $request['payment_schedule'];
+        $student_payment    = $request['student_payment'];
+        $trxn_code          = $request['student_payment']['transaction_code'];
+        $prededuct_com      = $request['student_payment']['pre_deduc_comm'];
+        $remarks            = $request['remarks'];
+        // return $payment_schedule;
         try{
             DB::beginTransaction();
             if($payment_schedule!=null){
@@ -744,6 +803,7 @@ class AgentController extends Controller
                                 $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
                                 $payment_details->amount = $ps['unverified_amount'];
                                 $payment_details->verified = 1;
+                                $payment_details->remarks = $remarks;
                                 $payment_details->update();
                                 $prededuct_com = 0;
                             }else{
@@ -757,6 +817,7 @@ class AgentController extends Controller
                                 $new_payment->payment_date = $student_payment['payment_date'];
                                 $new_payment->amount = $ps['unverified_amount'];
                                 $new_payment->verified = 1;
+                                $new_payment->remarks = $remarks;
                                 $new_payment->user_id = $student_payment['user_id'];
                                 $new_payment->pre_deduc_comm = $prededuct_com;
                                 $new_payment->save();
@@ -769,10 +830,10 @@ class AgentController extends Controller
             }else{
                 $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
                 $payment_details->verified = 1;
+                $payment_details->remarks = $remarks;
                 $payment_details->update();
             }
 
-            $this->notifyAgent($student_payment);
             
             $org = TrainingOrganisation::first();
             $send = new EmailSendingController;
@@ -788,13 +849,14 @@ class AgentController extends Controller
                 return response()->json(['status'=>'error','message'=>'Agent not found']);
             }
 
-            $content = '<b>Dear ' . $name . ',</b><br><br>Your payment has been verified and accepted.<br>Trxn no: '.$trxn_code;
+            $content = '<b>Dear ' . $name . ',</b><br><br>Your collection has been verified and accepted.<br>Trxn no: '.$trxn_code;
 
-            $s = $send->send_automate('Payment Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
+            $s = $send->send_automate('Collection Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
             // $s['status']='success';
-            
             if($s['status']=='success'){
                 DB::commit();
+                $student_payment['verified'] = 1;
+                $this->notifyAgent($student_payment);
                 return response()->json(['status'=>'success']);
             }else{
                 DB::rollback();
@@ -810,7 +872,6 @@ class AgentController extends Controller
     }
 
     public function notifyAgent($payments){
-        
         $student = Student::with(['party.person'])->where('student_id', $payments['student_id'])->first();
         $funded_course = $payments['funded_student_course'];
         $course = '';

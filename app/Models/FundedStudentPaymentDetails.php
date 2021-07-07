@@ -34,7 +34,9 @@ class FundedStudentPaymentDetails extends Model implements AuditableContract
         'pre_deduc_comm',
         'comm_release_status',
         'refunded',
-        'sent_receipt'
+        'sent_receipt',
+        'verified',
+        'remarks'
     ];
 
     public function attachment(){
@@ -69,6 +71,17 @@ class FundedStudentPaymentDetails extends Model implements AuditableContract
     }
     public function payment_schedule_template(){
         return $this->belongsTo(PaymentScheduleTemplate::class,'payment_schedule_template_id');
+    }
+
+    public static function boot()
+    {
+        parent::boot();
+        self::deleting(function ($payments) {
+            $payments->commission()->each(function ($details) {
+                $details->delete();
+            });
+            
+        });
     }
 
 }

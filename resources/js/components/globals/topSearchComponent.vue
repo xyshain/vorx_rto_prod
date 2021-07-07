@@ -73,7 +73,8 @@
         </li>
 
         <!-- Nav Item - Alerts -->
-        <li class="nav-item dropdown no-arrow mx-1"  v-if="role != 'Student'">
+        <!-- <li class="nav-item dropdown no-arrow mx-1"  v-if="role != 'Student'"> -->
+        <li class="nav-item dropdown no-arrow mx-1">
           <a
             class="nav-link dropdown-toggle"
             href="#"
@@ -85,7 +86,7 @@
           >
             <i class="fas fa-bell fa-fw"></i>
             <!-- Counter - Alerts -->
-            <span v-if="this.StudentAlerts.count > 0" class="badge badge-danger badge-counter">{{this.StudentAlerts.count}}</span>
+            <span v-if="unseen_notif > 0" class="badge badge-danger badge-counter">{{unseen_notif}}</span>
           </a>
           <!-- Dropdown - Alerts -->
           <div
@@ -96,10 +97,11 @@
             <!-- <h6 :class="'dropdown-header dropdown-header-'+app_color">Alerts Center</h6> -->
             <a
               class="dropdown-item d-flex align-items-center"
-              v-bind:class="sa.seen == 0 ? 'not_seen' : ''"
-              :href="sa.link"
-              v-for="(sa, k) in StudentAlerts.students"
+              v-bind:class="sa.is_seen == 0 ? 'not_seen' : ''"
+              href="javascript:void(0)"
+              v-for="(sa, k) in StudentAlerts"
               :key="k"  
+              @click="viewNotif(sa)"
             >
               <div class="mr-3">
                 <div :class="'icon-circle bg-'+app_color">
@@ -109,8 +111,8 @@
               <div>
                 <!-- <div class="small text-gray-500">December 12, 2019</div> -->
                 <div class="small text-gray-500">{{sa.date}}</div>
-                <span v-html="sa.message"> </span>
-                <span class="byUser" v-html="sa.user"></span>
+                <span v-html="sa.message" style="width:100%"> </span><br>
+                <span class="byUser" style="font-size:12px;" v-html="sa.timeDiff"></span>
               </div>
             </a>
             <!-- <a class="dropdown-item d-flex align-items-center" href="#">
@@ -258,15 +260,38 @@ export default {
       isLoading: false,
       user: {},
       role: null,
-      StudentAlerts: []
+      StudentAlerts: [],
+      // unseen_notif:0
     };
   },
   //   components: {},
-  created() {
+  mounted(){
     this.getUser();
-    this.getAlerts();
+  },
+  computed:{
+    unseen_notif(){
+      let count = 0;
+      this.StudentAlerts.forEach(function(data){
+        if(data.is_seen == 0){
+          count++;
+        }
+      });
+      return count;
+    }
+  },
+  async created() {
+    // await this.getAlerts();
   },
   methods: {
+    viewNotif(obj){
+      axios.get(`/view-notif/${obj.id}`).then(
+        response=>{
+          localStorage.setItem('activeTab','nav-collections');
+          localStorage.setItem('row_id',obj.table_id);
+          location.href = obj.link;
+        }
+      );
+    },
     toType(obj) {
         return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
     },
@@ -332,22 +357,35 @@ export default {
     },
     getAlerts() {
       let vm = this;
-      axios
+      
+      if(this.role == 'Staff' || this.role == 'Admin'){
+          axios
+          .get("/notifications")
+          .then(function(response) {
+            vm.StudentAlerts = response.data;
+          })
+          .catch(function(error) {
+            console.log(error);
+          })
+          .then(function() {
+            // always executed
+            // alert(af.selectedStudent);
+          });
+      } else{
+        axios
         .get("/get-stud-status-alert")
         .then(function(response) {
-          // handle success
-          // console.log(response.data);
           vm.StudentAlerts = response.data;
-          // console.log(vm.StudentAlerts);
         })
         .catch(function(error) {
-          // handle error
           console.log(error);
         })
         .then(function() {
           // always executed
           // alert(af.selectedStudent);
         });
+      }
+      
     },
     getUser() {
       let vm = this;
@@ -373,6 +411,7 @@ export default {
         .then(function() {
           // always executed
           // alert(af.selectedStudent);
+          vm.getAlerts();
         });
     },
     limitText(count) {

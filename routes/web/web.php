@@ -28,6 +28,8 @@ Route::middleware(['rto'])->group(function () {
     
     Route::get('/get-user-nav', 'HomeController@get_user_nav');
     Route::get('/get-stud-status-alert', 'HomeController@student_status_alert');
+    Route::get('/notifications', 'HomeController@notifs');
+    Route::get('/view-notif/{id}', 'HomeController@view_notif');
     
     // SIA check students
     Route::get('/sia-check-students', 'Master\MasterController@sia_student_check');

@@ -3,7 +3,7 @@
         name="verifyModal"
         transition="nice-modal-fade"
         classes="verify-collection"
-        :min-width="800"
+        :min-width="900"
         :min-height="200"
         :pivot-y="0.1"
         :adaptive="true"
@@ -19,9 +19,9 @@
         <div class="card">
             <div v-if="data.payment_schedule_template_id !== null">
                 <div class="card card-header text-center">
-                Payment Schedule Template
+                Payment Details
                 </div>
-                <div class="card card-body">
+                <div class="card card-body" style="overflow:auto;height:400px;">
                     <div class="card text-left" style="border:none">
                         <span><strong>Student:</strong> {{toType(data.student) !== 'undefined' ? data.student.party.name : ''}}</span>
                     </div>
@@ -38,10 +38,31 @@
                         </span>
                         
                     </div>
+                    <div class="card text-left" style="border:none">
+                        <span><strong>Attachment: </strong>
+                        <span v-if="toType(data.attachment)!=='undefined'">
+                            <a :href="'/payment_attachment/'+data.attachment.id" target="_blank"> Go to link</a>
+                        </span>
+                        <span v-else>
+                            No attachment found.
+                        </span>
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <strong>Payment Receipt: </strong>
+                            TBD
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <strong>Notes: </strong>
+                            {{data.notes}}
+                        </span>
+                    </div>
                     <div class="card text-right"  style="border:none">
                         <p>
                             <span class="fas fa-circle " style="color:#f6c23e"></span> Amount : {{amount_paid.toFixed(2)}} 
-                            <button class="btn btn-success btn-sm" @click="accept">Accept Payment</button>
                         </p>
                     </div>
                     <table
@@ -52,8 +73,8 @@
                     >
                          <thead>
                             <tr>
-                                <th width="20%"></th>
-                                <th class='text-center' width="20%">Order No</th>
+                                <th width="25%">Allocated Amount</th>
+                                <th class='text-center' width="15%">Month #</th>
                                 <th class='text-center' width="30%">Amount Due</th>
                                 <th class='text-center' width="30%">Amount Paid</th>
                                 <th class='text-center' width="30%">Due Date</th>
@@ -70,13 +91,24 @@
                                          {{parseFloat(st.unverified_amount).toFixed(2)}}
                                      </span>
                                  </td>
-                                 <td class="text-center">{{index+1}}</td>
+                                 <td class="text-center">{{parseInt(index)+1}}</td>
                                  <td class="text-center">{{st.payable_amount}}</td>
                                  <td class="text-center">{{st.approved_amount_paid}}</td>
                                  <td class="text-center">{{st.due_date | dateFormat}}</td>
                              </tr>
                          </tbody>
-                    </table>                    
+                    </table>  
+                    <div class="row">
+                        <div class="col-md-12">
+                            <textarea name="" id="" cols="30" rows="4" class="form-control" placeholder="Remarks (Optional)"></textarea>
+                        </div>
+                    </div>     <br>
+                    <div class="row text-right">
+                        <div class="col-md-12">
+                            <button class="btn btn-success btn-sm" @click="action('accept')">Accept</button>
+                            <button class="btn btn-danger btn-sm" @click="action('decline')">Decline</button>
+                        </div>    
+                    </div>             
                 </div>
 
             </div>
@@ -94,6 +126,7 @@ export default {
         return{
             student_payment:[],
             amount_paid:0,
+            remarks:''
         }
     },
     filters:{
@@ -105,7 +138,10 @@ export default {
         toType(obj) {
             return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
         },
-        accept(){
+        decline(){
+            console.log('wakla pa');
+        },  
+        action(action){
             swal.fire({
                 title: "Loading please wait...",
                 // html: '',// add html attribute if you want or remove
@@ -115,10 +151,12 @@ export default {
                 },
             });
             let dataz = {
+                action:action,
+                remarks: this.remarks,
                 student_payment:this.data,
                 payment_schedule:this.student_payment.funded_payment_sched_template
             }
-            axios.post(`/agent/collection/accept`,dataz).then(
+            axios.post(`/agent/collection/action`,dataz).then(
                 response=>{
                     if(response.data.status==='success'){
                         this.$parent.getAgentCollections();

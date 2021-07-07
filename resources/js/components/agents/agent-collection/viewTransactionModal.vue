@@ -3,7 +3,7 @@
         name="viewTransactionModal"
         transition="nice-modal-fade"
         classes="verify-collection"
-        :min-width="800"
+        :min-width="900"
         :min-height="200"
         :pivot-y="0.1"
         :adaptive="true"
@@ -21,7 +21,7 @@
                 <div class="card card-header text-center">
                 View Transaction
                 </div>
-                <div class="card card-body">
+                <div class="card card-body" style="overflow:auto;height:400px;">
                     <div class="card text-left" style="border:none">
                         <span><strong>Student:</strong> {{toType(data.student) !== 'undefined' ? data.student.party.name : ''}}</span>
                     </div>
@@ -37,6 +37,34 @@
                         </template>
                         </span>
                         
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span><strong>Attachment: </strong>
+                        <span v-if="toType(data.attachment)!=='undefined'">
+                            <a :href="'/payment_attachment/'+data.attachment.id" target="_blank"> Go to link</a>
+                        </span>
+                        <span v-else>
+                            No attachment found.
+                        </span>
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <strong>Payment Receipt: </strong>
+                            TBD
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <strong>Notes: </strong>
+                            {{data.note}}
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <strong>Remarks: </strong>
+                            {{data.remarks}}
+                        </span>
                     </div>
                     <div class="card text-right"  style="border:none">
                         <p>
@@ -76,8 +104,8 @@
                     >       
                         <thead>
                             <tr>
-                                <th width="20%"></th>
-                                <th class='text-center' width="20%">Order No</th>
+                                <th width="20%">Allocated Amount</th>
+                                <th class='text-center' width="20%">Month #</th>
                                 <th class='text-center' width="30%">Amount Due</th>
                                 <th class='text-center' width="30%">Amount Paid</th>
                                 <th class='text-center' width="30%">Due Date</th>

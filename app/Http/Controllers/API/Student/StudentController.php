@@ -474,6 +474,7 @@ class StudentController extends Controller
             $x = false;
             $att = null;
             $attachment = null;
+            $ap_deduct = 0;
             foreach($funded_course->payment_sched as $key => $psched){
                 $commission = 0;
                 $prev_balance = $balance;
@@ -486,16 +487,24 @@ class StudentController extends Controller
                             if($commission_settings != null){
                                 if($commission_settings->commission_type == '%'){
                                     if($commission_settings->gst_type == 'not_registered'){
-                                        if($commission_settings->gst_status == 0){
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
+                                        if($key != 0){
+                                            if($commission_settings->gst_status == 0){
+                                                $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
+                                            }else{
+                                                $commission =  round($balance * ($commission_settings->commision_value / 100) - ($balance * ($commission_settings->commision_value / 100) * .10), 2);
+                                            }
                                         }else{
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100) - ($balance * ($commission_settings->commision_value / 100) * .10), 2);
+                                            $commission = 0;
                                         }
                                     }else{
-                                        if($commission_settings->gst_status == 1){
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
+                                        if($key != 0){
+                                            if($commission_settings->gst_status == 1){
+                                                $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
+                                            }else{
+                                                $commission =  round($balance * ($commission_settings->commision_value / 100) + ($balance * ($commission_settings->commision_value / 100) * .10), 2);
+                                            }
                                         }else{
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100) + ($balance * ($commission_settings->commision_value / 100) * .10), 2);
+                                            $commission = 0;
                                         }
                                     }
                                     
@@ -528,21 +537,25 @@ class StudentController extends Controller
                     if($balance >= 0 ){
                         $balance = $psched->payable_amount ;
                         if($commission_settings != null){
-                            if($commission_settings->commission_type == '%'){
-                                if($commission_settings->gst_type == 'not_registered'){
-                                    if($commission_settings->gst_status == 0){
-                                        $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
+                            if($key != 0){
+                                if($commission_settings->commission_type == '%'){
+                                    if($commission_settings->gst_type == 'not_registered'){
+                                        if($commission_settings->gst_status == 0){
+                                            $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
+                                        }else{
+                                            $commission =  round($balance * ($commission_settings->commision_value / 100) - ($balance * ($commission_settings->commision_value / 100) * .10), 2);
+                                        }
                                     }else{
-                                        $commission =  round($balance * ($commission_settings->commision_value / 100) - ($balance * ($commission_settings->commision_value / 100) * .10), 2);
+                                        if($commission_settings->gst_status == 1){
+                                            $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
+                                        }else{
+                                            $commission =  round($balance * ($commission_settings->commision_value / 100) + ($balance * ($commission_settings->commision_value / 100) * .10), 2);
+                                        }
                                     }
-                                }else{
-                                    if($commission_settings->gst_status == 1){
-                                        $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
-                                    }else{
-                                        $commission =  round($balance * ($commission_settings->commision_value / 100) + ($balance * ($commission_settings->commision_value / 100) * .10), 2);
-                                    }
+                                    
                                 }
-                                
+                            }else{
+                                $commission = 0;
                             }
                         }
                     }
@@ -581,7 +594,7 @@ class StudentController extends Controller
                         'transaction_code' => $payment_detail->transaction_code,  
                         'payment_date' =>  Carbon::parse($payment_detail->payment_date)->format('d/m/Y'),  
                         'amount' => $payment_detail->amount,  
-                        'pre_deduc_comm' => number_format($payment_detail->pre_deduc_comm,2),  
+                        'pre_deduc_comm' => number_format($payment_detail->pre_deduc_comm,2,'.',''),  
                         'verified' => $payment_detail->verified,  
                         'note' => $payment_detail->note,  
                         'attachment' => $attachment
@@ -598,13 +611,27 @@ class StudentController extends Controller
                         $attain = false;
                     }
                 }
+                $commission1 = 0;
+                if($ap_deduct > 0){
+                    $ap_deduct = $ap_deduct - $commission;
+                    if($ap_deduct > 0){
+                        $commission = 0;
+                    }else{
+                        $commission = abs($ap_deduct);
+                    }
+                   
+                }else{
+                    $ap_deduct =0;
+                    // dump($ap_deduct);
+                }
+
                 $pl[]= [
                     'number'             => $ctr++,
                     'id'                 => $psched->id,
                     'name'               => $psched->id,
                     'due_date'           => Carbon::parse($psched->due_date)->format('d/m/Y'),
                     'adjusted_date'      => $psched->adjusted_date != '' ? Carbon::parse($psched->adjusted_date)->format('d/m/Y') : null,
-                    'payable_amount'     => $psched->payable_amount,
+                    'payable_amount'     => $psched->payable_amount - $psched->approved_amount_paid,
                     'payment_details'    => $pd,
                     'total_paid'         => $psched->amount_paid,
                     'total_paid_approved'         => $psched->approved_amount_paid,
@@ -613,7 +640,9 @@ class StudentController extends Controller
                     'attain'             => $attain ,
                     'commission'         => $commission,
                     'percentage'         => ( (float)$psched->approved_amount_paid / (float)$psched->payable_amount ) * 100,
+                    'ap_deduct'         => $ap_deduct,
                 ];
+                $ap_deduct = $ap_deduct +  $psched->prededucted_com;
                
                 
             }
@@ -632,7 +661,10 @@ class StudentController extends Controller
                         'attachment' => $details[0]->attachment != null ? $details[0]->attachment->hash_name : null
                     ];
 
-                }  
+                } 
+                usort($pdetails, function($item1,$item2){
+                    return $item2['id'] <=> $item1['id'];
+                }); 
 
             if($funded_course->course_code == '@@@@'){
                 $d = [
@@ -642,7 +674,7 @@ class StudentController extends Controller
                     'fee'               => $funded_course->course_fee, 
                     'course_fee_type'   => $course_fee_type, 
                     'payment_plan'      => $pl,
-                    'collections'        => $pdetails
+                    'collections'       => $pdetails
                 ];
             }else{
 
@@ -698,7 +730,8 @@ class StudentController extends Controller
                 'message' => '<b>' . Auth::user()->party->name . '</b> added collection on student id '.$student_id ,
                 'is_seen' => 0,
                 'action' => 'created',
-                'link' => '/agent/'.Auth::user()->agent_details->id
+                'link' => '/agent/'.Auth::user()->agent_details->id,
+                'table_id' => $funded_payments->id
             ]);
             $notify->user()->associate(Auth::user());
             $notify->save();
@@ -736,6 +769,22 @@ class StudentController extends Controller
     public function paymentsUpdate(Request $request, $student_id){
         $file = $request->file('file');
         $pd = FundedStudentPaymentDetails::find($request->payment_plan);
+
+        $notify = new Notification;
+
+            $notify->fill([
+                'type' => 'agent',
+                'table_name' => 'funded_student_payment_details',
+                'reference_id' => Auth::user()->agent_details->id,
+                'date_recorded' => Carbon::now()->format('Y-m-d H:i:s'),
+                'message' => '<b>' . Auth::user()->party->name . '</b> updated collection on student id '.$student_id ,
+                'is_seen' => 0,
+                'action' => 'update',
+                'link' => '/agent/'.Auth::user()->agent_details->id,
+                'table_id' => $pd->id
+            ]);
+            $notify->user()->associate(Auth::user());
+            $notify->save();
         try {
             DB::beginTransaction();
             $data = [
