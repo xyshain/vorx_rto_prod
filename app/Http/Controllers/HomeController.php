@@ -561,7 +561,7 @@ class HomeController extends Controller
         $user = Auth::user();
         $user_role = $user->roles->first()->name;
         
-        if($user_role == 'Staff' || $user_role == 'Admin'){
+        if($user_role == 'Staff' || $user_role == 'Admin' || $user_role == 'Super-Admin'){
             $notifs = Notification::with(['user.party.person'])->where('type','agent')->orderBy('date_recorded', 'desc')->limit(7)->get();
             foreach($notifs as $n){
                 $start = Carbon::parse($n->updated_at);

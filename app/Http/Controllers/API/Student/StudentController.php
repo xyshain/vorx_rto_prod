@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AgentTempUpdate;
 use App\Models\AvtPostcode;
 use App\Models\AvtStateIdentifier;
+use App\Models\Collection;
 use App\Models\FundedStudentPaymentDetails;
 use App\Models\Notification;
 use App\Models\PaymentAttachment;
@@ -478,7 +479,6 @@ class StudentController extends Controller
             foreach($funded_course->payment_sched as $key => $psched){
                 $commission = 0;
                 $prev_balance = $balance;
-
                 if($balance <= 0){
                     if($balance != 0){
                         $prev_balance = $balance;
@@ -569,20 +569,20 @@ class StudentController extends Controller
                 foreach($psched->payment_detail as $payment_detail){
                     if($att == null){
                        $att =  $payment_detail->transaction_code;
-                       if($payment_detail->attachment != null){
-                            $attachment = $payment_detail->attachment->hash_name;
+                       if($payment_detail->collection != null){
+                            $attachment = $payment_detail->collection->attachment;
                         }
                     }else{
                         if($att == $payment_detail->transaction_code){
-                            if($payment_detail->attachment != null){
-                                $attachment = $payment_detail->attachment->hash_name;
+                            if($payment_detail->collection != null){
+                                $attachment = $payment_detail->collection->attachment;
                             }else{
                                 $attachment = $attachment;
                             }
                         }else{
                             $att = $payment_detail->transaction_code;
-                            if($payment_detail->attachment != null){
-                                $attachment = $payment_detail->attachment->hash_name;
+                            if($payment_detail->collection != null){
+                                $attachment = $payment_detail->collection->attachment;
                             }else{
                                 $attachment = $attachment;
                             }
@@ -634,8 +634,9 @@ class StudentController extends Controller
                     'payable_amount'     => $psched->payable_amount - $psched->approved_amount_paid,
                     'payment_details'    => $pd,
                     'total_paid'         => $psched->amount_paid,
-                    'total_paid_approved'         => $psched->approved_amount_paid,
+                    'total_paid_approved'=> $psched->approved_amount_paid,
                     'balance'            => $balance ,
+                    'collection'         => $psched->collection->load('attachment'),   
                     'prev_balance'       => $prev_balance ,
                     'attain'             => $attain ,
                     'commission'         => $commission,
@@ -647,24 +648,26 @@ class StudentController extends Controller
                 
             }
 
-            $compiledDetails =  $funded_course->payment_details->groupBy('transaction_code');
-                $pdetails = [];
-                foreach($compiledDetails as $trnx =>$details){
-                    $pdetails[] = [
-                        'id' => $details[0]->id,  
-                        'transaction_code' => $trnx,  
-                        'payment_date' => Carbon::parse($details[0]->payment_date)->format('d/m/Y'),  
-                        'amount' => $details->sum('amount'),  
-                        'pre_deduc_comm' => $details->sum('pre_deduc_comm') ,  
-                        'verified' =>  $details[0]->verified,  
-                        'note' => $details[0]->note,  
-                        'attachment' => $details[0]->attachment != null ? $details[0]->attachment->hash_name : null
-                    ];
+            // $compiledDetails =  $funded_course->payment_details->groupBy('transaction_code');
+            $pdetails =  $funded_course->collection->load('attachment')->sortDesc();
+            // dd($compiledDetails);
+                // $pdetails = [];
+                // foreach($compiledDetails as $trnx =>$details){
+                //     $pdetails[] = [
+                //         'id' => $details[0]->id,  
+                //         'transaction_code' => $trnx,  
+                //         'payment_date' => Carbon::parse($details[0]->payment_date)->format('d/m/Y'),  
+                //         'amount' => $details->sum('amount'),  
+                //         'pre_deduc_comm' => $details->sum('pre_deduc_comm') ,  
+                //         'verified' =>  $details[0]->verified,  
+                //         'note' => $details[0]->note,  
+                //         'attachment' => $details[0]->attachment != null ? $details[0]->attachment->hash_name : null
+                //     ];
 
-                } 
-                usort($pdetails, function($item1,$item2){
-                    return $item2['id'] <=> $item1['id'];
-                }); 
+                // } 
+                // usort($pdetails, function($item1,$item2){
+                //     return $item2['id'] <=> $item1['id'];
+                // }); 
 
             if($funded_course->course_code == '@@@@'){
                 $d = [
@@ -704,34 +707,36 @@ class StudentController extends Controller
         $path  = null;
         try {
             DB::beginTransaction();
-            $funded_payments = new FundedStudentPaymentDetails;
+
+            $collection = new Collection;
+
+            // $funded_payments = new FundedStudentPaymentDetails;
             $data = [
                 'transaction_code' => $request->trxncode,
                 'payment_date' => Carbon::parse($request->colletion_date)->format('Y-m-d'),
                 'amount' => $request->deposited_amount,
                 'student_id'=> $student_id,
+                'payment_schedule_template_id' => $pl->id,
                 'pre_deduc_comm' => $request->deducted_commission_amount,
                 'student_course_id' => $funded_course,
-                'payment_schedule_template_id' => $pl->id,
-                'offer_letter_course_detail_id' => $offer_detail_course,
-                'user_id' => Auth::user()->id,
                 'agent_id' => Auth::user()->agent_details->id,
                 'note' => $request->notes,
+                'remarks' => '',
             ];
-            $funded_payments->fill($data);
-            $funded_payments->save();
+            $collection->fill($data);
+            $collection->save();
             $notify = new Notification;
 
             $notify->fill([
                 'type' => 'agent',
-                'table_name' => 'funded_student_payment_details',
+                'table_name' => 'collections',
                 'reference_id' => Auth::user()->agent_details->id,
                 'date_recorded' => Carbon::now()->format('Y-m-d H:i:s'),
                 'message' => '<b>' . Auth::user()->party->name . '</b> added collection on student id '.$student_id ,
                 'is_seen' => 0,
                 'action' => 'created',
                 'link' => '/agent/'.Auth::user()->agent_details->id,
-                'table_id' => $funded_payments->id
+                'table_id' => $collection->id
             ]);
             $notify->user()->associate(Auth::user());
             $notify->save();
@@ -750,7 +755,7 @@ class StudentController extends Controller
                     '_input'       => 'payment_attachment',
                 ]);
                 $studentAttachment->user()->associate(Auth::user());
-                $studentAttachment->payment()->associate($funded_payments);
+                $studentAttachment->payment()->associate($collection);
                 $studentAttachment->save();
                 DB::commit();
             }

@@ -50,12 +50,6 @@
                     </div>
                     <div class="card text-left" style="border:none">
                         <span>
-                            <strong>Payment Receipt: </strong>
-                            TBD
-                        </span>
-                    </div>
-                    <div class="card text-left" style="border:none">
-                        <span>
                             <strong>Notes: </strong>
                             {{data.notes}}
                         </span>
@@ -92,7 +86,7 @@
                                      </span>
                                  </td>
                                  <td class="text-center">{{parseInt(index)+1}}</td>
-                                 <td class="text-center">{{st.payable_amount}}</td>
+                                 <td class="text-center">{{st.balance}}</td>
                                  <td class="text-center">{{st.approved_amount_paid}}</td>
                                  <td class="text-center">{{st.due_date | dateFormat}}</td>
                              </tr>
@@ -100,7 +94,7 @@
                     </table>  
                     <div class="row">
                         <div class="col-md-12">
-                            <textarea name="" id="" cols="30" rows="4" class="form-control" placeholder="Remarks (Optional)"></textarea>
+                            <textarea name="" id="" cols="30" rows="4" class="form-control" placeholder="Remarks (Optional)" v-model="remarks"></textarea>
                         </div>
                     </div>     <br>
                     <div class="row text-right">
