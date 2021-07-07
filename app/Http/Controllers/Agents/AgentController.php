@@ -631,7 +631,7 @@ class AgentController extends Controller
     }
 
     public function agentCollection($id){
-        $agent_collections = Collection::with('agent','student.party','funded_student_course.course','attachment')->where('agent_id',$id)->get();
+        $agent_collections = Collection::with('agent','student.party','funded_student_course.course','attachment')->where('agent_id',$id)->orderBy('id','desc')->get();
 
         return $agent_collections;
         
