@@ -10,6 +10,7 @@ use App\Models\Student\Student;
 use App\Models\Student\Party;
 use App\Models\FundedStudentCourse;
 use App\Models\FundedStudentPaymentDetails;
+use App\Models\Collection;
 use App\Models\CommissionDetail;
 use App\Models\Audit;
 use App\Models\User;
@@ -162,8 +163,9 @@ class DashboardController extends Controller
             $url = explode('/', $v->url);
             $dname = '';
             $student_details = [];
+
             // Student Module Audits
-            if($url[3] == 'student' || $v->auditable_type == 'App\Models\FundedStudentPaymentDetails'){
+            if($url[3] == 'student' || $v->auditable_type == 'App\Models\FundedStudentPaymentDetails' || $v->auditable_type == 'App\Models\Collection'){
 
                 $student_status = '';
                 $studentID = '';
@@ -191,12 +193,19 @@ class DashboardController extends Controller
                             $agent_stud = true;
                         }
                     }
-                }elseif($v->auditable_type == 'App\Models\FundedStudentPaymentDetails'){
+                }elseif($v->auditable_type == 'App\Models\FundedStudentPaymentDetails' || $v->auditable_type == 'App\Models\Collection'){
                     $audit_type = 'Payment';
                     $payment_details = FundedStudentPaymentDetails::with('student')->where('id', $v->auditable_id)->first();
                     if($payment_details){
                         $student_id = $payment_details->student->student_id;
                         if($payment_details->agent_id !== null && $payment_details->agent_id == $agent_id){
+                            $agent_stud = true;
+                        }
+                    }
+                    $collection = Collection::with('student')->where('id', $v->auditable_id)->first();
+                    if($collection){
+                        $student_id = $collection->student->student_id;
+                        if($collection->agent_id !== null && $collection->agent_id == $agent_id){
                             $agent_stud = true;
                         }
                     }
@@ -234,7 +243,7 @@ class DashboardController extends Controller
             }
 
             // Student Module Audits    
-            if($url[3] == 'student' || $v->auditable_type == 'App\Models\FundedStudentPaymentDetails'){
+            if($url[3] == 'student' || $v->auditable_type == 'App\Models\FundedStudentPaymentDetails' || $v->auditable_type == 'App\Models\Collection'){
                 if($agent_id !== '' || $v->user_id == $user->id){
                     //under agent students only
                     if(count($student_details) > 0 && $student_details['agent_stud'] == true){
