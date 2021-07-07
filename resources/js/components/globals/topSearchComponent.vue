@@ -358,7 +358,7 @@ export default {
     getAlerts() {
       let vm = this;
       
-      if(this.role == 'Staff' || this.role == 'Admin'){
+      if(this.role == 'Staff' || this.role == 'Admin' || this.role == 'Super-Admin'){
           axios
           .get("/notifications")
           .then(function(response) {

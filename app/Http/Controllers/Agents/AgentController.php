@@ -646,6 +646,7 @@ class AgentController extends Controller
                     $amount = 0;
                     $attachment = null;
                     $note = null;
+                    $remarks = null;
                     foreach($payment_details as $pd){
                         $amount += $pd->amount;
                         // dump($pd->attachment);
@@ -655,9 +656,12 @@ class AgentController extends Controller
                         if(isset($pd->note)){
                             $note = $pd->note;
                         }
+                        if(isset($pd->remarks)){
+                            $remarks = $pd->remarks;
+                        }
                     }
                     
-                    $note_att[$i] = ['tcode'=>$agent_collections[$i]->transaction_code,'note'=>$note,'attachment'=>$attachment,'amount'=>$amount];
+                    $note_att[$i] = ['tcode'=>$agent_collections[$i]->transaction_code,'note'=>$note,'attachment'=>$attachment,'amount'=>$amount,'remarks'=>$remarks];
                     // $agent_collections[$i]->amount = $amount;
                     // if(!in_array($agent_collections[$i]->transaction_code,$tcodes)){
                         array_push($tcodes,$agent_collections[$i]->transaction_code);
@@ -672,6 +676,7 @@ class AgentController extends Controller
                     $ac->attachments = $na['attachment'];
                     $ac->note = $na['note'];
                     $ac->amount = $na['amount'];
+                    $ac->remarks = $na['remarks'];
                     // return response()->json(['ac'=>$ac,'ac_attachment'=>$ac->attachment,'na'=>$na['attachment']]);
                 }
             }
@@ -791,6 +796,7 @@ class AgentController extends Controller
         $student_payment    = $request['student_payment'];
         $trxn_code          = $request['student_payment']['transaction_code'];
         $prededuct_com      = $request['student_payment']['pre_deduc_comm'];
+        
         $remarks            = $request['remarks'];
         // return $payment_schedule;
         try{
