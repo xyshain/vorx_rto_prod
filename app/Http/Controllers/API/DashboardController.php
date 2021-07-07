@@ -150,7 +150,7 @@ class DashboardController extends Controller
     public function activities_details(){
         $user = \Auth::user();
         $logout = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]/user/logout";
-        $audits = Audit::with('user.party.person')->select(DB::raw('id, event, user_id, auditable_id, auditable_type, old_values, new_values, url, MINUTE(created_at) AS created_min, created_at'))->where('url', '!=', $logout)->groupBy('event', 'url', 'user_id', 'created_min')->orderBy('id', 'desc')->limit(20)->get();
+        $audits = Audit::with('user.party')->select(DB::raw('id, event, user_id, auditable_id, auditable_type, old_values, new_values, url, MINUTE(created_at) AS created_min, created_at'))->where('url', '!=', $logout)->orderBy('id', 'desc')->limit(20)->get();
         $agent_id = '';
         if($user->hasRole('Agent')){
             $agent = $user->agent_details; 
@@ -159,12 +159,11 @@ class DashboardController extends Controller
 
         $activity = [];
         foreach ($audits as $k => $v) {
-            
             $url = explode('/', $v->url);
             $dname = '';
             $student_details = [];
             // Student Module Audits
-            if($url[3] == 'student' || $url[3] == 'payment'){
+            if($url[3] == 'student' || $v->auditable_type == 'App\Models\FundedStudentPaymentDetails'){
 
                 $student_status = '';
                 $studentID = '';
@@ -233,59 +232,38 @@ class DashboardController extends Controller
                     ];
                 }
             }
-            // dump(count($student_details));
-            // Student Module Audits            
-            // if (isset($v->user->party->person) && $v->user->id != 1) {
-                if (isset($v->user->party->person)){
-                    if($url[3] == 'student' || $url[3] == 'payment'){
-                        if($agent_id !== ''){
-                            //under agent students only
-                            if(count($student_details) > 0 && $student_details['agent_stud'] == true){
-                                // if($student_details['agent_stud'] == true){
-                                    array_push($activity, [
-                                        'id' => $v->id,
-                                        'name' => isset($v->user->party->name) ? $v->user->party->name : '',
-                                        'firstname' => $v->user->party->person->firstname,
-                                        'lastname' => $v->user->party->person->lastname,
-                                        'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
-                                        'url' => $url,
-                                        'old_values' => $old_v,
-                                        'new_values' => $new_v,
-                                        'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
-                                        'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
-                                        'event' => $v->event,
-                                        'dname' => $dname,
-                                        'student' => $student_details,
-                                        'collection_status' => $collection_status
-                                    ]);
-                                // }
-                            }else{
-                                // new enrolled isset($new_v['name'])
-                                if($v->event == 'created'){
-                                    array_push($activity, [
-                                        'id' => $v->id,
-                                        'name' => isset($v->user->party->name) ? $v->user->party->name : '',
-                                        'firstname' => $v->user->party->person->firstname,
-                                        'lastname' => $v->user->party->person->lastname,
-                                        'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
-                                        'url' => $url,
-                                        'old_values' => $old_v,
-                                        'new_values' => $new_v,
-                                        'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
-                                        'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
-                                        'event' => $v->event,
-                                        'dname' => $dname,
-                                        'student' => $student_details,
-                                        'collection_status' => $collection_status
-                                    ]);
-                                }
-                            }
-                        }else{
+
+            // Student Module Audits    
+            if($url[3] == 'student' || $v->auditable_type == 'App\Models\FundedStudentPaymentDetails'){
+                if($agent_id !== '' || $v->user_id == $user->id){
+                    //under agent students only
+                    if(count($student_details) > 0 && $student_details['agent_stud'] == true){
+                        // if($student_details['agent_stud'] == true){
                             array_push($activity, [
                                 'id' => $v->id,
-                                'name' => isset($v->user->party->name) ? $v->user->party->name : '',
-                                'firstname' => $v->user->party->person->firstname,
-                                'lastname' => $v->user->party->person->lastname,
+                                'name' => $v->user->hasRole('Agent') ? $v->user->agent_details->agent_name : 'Admin Staff',
+                                // 'firstname' => $v->user->party->person->firstname,
+                                // 'lastname' => $v->user->party->person->lastname,
+                                'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
+                                'url' => $url,
+                                'old_values' => $old_v,
+                                'new_values' => $new_v,
+                                'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
+                                'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
+                                'event' => $v->event,
+                                'dname' => $dname,
+                                'student' => $student_details,
+                                'collection_status' => $collection_status
+                            ]);
+                        // }
+                    }else{
+                        // new enrolled isset($new_v['name'])
+                        if($v->event == 'created'){
+                            array_push($activity, [
+                                'id' => $v->id,
+                                'name' => $v->user->hasRole('Agent') ? $v->user->agent_details->agent_name : 'Admin Staff',
+                                // 'firstname' => $v->user->party->person->firstname,
+                                // 'lastname' => $v->user->party->person->lastname,
                                 'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
                                 'url' => $url,
                                 'old_values' => $old_v,
@@ -298,10 +276,28 @@ class DashboardController extends Controller
                                 'collection_status' => $collection_status
                             ]);
                         }
-                        
                     }
+                }else{
+                    array_push($activity, [
+                        'id' => $v->id,
+                        'name' => $v->user->hasRole('Agent') ? $v->user->agent_details->agent_name : 'Admin Staff',
+                        // 'firstname' => $v->user->party->person->firstname,
+                        // 'lastname' => $v->user->party->person->lastname,
+                        'avatar' => '/storage/user/avatars/' . $v->user->profile_image,
+                        'url' => $url,
+                        'old_values' => $old_v,
+                        'new_values' => $new_v,
+                        'created_at' => Carbon::parse($v->created_at)->format('Y-m-d H:m:s'),
+                        'created_min' =>  Carbon::parse($v->created_at)->diffForHumans(),
+                        'event' => $v->event,
+                        'dname' => $dname,
+                        'student' => $student_details,
+                        'collection_status' => $collection_status
+                    ]);
                 }
-            // }
+                
+            }                    
+
         }
         // dd($activity);
         return $activity;
