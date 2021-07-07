@@ -777,7 +777,7 @@ class StudentController extends Controller
                 'table_name' => 'funded_student_payment_details',
                 'reference_id' => Auth::user()->agent_details->id,
                 'date_recorded' => Carbon::now()->format('Y-m-d H:i:s'),
-                'message' => '<b>' . Auth::user()->party->name . '</b> added collection on student id '.$student_id ,
+                'message' => '<b>' . Auth::user()->party->name . '</b> updated collection on student id '.$student_id ,
                 'is_seen' => 0,
                 'action' => 'update',
                 'link' => '/agent/'.Auth::user()->agent_details->id,
