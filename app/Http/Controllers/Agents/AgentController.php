@@ -631,72 +631,73 @@ class AgentController extends Controller
     }
 
     public function agentCollection($id){
-        $agent_collections = Collection::with('attachment')->where('agent_id',$id)->get();
+        $agent_collections = Collection::with('agent','student.party','funded_student_course.course','attachment')->where('agent_id',$id)->get();
 
         return $agent_collections;
-        $agent_collections = FundedStudentPaymentDetails::with('agent','attachment','student.party','funded_student_course.course','payment_schedule_template')->where('agent_id',$id)
-        ->orderBy('id','desc')->get();
-
-        $tcodes = [];
-        $dup_codes = [];
-        $note_att = [];
-        for($i = 0; $i < count($agent_collections); $i++){
-            if(isset($agent_collections[$i]->transaction_code)){
-                if(in_array($agent_collections[$i]->transaction_code,$tcodes)){
-                    // unset($agent_collections[$i]);
-                    array_push($dup_codes,$agent_collections[$i]->transaction_code);
-                }else{
-                    $payment_details = FundedStudentPaymentDetails::where('transaction_code',$agent_collections[$i]->transaction_code)->get();
-                    $amount = 0;
-                    $attachment = null;
-                    $note = null;
-                    $remarks = null;
-                    foreach($payment_details as $pd){
-                        $amount += $pd->amount;
-                        // dump($pd->attachment);
-                        if(isset($pd->attachment)){
-                            $attachment = $pd->attachment;
-                        }
-                        if(isset($pd->note)){
-                            $note = $pd->note;
-                        }
-                        if(isset($pd->remarks)){
-                            $remarks = $pd->remarks;
-                        }
-                    }
-                    
-                    $note_att[$i] = ['tcode'=>$agent_collections[$i]->transaction_code,'note'=>$note,'attachment'=>$attachment,'amount'=>$amount,'remarks'=>$remarks];
-                    // $agent_collections[$i]->amount = $amount;
-                    // if(!in_array($agent_collections[$i]->transaction_code,$tcodes)){
-                        array_push($tcodes,$agent_collections[$i]->transaction_code);
-                    // }
-                }
-            }
-        }
         
-        foreach($agent_collections as $ac){
-            foreach($note_att as $na){  
-                if($ac->transaction_code == $na['tcode']){
-                    $ac->attachments = $na['attachment'];
-                    $ac->note = $na['note'];
-                    $ac->amount = $na['amount'];
-                    $ac->remarks = $na['remarks'];
-                    // return response()->json(['ac'=>$ac,'ac_attachment'=>$ac->attachment,'na'=>$na['attachment']]);
-                }
-            }
-        }
+        // $agent_collections = FundedStudentPaymentDetails::with('agent','attachment','student.party','funded_student_course.course','payment_schedule_template')->where('agent_id',$id)
+        // ->orderBy('id','desc')->get();
 
-        for($i = 0; $i < count($agent_collections); $i++){
-            if(isset($agent_collections[$i]->transaction_code)){
-                if(in_array($agent_collections[$i]->transaction_code,$dup_codes)){
-                    if(($key = array_search($agent_collections[$i]->transaction_code,$dup_codes))!==false){
-                        unset($dup_codes[$key]);
-                    }
-                    unset($agent_collections[$i]);
-                }
-            }
-        }
-        return $agent_collections;
+        // $tcodes = [];
+        // $dup_codes = [];
+        // $note_att = [];
+        // for($i = 0; $i < count($agent_collections); $i++){
+        //     if(isset($agent_collections[$i]->transaction_code)){
+        //         if(in_array($agent_collections[$i]->transaction_code,$tcodes)){
+        //             // unset($agent_collections[$i]);
+        //             array_push($dup_codes,$agent_collections[$i]->transaction_code);
+        //         }else{
+        //             $payment_details = FundedStudentPaymentDetails::where('transaction_code',$agent_collections[$i]->transaction_code)->get();
+        //             $amount = 0;
+        //             $attachment = null;
+        //             $note = null;
+        //             $remarks = null;
+        //             foreach($payment_details as $pd){
+        //                 $amount += $pd->amount;
+        //                 // dump($pd->attachment);
+        //                 if(isset($pd->attachment)){
+        //                     $attachment = $pd->attachment;
+        //                 }
+        //                 if(isset($pd->note)){
+        //                     $note = $pd->note;
+        //                 }
+        //                 if(isset($pd->remarks)){
+        //                     $remarks = $pd->remarks;
+        //                 }
+        //             }
+                    
+        //             $note_att[$i] = ['tcode'=>$agent_collections[$i]->transaction_code,'note'=>$note,'attachment'=>$attachment,'amount'=>$amount,'remarks'=>$remarks];
+        //             // $agent_collections[$i]->amount = $amount;
+        //             // if(!in_array($agent_collections[$i]->transaction_code,$tcodes)){
+        //                 array_push($tcodes,$agent_collections[$i]->transaction_code);
+        //             // }
+        //         }
+        //     }
+        // }
+        
+        // foreach($agent_collections as $ac){
+        //     foreach($note_att as $na){  
+        //         if($ac->transaction_code == $na['tcode']){
+        //             $ac->attachments = $na['attachment'];
+        //             $ac->note = $na['note'];
+        //             $ac->amount = $na['amount'];
+        //             $ac->remarks = $na['remarks'];
+        //             // return response()->json(['ac'=>$ac,'ac_attachment'=>$ac->attachment,'na'=>$na['attachment']]);
+        //         }
+        //     }
+        // }
+
+        // for($i = 0; $i < count($agent_collections); $i++){
+        //     if(isset($agent_collections[$i]->transaction_code)){
+        //         if(in_array($agent_collections[$i]->transaction_code,$dup_codes)){
+        //             if(($key = array_search($agent_collections[$i]->transaction_code,$dup_codes))!==false){
+        //                 unset($dup_codes[$key]);
+        //             }
+        //             unset($agent_collections[$i]);
+        //         }
+        //     }
+        // }
+        // return $agent_collections;
     }
 
     public function declineCollection($request){ //funded student payment detail id
@@ -705,15 +706,19 @@ class AgentController extends Controller
         
         try{
             DB::beginTransaction();
-            $student_funded_payment_detail = FundedStudentPaymentDetails::where('id',$id)->first();
+            // $student_funded_payment_detail = FundedStudentPaymentDetails::where('id',$id)->first();
 
-            $student_funded_payment_detail->verified = 2;
-            $student_funded_payment_detail->remarks = $request['remarks'];
-            $student_funded_payment_detail->update();
+            // $student_funded_payment_detail->verified = 2;
+            // $student_funded_payment_detail->remarks = $request['remarks'];
+            // $student_funded_payment_detail->update();
             
+            $collection = Collection::find($id);
+            $collection->verified = 2;
+            $collection->update();
+
             $org = TrainingOrganisation::first();
             $send = new EmailSendingController;
-            
+
             if(isset($request['agent'])){
                 $name = $request['agent']['agent_name'];
                 if(isset($request['agent']['email'])){
@@ -731,7 +736,7 @@ class AgentController extends Controller
             // $s['status']='success';
             if($s['status']=='success'){
                 DB::commit();
-                $this->notifyAgent($student_funded_payment_detail);
+                $this->notifyAgent($collection);
                 return response()->json(['status'=>'success']);
             }else{
                 DB::rollback();
@@ -788,6 +793,7 @@ class AgentController extends Controller
     }
 
     public function collectionAction(Request $request){
+        // return $request->all();
         if($request->action == 'accept'){
             return $this->acceptCollection($request->all());
         }else{
@@ -800,54 +806,66 @@ class AgentController extends Controller
         $student_payment    = $request['student_payment'];
         $trxn_code          = $request['student_payment']['transaction_code'];
         $prededuct_com      = $request['student_payment']['pre_deduc_comm'];
-        
+        $unverified_amount  = $request['student_payment']['amount'];
         $remarks            = $request['remarks'];
+        $collection_id      = $request['student_payment']['id'];
+        $user_id            = \Auth::user()->id;
+        
+        $collection = Collection::find($collection_id);
         // return $payment_schedule;
         try{
             DB::beginTransaction();
             if($payment_schedule!=null){
                 foreach($payment_schedule as $ps){
-                    if(isset($ps['unverified_amount'])){
-                        if($ps['unverified_amount']!=0){
-                            if($student_payment['payment_schedule_template_id'] == $ps['id']){
-                                $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
-                                $payment_details->amount = $ps['unverified_amount'];
-                                $payment_details->verified = 1;
-                                $payment_details->remarks = $remarks;
-                                $payment_details->update();
-                                $prededuct_com = 0;
-                            }else{
+                    // if(isset($ps['unverified_amount'])){
+                        // if($ps['unverified_amount']!=0){
+                        if($unverified_amount != 0){
+                            $amount = $unverified_amount > $ps['balance'] ? $ps['balance'] : $unverified_amount;
+                            // if($student_payment['payment_schedule_template_id'] == $ps['id']){
+                            //     $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
+                            //     $payment_details->amount = $ps['unverified_amount'];
+                            //     $payment_details->verified = 1;
+                            //     // $payment_details->remarks = $remarks;
+                            //     $payment_details->collection_id = $student_payment['id'];
+                            //     $payment_details->update();
+                            //     $prededuct_com = 0;
+                            // }else{
                                 $new_payment = new FundedStudentPaymentDetails;
                                 $new_payment->student_id = $student_payment['student_id'];
                                 $new_payment->agent_id = $student_payment['agent_id'];
                                 $new_payment->student_course_id = $student_payment['student_course_id'];
-                                $new_payment->offer_letter_course_detail_id = $student_payment['offer_letter_course_detail_id'];
+                                $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
                                 $new_payment->transaction_code = $student_payment['transaction_code'];
                                 $new_payment->payment_schedule_template_id = $ps['id'];
                                 $new_payment->payment_date = $student_payment['payment_date'];
-                                $new_payment->amount = $ps['unverified_amount'];
+                                $new_payment->amount = $amount;
                                 $new_payment->verified = 1;
-                                $new_payment->remarks = $remarks;
-                                $new_payment->user_id = $student_payment['user_id'];
+                                $new_payment->collection_id = $collection_id;
+                                // $new_payment->remarks = $remarks;
+                                $new_payment->user_id = $user_id;
                                 $new_payment->pre_deduc_comm = $prededuct_com;
                                 $new_payment->save();
         
                                 $prededuct_com = 0;
-                            }
+                                $unverified_amount = $unverified_amount - $amount;
+                            // }
                         }
-                    }                    
+                    // }                    
                 }
             }else{
                 $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
                 $payment_details->verified = 1;
-                $payment_details->remarks = $remarks;
+                $payment_details->collection_id = $student_payment['id'];
+                // $payment_details->remarks = $remarks;
                 $payment_details->update();
             }
-
+            
+            $collection->verified = 1;
+            $collection->update();
             
             $org = TrainingOrganisation::first();
             $send = new EmailSendingController;
-            
+            // return $student_payment;
             if(isset($student_payment['agent'])){
                 $name = $student_payment['agent']['agent_name'];
                 if(isset($student_payment['agent']['email'])){

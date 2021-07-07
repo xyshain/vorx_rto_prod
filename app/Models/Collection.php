@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Student\Student;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -37,6 +38,16 @@ class Collection extends Model implements AuditableContract
 
     public function attachment(){
         return $this->hasOne(PaymentAttachment::class);
+    }
+
+    public function funded_student_course()
+    {
+        return $this->belongsTo(FundedStudentCourse::class, 'student_course_id');
+    }
+    
+    public function student()
+    {
+        return $this->belongsTo(Student::class, 'student_id','student_id');
     }
 
     public function agent(){

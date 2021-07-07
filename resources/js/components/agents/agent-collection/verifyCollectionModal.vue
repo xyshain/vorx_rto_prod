@@ -86,7 +86,7 @@
                                      </span>
                                  </td>
                                  <td class="text-center">{{parseInt(index)+1}}</td>
-                                 <td class="text-center">{{st.payable_amount}}</td>
+                                 <td class="text-center">{{st.balance}}</td>
                                  <td class="text-center">{{st.approved_amount_paid}}</td>
                                  <td class="text-center">{{st.due_date | dateFormat}}</td>
                              </tr>

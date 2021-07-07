@@ -114,7 +114,7 @@
                                     0.00
                                 </td>
                                 <td class="text-center">{{index+1}}</td>
-                                <td class="text-center">{{ps.payable_amount}}</td>
+                                <td class="text-center">{{ps.balance}}</td>
                                 <td class="text-center">{{ps.approved_amount_paid}}</td>
                                 <td class="text-center">{{ps.due_date | dateFormat}}</td>
                             </tr>
