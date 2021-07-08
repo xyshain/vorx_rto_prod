@@ -151,7 +151,7 @@ class DashboardController extends Controller
     public function activities_details(){
         $user = \Auth::user();
         $logout = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]/user/logout";
-        $audits = Audit::with('user.party')->select(DB::raw('id, event, user_id, auditable_id, auditable_type, old_values, new_values, url, MINUTE(created_at) AS created_min, created_at'))->where('url', '!=', $logout)->orderBy('id', 'desc')->limit(20)->get();
+        $audits = Audit::with('user.party')->select(DB::raw('id, event, user_id, auditable_id, auditable_type, old_values, new_values, url, MINUTE(created_at) AS created_min, created_at'))->where('url', '!=', $logout)->orderBy('id', 'desc')->limit(25)->get();
         $agent_id = '';
         if($user->hasRole('Agent')){
             $agent = $user->agent_details; 
@@ -164,7 +164,7 @@ class DashboardController extends Controller
             $dname = '';
             $student_details = [];
 
-            // Student Module Audits
+            // Student Module Audits  
             if($url[3] == 'student' || $v->auditable_type == 'App\Models\FundedStudentPaymentDetails' || $v->auditable_type == 'App\Models\Collection'){
 
                 $student_status = '';
@@ -183,7 +183,7 @@ class DashboardController extends Controller
                         $student_status = $status->description;
                     }
                 }
-                
+
                 if($v->auditable_type == 'App\Models\FundedStudentCourse'){
                     $audit_type = 'Course';
                     $funded_c = FundedStudentCourse::with('student')->where('id', $v->auditable_id)->first();
@@ -195,18 +195,21 @@ class DashboardController extends Controller
                     }
                 }elseif($v->auditable_type == 'App\Models\FundedStudentPaymentDetails' || $v->auditable_type == 'App\Models\Collection'){
                     $audit_type = 'Payment';
-                    $payment_details = FundedStudentPaymentDetails::with('student')->where('id', $v->auditable_id)->first();
-                    if($payment_details){
-                        $student_id = $payment_details->student->student_id;
-                        if($payment_details->agent_id !== null && $payment_details->agent_id == $agent_id){
-                            $agent_stud = true;
+                    if($v->auditable_type == 'App\Models\FundedStudentPaymentDetails'){
+                        $payment_details = FundedStudentPaymentDetails::with('student')->where('id', $v->auditable_id)->first();
+                        if($payment_details){
+                            $student_id = $payment_details->student->student_id;
+                            if($payment_details->agent_id !== null && $payment_details->agent_id == $agent_id){
+                                $agent_stud = true;
+                            }
                         }
-                    }
-                    $collection = Collection::with('student')->where('id', $v->auditable_id)->first();
-                    if($collection){
-                        $student_id = $collection->student->student_id;
-                        if($collection->agent_id !== null && $collection->agent_id == $agent_id){
-                            $agent_stud = true;
+                    }else{
+                        $collection = Collection::with('student')->where('id', $v->auditable_id)->first();
+                        if($collection){
+                            $student_id = $collection->student->student_id;
+                            if($collection->agent_id !== null && $collection->agent_id == $agent_id){
+                                $agent_stud = true;
+                            }
                         }
                     }
                     if(isset($old_v['verified'])){
