@@ -240,6 +240,7 @@ class OfferLetterController extends Controller
 
             if($request->agent != ''){
                 $this->addUpdateAgentCommission($offerLetter);
+                $this->emailAgent($offerLetter);
             }
             DB::commit();
             return response()->json(['status' => 'success']);
@@ -419,8 +420,8 @@ class OfferLetterController extends Controller
             $offer_letter->save();
 
             if($offer_letter->wasChanged('agent_id')){
-                
                 $this->addUpdateAgentCommission($offer_letter);
+                $this->emailAgent($offer_letter);
             }
 
 
@@ -1556,5 +1557,44 @@ class OfferLetterController extends Controller
             throw $th;
         }
 
+    }
+
+    public function emailAgent($offerletter){
+
+        $ol_details = $offerletter->course_details;
+        $agent = AgentDetail::where('id', $offerletter->agent_id)->first();
+        $student = Student::with('party.person')->where('student_id', $offerletter->student_id)->first();
+
+        try{
+            DB::beginTransaction();
+
+            $org = TrainingOrganisation::first();
+            $send = new EmailSendingController;
+            $emailsTo = [];
+            if(isset($agent)){
+                $name = $agent->agent_name;
+                if(isset($agent->email)){
+                    $emailsTo[] = $agent->email;
+                }else{   
+                    return response()->json(['status'=>'error','message'=>'Agent email not found']);
+                }
+            }else{
+                return response()->json(['status'=>'error','message'=>'Agent not found']);
+            }
+
+            $content = '<b>Dear ' . $name . ',</b><br><br>'.$student->party->name.' has been enrolled in '.$ol_details[0]->course_code.' course.<br><br>Regards,<br><br><b>Admin Team</b>';
+
+            $s = $send->send_automate('Newly Enrolled Student', $content, [$org->training_organisation_name => $org->email_address], $emailsTo,[],[]);
+
+            if($s['status'] !== 'success'){
+                DB::rollback();
+                return response()->json(['status'=>'error','message'=>'Email agent error']);
+            }
+            // DB::commit();
+            // return response()->json(['status'=>'success']);
+        }catch (\Throwable $th) {
+            DB::rollback();
+            throw $th;
+        }
     }
 }

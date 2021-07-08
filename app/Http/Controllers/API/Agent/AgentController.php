@@ -36,7 +36,7 @@ class AgentController extends Controller
         }
         
     }
-    private function update(Request $request, $agent)
+    public function update(Request $request, $agent)
     {
         $data = $request->all();
         try {
