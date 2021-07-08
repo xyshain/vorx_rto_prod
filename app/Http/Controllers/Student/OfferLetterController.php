@@ -240,6 +240,7 @@ class OfferLetterController extends Controller
 
             if($request->agent != ''){
                 $this->addUpdateAgentCommission($offerLetter);
+                $this->emailAgent($offerLetter);
             }
             DB::commit();
             return response()->json(['status' => 'success']);
@@ -261,10 +262,17 @@ class OfferLetterController extends Controller
         // 
         // dd($id);
 
-        $offerLetter = OfferLetter::with('student_details','course_details.payment_template', 'course_details.payments.attachment','course_details.payments.agent' ,'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
+        $offerLetter = OfferLetter::with('student_details','course_details.payment_template', 'course_details.funded_course.collection.agent','course_details.funded_course.collection.attachment','course_details.payments','course_details.payments.agent' ,'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
         // $offerLetter->course_details->payments->user->roles = $offerLetter->course_details->payments->user->roles[0]->name;
-        
-        
+        // foreach($offerLetter->course_details as $cd){
+        //     dump($cd);
+        // }
+        // return $offerLetter;
+        foreach($offerLetter as $ol){
+            foreach($ol->course_details as $cd){
+                $cd->collection = $cd->funded_course->collection;
+            }
+        }
         \JavaScript::put([
             'student_id' => $id,
         ]);
@@ -412,8 +420,8 @@ class OfferLetterController extends Controller
             $offer_letter->save();
 
             if($offer_letter->wasChanged('agent_id')){
-                
                 $this->addUpdateAgentCommission($offer_letter);
+                $this->emailAgent($offer_letter);
             }
 
 
@@ -1549,5 +1557,44 @@ class OfferLetterController extends Controller
             throw $th;
         }
 
+    }
+
+    public function emailAgent($offerletter){
+
+        $ol_details = $offerletter->course_details;
+        $agent = AgentDetail::where('id', $offerletter->agent_id)->first();
+        $student = Student::with('party.person')->where('student_id', $offerletter->student_id)->first();
+
+        try{
+            DB::beginTransaction();
+
+            $org = TrainingOrganisation::first();
+            $send = new EmailSendingController;
+            $emailsTo = [];
+            if(isset($agent)){
+                $name = $agent->agent_name;
+                if(isset($agent->email)){
+                    $emailsTo[] = $agent->email;
+                }else{   
+                    return response()->json(['status'=>'error','message'=>'Agent email not found']);
+                }
+            }else{
+                return response()->json(['status'=>'error','message'=>'Agent not found']);
+            }
+
+            $content = '<b>Dear ' . $name . ',</b><br><br>'.$student->party->name.' has been enrolled in '.$ol_details[0]->course_code.' course.<br><br>Regards,<br><br><b>Admin Team</b>';
+
+            $s = $send->send_automate('Newly Enrolled Student', $content, [$org->training_organisation_name => $org->email_address], $emailsTo,[],[]);
+
+            if($s['status'] !== 'success'){
+                DB::rollback();
+                return response()->json(['status'=>'error','message'=>'Email agent error']);
+            }
+            // DB::commit();
+            // return response()->json(['status'=>'success']);
+        }catch (\Throwable $th) {
+            DB::rollback();
+            throw $th;
+        }
     }
 }

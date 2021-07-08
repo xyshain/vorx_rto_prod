@@ -115,7 +115,7 @@ export default {
                     this.$modal.show('verifyModal');
                 }else{
                     this.acceptWithoutSchedule(index);
-                    console.log('chovuhr');
+                    // console.log('chovuhr');
                 }
                 event.target.value = ''
             }

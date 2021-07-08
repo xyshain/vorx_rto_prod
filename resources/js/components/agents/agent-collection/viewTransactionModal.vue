@@ -57,7 +57,7 @@
                     <div class="card text-left" style="border:none">
                         <span>
                             <strong>Remarks: </strong>
-                            {{data.remarks}}
+                            {{data.remakrs}}
                         </span>
                     </div>
                     <div class="card text-right"  style="border:none">
