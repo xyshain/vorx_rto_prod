@@ -69,3 +69,7 @@ Vue.component('attendance-list-generator', require('./components/reports/attenda
 
 // payment list generator
 Vue.component('payment-list-generator', require('./components/reports/paymentListGenerator.vue').default);
+
+//verify collection modal
+Vue.component('verify-collection', require('./components/agents/agent-collection/verifyCollectionModal.vue').default);
+

@@ -16,6 +16,9 @@ Auth::routes();
     //     return view('welcome');
     // });
     Route::get('agent/generate/commission', 'Agent\CommissionController@index');
+    Route::get('agent/view/{serial}/{agent}', 'Agent\CommissionController@view_commison_per_agent');
+
+    
 Route::middleware(['rto'])->group(function () {
     //student login
     Route::get('/student-login','Auth\LoginController@student_login');

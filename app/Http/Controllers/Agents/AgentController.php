@@ -861,6 +861,7 @@ class AgentController extends Controller
             }
             
             $collection->verified = 1;
+            $collection->remakrs = $remarks;
             $collection->update();
             
             $org = TrainingOrganisation::first();

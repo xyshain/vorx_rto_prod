@@ -237,12 +237,13 @@ class OfferLetterController extends Controller
                 $this->createPayment($offerLetter);
                 // $this->updatePayment($course, $package_structure, $package_structure['weekly_payment']);
             }
+            DB::commit();
 
             if($request->agent != ''){
                 $this->addUpdateAgentCommission($offerLetter);
                 $this->emailAgent($offerLetter);
             }
-            DB::commit();
+           
             return response()->json(['status' => 'success']);
         } catch (\Throwable $th) {
             //throw $th;
@@ -262,10 +263,17 @@ class OfferLetterController extends Controller
         // 
         // dd($id);
 
-        $offerLetter = OfferLetter::with('student_details','course_details.payment_template', 'course_details.payments.attachment','course_details.payments.agent' ,'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
+        $offerLetter = OfferLetter::with('student_details','course_details.payment_template', 'course_details.funded_course.collection.agent','course_details.funded_course.collection.attachment','course_details.payments','course_details.payments.agent' ,'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
         // $offerLetter->course_details->payments->user->roles = $offerLetter->course_details->payments->user->roles[0]->name;
-        
-        
+        // foreach($offerLetter->course_details as $cd){
+        //     dump($cd);
+        // }
+        // return $offerLetter;
+        foreach($offerLetter as $ol){
+            foreach($ol->course_details as $cd){
+                $cd->collection = $cd->funded_course->collection;
+            }
+        }
         \JavaScript::put([
             'student_id' => $id,
         ]);

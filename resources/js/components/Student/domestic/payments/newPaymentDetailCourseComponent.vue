@@ -1,6 +1,7 @@
 <template>
     <div>
         <adjust-date-modal />
+        <verify-collection :data="trxn"/>
         <div class="float-left">
         <p>
                 <a class="collapse-menu active p-1 pl-2 pr-2 m-1 paymentPlanH" type="button" data-toggle="collapse" @click="closeOther('paymentPlan','paymentPlanH')" href=".paymentPlan" aria-expanded="false" aria-controls="collapseExample">
@@ -65,9 +66,9 @@
                       <span v-else data-toggle="tooltip" data-placement="top" title="adjusted due date" class="mark" >{{ sched.adjusted_date | dateFormat}}</span>
                     </td>
                     <td class='text-center'><div class="form-group mt-3">
-                            <select @change="passActionPayment(index,$event)" class="form-control custominput" id="exampleFormControlSelect1">
+                            <select @change="passAction(index,$event)" class="form-control custominput" id="exampleFormControlSelect1">
                             <option value="">Actions</option>
-                            <option value="Edit">Edit</option>
+                            <option value="Verify">Verify Collection</option>
                             <option value="Delete">Delete</option>
                             </select>
                         </div>
@@ -143,7 +144,8 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(sched,index) in payment_details" :key="index"> 
+              <template v-if="toType(detail.collection) !=='undefined'">
+                <tr v-for="(sched,index) in detail.collection" :key="index"> 
                     <td class='text-center'>
                       <span v-if="sched.verified === 1" >
                           <i class="fas fa-check-circle" style="color:green"></i>
@@ -167,13 +169,19 @@
                         <div class="form-group mt-3">
                             <select class="form-control custominput"  @change="passAction(index,$event)" id="exampleFormControlSelect1">
                             <option value="">Actions</option>
-                            <option value="Accept" v-if="sched.verified===0">Accept Payment</option>
+                            <option value="Verify" v-if="sched.verified===0">Accept Payment</option>
                             <option value="Edit">Edit</option>
                             <option value="Delete">Delete</option>
                             </select>
                         </div>
                     </td>
                 </tr>
+                </template>
+                <template v-else> 
+                  <tr>
+                    <td class="text-center" colspan="8">No data found</td>
+                  </tr>
+                </template>
             </tbody>
             </table>
         </div>
@@ -197,6 +205,7 @@ export default {
     return {
       demoUser: window.demoUser,
       stud_info: {},
+      trxn:[],
       course_payments: [],
       // course_invoice: [],
       edit_due_date : {},
@@ -284,19 +293,33 @@ export default {
       
   },
   methods: {
-    passActionPayment(index,event){
-      let action = event.target.value
-      let vm = this;
-      if(action == 'Edit'){
-        let adjustduedate =  vm.payment_sched[index];
-        this.showModal(adjustduedate);
-        event.target.value = ''
-      }
-      else if(action == 'Delete'){
-        this.deletePaymentTemplate(this.payment_sched[index].id)
-        event.target.value = ''
-      }
-      
+    toType(obj) {
+            return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+        },
+    passAction(index,event){
+        // console.log(index,event);
+        let action = event.target.value
+        let vm = this;
+        if(action == 'Verify'){
+            this.trxn = this.detail.colllection[index];
+            // if(this.payment_details[index].payment_schedule_template_id!==null){
+                this.$modal.show('verifyModal');
+            // }else{
+            //     this.acceptWithoutSchedule(index);
+            //     // console.log('chovuhr');
+            // }
+            event.target.value = ''
+        }
+        else if(action == 'Decline'){
+            this.declineCollection(index);
+            event.target.value = ''
+        }
+        else if(action == 'View'){
+            this.trxn = this.payment_details[index];
+            this.trxn_code = this.payment_details[index].transaction_code;
+            this.$modal.show('viewTransactionModal');
+            event.target.value = ''
+        }
     },
     deletePaymentTemplate(id){
        swal
