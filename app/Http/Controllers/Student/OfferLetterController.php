@@ -237,12 +237,13 @@ class OfferLetterController extends Controller
                 $this->createPayment($offerLetter);
                 // $this->updatePayment($course, $package_structure, $package_structure['weekly_payment']);
             }
+            DB::commit();
 
             if($request->agent != ''){
                 $this->addUpdateAgentCommission($offerLetter);
                 $this->emailAgent($offerLetter);
             }
-            DB::commit();
+           
             return response()->json(['status' => 'success']);
         } catch (\Throwable $th) {
             //throw $th;
