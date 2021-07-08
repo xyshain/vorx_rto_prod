@@ -899,9 +899,10 @@ class AgentController extends Controller
 
     }
 
-    public function notifyAgent($payments){
-        $student = Student::with(['party.person'])->where('student_id', $payments['student_id'])->first();
-        $funded_course = $payments['funded_student_course'];
+    public function notifyAgent($collection){
+        
+        $student = Student::with(['party.person'])->where('student_id', $collection['student_id'])->first();
+        $funded_course = $collection['funded_student_course'];
         $course = '';
         if($funded_course['course_code'] == '@@@@'){
             $course = 'Unit of Compentency';
@@ -910,11 +911,11 @@ class AgentController extends Controller
         }
 
         $collection_status = "";
-        if($payments['verified'] == 1){
+        if($collection['verified'] == 1){
             $collection_status = 'Verified';
-        }elseif($payments['verified'] == 0){
+        }elseif($collection['verified'] == 0){
             $collection_status = 'Pending';
-        }elseif($payments['verified'] == 2){
+        }elseif($collection['verified'] == 2){
             $collection_status = 'Declined';
         } 
         // return $collection_status;
@@ -925,8 +926,8 @@ class AgentController extends Controller
             $notify->fill([
                 'type' => 'payment_collection',
                 'table_name' => 'funded_student_payment_details',
-                'table_id' => $payments['id'],
-                'reference_id' => $payments['agent_id'] !== null ? $payments['agent_id'] : $student['student_id'], 
+                'table_id' => $collection['id'],
+                'reference_id' => $collection['agent_id'] !== null ? $collection['agent_id'] : $student['student_id'], 
                 'date_recorded' => Carbon::now()->setTimezone('Australia/Melbourne')->format('Y-m-d H:i:s'),
                 'message' => 'Payment collection has been '. $collection_status .' under '. $course . ' course.',
                 'is_seen' => 0,
