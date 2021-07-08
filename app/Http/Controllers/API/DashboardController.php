@@ -327,46 +327,47 @@ class DashboardController extends Controller
 
        $n = [];
         foreach($notifications as $notif){
+
             $course = [];
-            $payments = FundedStudentPaymentDetails::with('student.party','funded_student_course.course')->where('id', $notif->table_id)->first();
-            $funded_course = $payments->funded_student_course;
-
-            $collection_status = "";
-
-            if($payments->verified == 1){
-                $collection_status = 'Verified';
-            }elseif($payments->verified == 0){
-                $collection_status = 'Pending';
-            }elseif($payments->verified == 2){
-                $collection_status = 'Declined';
-            }              
-
-            if($funded_course->course_code == '@@@@'){
-                $course = [
-                    'name' => 'Unit of Compentency',
-                    'code' => $funded_course->course_code,
-                    'collection_status' => $collection_status
-                ];
-            }else{
-                $course = [
-                    'name' => $funded_course->course->name,
-                    'code' => $funded_course->course_code,
-                    'collection_status' => $collection_status
-                ];
-            }
-
-            $n[] = [
-                'id' => $notif->id,
-                'label' => $notif->message,
-                'is_seen' => $notif->is_seen,
-                'student_id' => $payments->student_id,
-                'student_name' => $payments->student->party->name,
-                'created_at' => Carbon::parse($notif->created_at)->format('Y-m-d H:m:s'),
-                'created_min' =>  Carbon::parse($notif->created_at)->diffForHumans(),
-                'course' => $course
-            ];                                
+            $collection = Collection::with('student.party','funded_student_course.course')->where('id', $notif->table_id)->first();
+            if($collection){
+                $funded_course = $collection->funded_student_course;
+                $collection_status = "";
+                if($collection->verified == 1){
+                    $collection_status = 'Verified';
+                }elseif($collection->verified == 0){
+                    $collection_status = 'Pending';
+                }elseif($collection->verified == 2){
+                    $collection_status = 'Declined';
+                }              
+                
+                if($funded_course->course_code == '@@@@'){
+                    $course = [
+                        'name' => 'Unit of Compentency',
+                        'code' => $funded_course->course_code,
+                        'collection_status' => $collection_status
+                    ];
+                }else{
+                    $course = [
+                        'name' => $funded_course->course->name,
+                        'code' => $funded_course->course_code,
+                        'collection_status' => $collection_status
+                    ];
+                }
+                
+                $n[] = [
+                    'id' => $notif->id,
+                    'label' => $notif->message,
+                    'is_seen' => $notif->is_seen,
+                    'student_id' => $collection->student_id,
+                    'student_name' => $collection->student->party->name,
+                    'created_at' => Carbon::parse($notif->created_at)->format('Y-m-d H:m:s'),
+                    'created_min' =>  Carbon::parse($notif->created_at)->diffForHumans(),
+                    'course' => $course
+                ]; 
+            }                           
         }
-        
+
         return $n;
     }
 
