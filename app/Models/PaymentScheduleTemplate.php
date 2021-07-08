@@ -98,6 +98,11 @@ class PaymentScheduleTemplate extends Model implements AuditableContract
         }
     }
 
+    public function commission(){
+        return $this->hasOne(CommissionDetail::class,'payment_sched_id');
+    }
+
+
 
     public function collection(){
         return $this->hasMany(Collection::class);
