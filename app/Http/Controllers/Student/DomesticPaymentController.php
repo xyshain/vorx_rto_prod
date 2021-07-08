@@ -208,7 +208,7 @@ class DomesticPaymentController extends Controller
 
     public function payment_details($student)
     {
-        $info = Student::with('party.person', 'type', 'funded_course.payment_details.attachment','funded_course.payment_details.user.party', 'funded_course.payment_sched')->where('id', $student)->first();
+        $info = Student::with('party.person', 'type', 'funded_course.collection.agent' ,'funded_course.payment_details.attachment','funded_course.payment_details.user.party', 'funded_course.payment_sched')->where('id', $student)->first();
         $funded_course = $info->funded_course;
         $student_invoice = StudentInvoice::where('student_id', $info->student_id)->get();
 
