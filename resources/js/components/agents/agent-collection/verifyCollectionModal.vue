@@ -106,8 +106,8 @@
                                          {{parseFloat(st.unverified_amount).toFixed(2)}}
                                      </span>
                                  </td>
-                                 <td class="text-center">Commission</td>
-                                 <td class="text-center bg-secondary text-white">Pre deducted</td>
+                                 <td class="text-center">{{st.commission}}</td>
+                                 <td class="text-center bg-secondary text-white">{{parseFloat(st.pre_deduct_com).toFixed(2)}}</td>
                              </tr>
                          </tbody>
                     </table>  
@@ -222,7 +222,12 @@ export default {
             this.getStudentPayments();
         },
         getStudentPayments(){
-            axios.get(`/agent/student-payments/${this.data.student_course_id}/${this.amount_paid}`).then(
+            axios.post(`/agent/student-payments`,
+            {
+                id:this.data.student_course_id,
+                amount_paid:this.amount_paid,
+                pre_deduc_com:this.data.pre_deduc_comm
+            }).then(
                 response=>{
                     // console.log('gago');
                      this.student_payment = response.data;  
