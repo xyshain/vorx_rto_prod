@@ -150,6 +150,9 @@
                       <span v-if="sched.verified === 1" >
                           <i class="fas fa-check-circle" style="color:green"></i>
                       </span>
+                      <span v-else-if="sched.verified === 2" >
+                          <i class="fab fa-creative-commons-nc" style="color:red"></i>
+                      </span>
                       <span v-else title="Pending">
                           <i class="fas fa-clock"></i>
                       </span>
@@ -169,7 +172,7 @@
                         <div class="form-group mt-3">
                             <select class="form-control custominput"  @change="passAction(index,$event)" id="exampleFormControlSelect1">
                             <option value="">Actions</option>
-                            <option value="Verify" v-if="sched.verified===0">Accept Payment</option>
+                            <option value="Verify" v-if="sched.verified===0">Verify Collection</option>
                             <option value="Edit">Edit</option>
                             <option value="Delete">Delete</option>
                             </select>
@@ -300,8 +303,9 @@ export default {
         // console.log(index,event);
         let action = event.target.value
         let vm = this;
+        console.log(this.detail.collection[index]);
         if(action == 'Verify'){
-            this.trxn = this.detail.colllection[index];
+            this.trxn = this.detail.collection[index];
             // if(this.payment_details[index].payment_schedule_template_id!==null){
                 this.$modal.show('verifyModal');
             // }else{
@@ -371,22 +375,22 @@ export default {
     showModal(data){
        this.$modal.show("adjust-due-modal",data);
     },
-    passAction(data,event){
-      let action = event.target.value
-      let vm = this;
-      if(action == 'Edit'){
-        this.editPayment(data);
-        event.target.value = ''
-      }
-      else if(action == 'Delete'){
-        this.remove(data,this.payment_details[data].id)
-        event.target.value = ''
-      }
-      else if(action == 'Accept'){
-        this.acceptPayment(data);
-        event.target.value = ''
-      }
-    },
+    // passAction(data,event){
+    //   let action = event.target.value
+    //   let vm = this;
+    //   if(action == 'Edit'){
+    //     this.editPayment(data);
+    //     event.target.value = ''
+    //   }
+    //   else if(action == 'Delete'){
+    //     this.remove(data,this.payment_details[data].id)
+    //     event.target.value = ''
+    //   }
+    //   else if(action == 'Accept'){
+    //     this.acceptPayment(data);
+    //     event.target.value = ''
+    //   }
+    // },
     acceptPayment(idx){
       let data = {
         payment_details : this.payment_details[idx],

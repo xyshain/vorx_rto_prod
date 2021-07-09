@@ -3,7 +3,7 @@
         name="viewTransactionModal"
         transition="nice-modal-fade"
         classes="verify-collection"
-        :min-width="900"
+        :min-width="1000"
         :min-height="200"
         :pivot-y="0.1"
         :adaptive="true"
@@ -98,26 +98,30 @@
                     >       
                         <thead>
                             <tr>
-                                <th width="20%">Allocated Amount</th>
-                                <th class='text-center' width="20%">Month #</th>
-                                <th class='text-center' width="30%">Amount Due</th>
-                                <th class='text-center' width="30%">Amount Paid</th>
-                                <th class='text-center' width="30%">Due Date</th>
+                                <th class='text-center' width="10%">Month #</th>
+                                <th class='text-center' width="15%">Amount Due</th>
+                                <th class='text-center' width="15%">Due Date</th>
+                                <th class='text-center' width="15%">Amount Paid</th>
+                                <th class='text-center' width="15%">Allocated Amount</th>
+                                <th class='text-center' width="15%">Commission</th>
+                                <th class='text-center' width="15%">Pre Deducted Commission</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(ps,index) in payment_schedule" :key="index">
-                                <td class="text-center bg-primary text-white" v-if="toType(findPaymentDetail(ps.id))!=='undefined'">
+                                 <td class="text-center">{{parseInt(index)+1}}</td>
+                                 <td class="text-center">{{ps.balance.toFixed(2)}}</td>
+                                 <td class="text-center">{{ps.due_date | dateFormat}}</td>
+                                 <td class="text-center">{{ps.approved_amount_paid}}</td>
+                                 <td class="text-center bg-primary text-white" v-if="toType(findPaymentDetail(ps.id))!=='undefined'">
                                         {{findPaymentDetail(ps.id)}}
                                 </td>
                                 <td class="text-center" v-else>
                                     0.00
                                 </td>
-                                <td class="text-center">{{index+1}}</td>
-                                <td class="text-center">{{ps.balance}}</td>
-                                <td class="text-center">{{ps.approved_amount_paid}}</td>
-                                <td class="text-center">{{ps.due_date | dateFormat}}</td>
-                            </tr>
+                                 <td class="text-center">Commission</td>
+                                 <td class="text-center bg-secondary text-white">Pre deducted</td>
+                             </tr>
                         </tbody>
                     </table>          
                 </div>
