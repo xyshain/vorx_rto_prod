@@ -137,9 +137,9 @@ class FundedStudentCourse extends Model implements AuditableContract
                 $payment->delete();
             });
 
-            // $course->completion()->each(function ($completion) {
-            //     $completion->delete();
-            // });
+            $course->commission()->each(function ($commission) {
+                $commission->delete();
+            });
 
             $course->payment_details()->each(function ($payment_details) {
                 $payment_details->delete();

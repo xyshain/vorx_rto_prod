@@ -45,6 +45,7 @@ use App\Models\EmailAutomation;
 use App\Models\EnrolmentPack;
 use App\Models\TrainingDeliveryLoc;
 use App\Models\TrainingOrganisation;
+use PDO;
 
 class OfferLetterController extends Controller
 {
@@ -234,7 +235,8 @@ class OfferLetterController extends Controller
             }
 
             if ($package_structure['balance_due'] != '0.00') {
-                $this->createPayment($offerLetter);
+                    $this->createPayment($offerLetter);
+                
                 // $this->updatePayment($course, $package_structure, $package_structure['weekly_payment']);
             }
             DB::commit();
@@ -263,7 +265,7 @@ class OfferLetterController extends Controller
         // 
         // dd($id);
 
-        $offerLetter = OfferLetter::with('student_details','course_details.payment_template', 'course_details.funded_course.collection.agent','course_details.funded_course.collection.attachment','course_details.payments','course_details.payments.agent' ,'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
+        $offerLetter = OfferLetter::with('student_details','course_details.payment_template', 'course_details.funded_course.collection.agent','course_details.funded_course.collection.attachment','course_details.payments','course_details.payments.agent' ,'course_details.package.detail.course.detail', 'course_details.course_matrix.detail', 'course_details.enrolment', 'course_details.funded_course.detail', 'course_details.funded_course.payment_sched','course_details.funded_course.payment_details','fees')->where('student_id', $id)->orderBy('id', 'DESC')->get();
         // $offerLetter->course_details->payments->user->roles = $offerLetter->course_details->payments->user->roles[0]->name;
         // foreach($offerLetter->course_details as $cd){
         //     dump($cd);
@@ -448,6 +450,7 @@ class OfferLetterController extends Controller
             // dd($course_details);
             foreach($course_details as $detail){
                 // DB::rollback();
+
                 if($detail->funded_course != null){
                     // dd($detail);
                     $funded = $detail->funded_course;
@@ -475,9 +478,25 @@ class OfferLetterController extends Controller
                     ]);
                     $acss->main()->associate($agent);
                     $acss->save();
+
+                    foreach($funded->payment_sched as $key => $plan){
+                        if($key != 0){
+                        $funded = $detail->funded_course;
+                            if($agent->gst_type == 'not_registered'){
+                                $commission = $this->commission_not_registered($acss,$plan->payable_amount);
+                            }else{
+                                $commission = $this->commission_registered($acss, $plan->payable_amount);
+                            }
+                                $plan->commission = $commission;
+                                $plan->update();
+                        }
+                        
+                    }
                  
 
                 }
+
+
                 
 
             }
@@ -586,13 +605,8 @@ class OfferLetterController extends Controller
     {
         set_time_limit(500); //
         try {
-            // dd($package_structure);
             $fees = $course->payment_template;
             DB::beginTransaction();
-            //code...
-            // $course_end_date = Carbon::createFromFormat('Y-m-d', $course->course_end_date);
-            // $course_start_date = Carbon::createFromFormat('Y-m-d', $course->course_start_date);
-            // $monthly = $course_end_date->diffInMonths($course_start_date);
             $initial = $package_structure['initial_payment_amount'] != '0' ? $package_structure['initial_payment_amount'] : $package_structure['downpayment'];
             $nonTuition  = $course->offer_letter->fees->materials_fee + $course->offer_letter->fees->application_fee;
             $tuition = $course->tuition_fees;
@@ -601,7 +615,6 @@ class OfferLetterController extends Controller
             $duration = 0;
             $startdate = $package_structure['installment_start_date'] == '' ? Carbon::parse($course->course_start_date)->timezone('Australia/Melbourne') : Carbon::parse($package_structure['installment_start_date'])->timezone('Australia/Melbourne');
             if ($initial >= 500) {
-                // dd($course->offer_letter->fees->discounted_amount);
                 if ($course->offer_letter->fees->discounted_amount == null) {
                     $tfees = $tuition +  $nonTuition - $discount;
                     $balance = $tfees - $initial;
@@ -633,29 +646,12 @@ class OfferLetterController extends Controller
                 $totalTuition = $tuition / $course->week_duration;
                 $week = round($balance / $totalTuition);
             }
-            // dump($course->offer_letter->fees);
-            // dd($nonTuition);
-            // $totalTuition = $tuition / $course->week_duration;
-            // $week = round($balance / $totalTuition);
-
-            // $bduration = $course->week_duration;
-            // $duration = $bduration - $week;
-
-
-            // dump($week);
-            // $balance_ = $balance - $discount  + $nonTuition;
             if ($weekly_payment != 0) {
-               
-                // dump('course tuition =' . $tuition);
-                // // dump($balance_);
-                // dump('initial =' . $initial);
-                // dump('course - initial =' . $balance);
-                // dump('weekly tuition =' . $totalTuition);
-                // // dump($duration);
-                // dump($week);
-                // dd($weekly_payment);
-                // dd($fees);
+              
                 if (!$fees->isEmpty()) {
+
+                    
+
                     $weekp = $package_structure['installment_amount'];
                     foreach ($fees as $key => $fee) {
                         if ($key === 0) {
@@ -686,6 +682,12 @@ class OfferLetterController extends Controller
                         if($i == $limit - 1){
                             $weekp = $weeklybalance;
                         }
+                        $acss = $course->funded_course->commission;
+                        if($acss->gst_type == 'not_registered'){
+                            $comm_limit = $this->commission_not_registered($acss,$weekp);
+                        }else{
+                            $comm_limit = $this->commission_registered($acss, $weekp);
+                        }
                         $payment = new PaymentScheduleTemplate;
                         $permitted_chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
                         $invoice_no = $this->generate_string($permitted_chars, 12);
@@ -693,7 +695,8 @@ class OfferLetterController extends Controller
 
                             'invoice_no' => $invoice_no,
                             'due_date' => $i == 0 ? $startdate->format('Y-m-d') : $startdate->addWeek($package_structure['weekly_interval'])->format('Y-m-d'),
-                            'payable_amount' =>  $weekp
+                            'payable_amount' =>  $weekp,
+                            'commission'    => $comm_limit
                         ]);
                         $payment->offerLetter()->associate($course->offer_letter_id);
                         $payment->course_detail()->associate($course);
@@ -752,12 +755,20 @@ class OfferLetterController extends Controller
                         }
                         $payment1 = new PaymentScheduleTemplate;
                         $permitted_chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+                        $acss = $course->funded_course->commission;
+                        if($acss->gst_type == 'not_registered'){
+                            $comm_limit = $this->commission_not_registered($acss,$weekp);
+                        }else{
+                            $comm_limit = $this->commission_registered($acss, $weekp);
+                        }
                         $invoice_no = $this->generate_string($permitted_chars, 12);
                         $payment1->fill([
 
                             'invoice_no' => $invoice_no,
                             'due_date' =>  $i == 0 ?  $startdate->addDays(3)->format('Y-m-d')  : $startdate->addWeek($package_structure['weekly_interval'])->format('Y-m-d'),
-                            'payable_amount' =>  $weekp
+                            'payable_amount' =>  $weekp,
+                            'commission'     =>$weekp,
                         ]);
                         $payment1->offerLetter()->associate($course->offer_letter_id);
                         $payment1->course_detail()->associate($course);
@@ -974,6 +985,8 @@ class OfferLetterController extends Controller
     public function createPayment($offerLetter)
     {
         // dd('offerlettercontroller');
+
+        // dd($agent);
         $course_fees = $offerLetter->fees;
         $course_detail  = $offerLetter->course_details;
      
@@ -996,6 +1009,7 @@ class OfferLetterController extends Controller
                         $invoice_no = $this->generate_string($permitted_chars, 12);
                         $payment = new PaymentScheduleTemplate;
                         $payable = $course_fees->initial_payment_amount == 0  ? $course_fees->payment_required : $course_fees->initial_payment_amount;
+                        
                         $payment->fill([
                             'invoice_no' => $invoice_no,
                             'due_date' => ($i == 0) ?  $initial_Due : $startdate->format('Y-m-d'),
