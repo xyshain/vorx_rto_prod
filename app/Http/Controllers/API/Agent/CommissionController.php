@@ -26,7 +26,7 @@ class CommissionController extends Controller
        }
     }
     public function commission($serial){
-        $agent = Auth::user()->agent_details->id;
+        $agent = Auth::user()->agent_details;
         $c = new  AgentCommissionController;
         $settings = $c->view_commison_per_agent($serial,$agent);
         return $settings;

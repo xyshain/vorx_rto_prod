@@ -107,8 +107,8 @@
               role="tabpanel"
               :course="detail.course_code"
               :id="`${detail.course_code}-${detail.id}`"
-              :payment_details="detail.payments"
-              :payment_sched="detail.payment_template" 
+              :payment_details="detail.funded_course.payment_details"
+              :payment_sched="detail.funded_course.payment_sched" 
               :course_fee="detail.tuition_fees" 
               :detail="detail" 
             ></payment-detail>

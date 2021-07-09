@@ -449,7 +449,7 @@ class StudentController extends Controller
     }
 
     public function payments(Student $student){
-        $data = $student->load('funded_course.status','funded_course.offer_detail','funded_course.payment_details','funded_course.payment_sched');
+        $data = $student->load('funded_course.status','funded_course.offer_detail','funded_course.payment_details','funded_course.payment_sched.collection.attachment');
         $course = [];
         foreach($data->funded_course as $funded_course){
             $course_fee_type = '';
@@ -534,7 +534,7 @@ class StudentController extends Controller
                     }
                 }else{
                     $balance = $psched->payable_amount - abs($balance);
-                    if($balance >= 0 ){
+                    if($balance > 0 ){
                         $balance = $psched->payable_amount ;
                         if($commission_settings != null){
                             if($key != 0){
@@ -558,13 +558,37 @@ class StudentController extends Controller
                                 $commission = 0;
                             }
                         }
+                    }else{
+                        if($commission_settings != null){
+                            if($key != 0){
+                                $balance = $psched->payable_amount ;
+                                if($commission_settings->commission_type == '%'){
+                                    if($commission_settings->gst_type == 'not_registered'){
+                                        if($commission_settings->gst_status == 0){
+                                            $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
+                                        }else{
+                                            $commission =  round($balance * ($commission_settings->commision_value / 100) - ($balance * ($commission_settings->commision_value / 100) * .10), 2);
+                                        }
+                                    }else{
+                                        if($commission_settings->gst_status == 1){
+                                            $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
+                                        }else{
+                                            $commission =  round($balance * ($commission_settings->commision_value / 100) + ($balance * ($commission_settings->commision_value / 100) * .10), 2);
+                                        }
+                                    }
+                                    
+                                }
+                            }else{
+                                $balance = 0 ;
+                                $commission = 0;
+                            }
+                        }
                     }
                 }
                
                 
 
                 $pd = [];
-                $ptotalAmount = 0;
                     
                 foreach($psched->payment_detail as $payment_detail){
                     if($att == null){
@@ -611,7 +635,9 @@ class StudentController extends Controller
                         $attain = false;
                     }
                 }
-                $commission1 = 0;
+                if($key !== 0){
+                    $ap_deduct = $ap_deduct +  $psched->prededucted_com;
+                }
                 if($ap_deduct > 0){
                     $ap_deduct = $ap_deduct - $commission;
                     if($ap_deduct > 0){
@@ -624,6 +650,7 @@ class StudentController extends Controller
                     $ap_deduct =0;
                     // dump($ap_deduct);
                 }
+                
 
                 $pl[]= [
                     'number'             => $ctr++,
@@ -636,20 +663,22 @@ class StudentController extends Controller
                     'total_paid'         => $psched->amount_paid,
                     'total_paid_approved'=> $psched->approved_amount_paid,
                     'balance'            => $balance ,
-                    'collection'         => $psched->collection->load('attachment'),   
+                    'collection'         => $psched->collection()->orderBy('id','DESC')->get(),   
                     'prev_balance'       => $prev_balance ,
                     'attain'             => $attain ,
                     'commission'         => $commission,
                     'percentage'         => ( (float)$psched->approved_amount_paid / (float)$psched->payable_amount ) * 100,
                     'ap_deduct'         => $ap_deduct,
                 ];
-                $ap_deduct = $ap_deduct +  $psched->prededucted_com;
+                if($key == 0){
+                    $ap_deduct = $ap_deduct +  $psched->prededucted_com;
+                }
                
                 
             }
 
             // $compiledDetails =  $funded_course->payment_details->groupBy('transaction_code');
-            $pdetails =  $funded_course->collection->load('attachment')->sortDesc();
+            $pdetails =  $funded_course->collection()->with('attachment')->orderBy('id','DESC')->get();
             // dd($compiledDetails);
                 // $pdetails = [];
                 // foreach($compiledDetails as $trnx =>$details){
@@ -773,7 +802,7 @@ class StudentController extends Controller
 
     public function paymentsUpdate(Request $request, $student_id){
         $file = $request->file('file');
-        $pd = FundedStudentPaymentDetails::find($request->payment_plan);
+        $pd = Collection::find($request->payment_plan);
 
         $notify = new Notification;
 
@@ -803,8 +832,7 @@ class StudentController extends Controller
                 'note' => $request->notes,
                 'verified' => 0,
             ];
-            FundedStudentPaymentDetails::where('id',$pd->id)
-                ->update($data);
+            $pd->update($data);
 
             if($file != null){
                 $exist = PaymentAttachment::where('funded_student_payment_detail_id',$pd->id)->first();
