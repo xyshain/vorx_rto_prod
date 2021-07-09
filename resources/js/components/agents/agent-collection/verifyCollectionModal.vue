@@ -3,7 +3,7 @@
         name="verifyModal"
         transition="nice-modal-fade"
         classes="verify-collection"
-        :min-width="900"
+        :min-width="1000"
         :min-height="200"
         :pivot-y="0.1"
         :adaptive="true"
@@ -48,16 +48,31 @@
                         </span>
                         </span>
                     </div>
+                    <div class="card text-left"  style="border:none">
+                        <span>
+                            <span class="fas fa-circle " style="color:#f6c23e"></span> 
+                            <strong>Received Amount :</strong>  
+                            {{amount_paid.toFixed(2)}} 
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <span class="fas fa-circle " style="color:#858796"></span> 
+                            <strong>Pre Deducted Comission: </strong>
+                            {{parseFloat(data.pre_deduc_comm).toFixed(2)}}
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <strong>Total Amount: </strong>
+                            {{(parseFloat(data.amount) + parseFloat(data.pre_deduc_comm)).toFixed(2)}}
+                        </span>
+                    </div>
                     <div class="card text-left" style="border:none">
                         <span>
                             <strong>Notes: </strong>
                             {{data.notes}}
                         </span>
-                    </div>
-                    <div class="card text-right"  style="border:none">
-                        <p>
-                            <span class="fas fa-circle " style="color:#f6c23e"></span> Amount : {{amount_paid.toFixed(2)}} 
-                        </p>
                     </div>
                     <table
                         class="table custom-table"
@@ -67,15 +82,21 @@
                     >
                          <thead>
                             <tr>
-                                <th width="25%">Allocated Amount</th>
-                                <th class='text-center' width="15%">Month #</th>
-                                <th class='text-center' width="30%">Amount Due</th>
-                                <th class='text-center' width="30%">Amount Paid</th>
-                                <th class='text-center' width="30%">Due Date</th>
+                                <th class='text-center' width="10%">Month #</th>
+                                <th class='text-center' width="15%">Amount Due</th>
+                                <th class='text-center' width="15%">Due Date</th>
+                                <th class='text-center' width="15%">Amount Paid</th>
+                                <th class='text-center' width="15%">Allocated Amount</th>
+                                <th class='text-center' width="15%">Commission</th>
+                                <th class='text-center' width="15%">Pre Deducted Commission</th>
                             </tr>
                          </thead>
                          <tbody>
                              <tr v-for="(st,index) in student_payment.funded_payment_sched_template" :key="index">
+                                 <td class="text-center">{{parseInt(index)+1}}</td>
+                                 <td class="text-center">{{st.balance.toFixed(2)}}</td>
+                                 <td class="text-center">{{st.due_date | dateFormat}}</td>
+                                 <td class="text-center">{{st.approved_amount_paid}}</td>
                                  <td class="text-center" :class="'bg-'+getBg(st.unverified_amount)">
                                      <!-- {{st.payable_amount}} - {{st.a}} -->
                                      <span v-if="parseFloat(st.approved_amount_paid) >= parseFloat(st.payable_amount)">
@@ -85,10 +106,8 @@
                                          {{parseFloat(st.unverified_amount).toFixed(2)}}
                                      </span>
                                  </td>
-                                 <td class="text-center">{{parseInt(index)+1}}</td>
-                                 <td class="text-center">{{st.balance}}</td>
-                                 <td class="text-center">{{st.approved_amount_paid}}</td>
-                                 <td class="text-center">{{st.due_date | dateFormat}}</td>
+                                 <td class="text-center">Commission</td>
+                                 <td class="text-center bg-secondary text-white">Pre deducted</td>
                              </tr>
                          </tbody>
                     </table>  

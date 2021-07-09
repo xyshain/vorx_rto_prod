@@ -703,6 +703,7 @@ class AgentController extends Controller
     public function declineCollection($request){ //funded student payment detail id
         $id         = $request['id'];
         $trxn_code  = $request['transaction_code'];
+        $remarks    = $request['remarks'];
         
         try{
             DB::beginTransaction();
@@ -714,6 +715,7 @@ class AgentController extends Controller
             
             $collection = Collection::find($id);
             $collection->verified = 2;
+            $collection->remakrs = $remarks;
             $collection->update();
 
             $org = TrainingOrganisation::first();
@@ -751,7 +753,7 @@ class AgentController extends Controller
     public function studentPayments($id,$amount){
         $funded_student_payments = FundedStudentPaymentDetails::where('student_course_id',$id)->where('verified',1)->get();
         $funded_payment_sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$id)->get();
-
+        
         $sched_with_payment = [];
         
         $unverified_amount = $amount;
@@ -800,8 +802,89 @@ class AgentController extends Controller
             return $this->declineCollection($request->student_payment);
         }
     }
+    
+    public function collectionEmail($payment_schedule){
+        // return $payment_schedule;
+
+        $content = '<b>Dear Choy,</b><br><br>Your collection has been verified and accepted.
+        <p>Trxn no: Test rtarnscdf</p>
+        <p>Course: Test course</p>
+        <p>Recieved Amount: zzzz</p>
+        <p>Pre-deducted Commission: zzzz</p>
+        <p>Total Amount: zzzz</p>
+        <p>Notes: notezznotezznotezznotezznotezz</p>
+        <p>Remarks: remarksremarksremarksremarks</p>
+        <br>';
+        // return $content;
+        $tbody = '';
+            
+        foreach($payment_schedule as $key=>$ps){
+            $tr = '
+                <tr>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.$key.'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.$ps['balance'].'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.Carbon::parse($ps['due_date'])->format('d/m/Y').'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.$ps['approved_amount_paid'].'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.$ps['unverified_amount'].'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        Commission
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        Pre-deducted
+                    </td>
+                </tr>
+            ';
+            $tbody .= $tr;
+        }
+        // return $tbody;
+        // return 'aw';
+        $table = '<table style="border-collapse: collapse;
+        width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Month #</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Amount Due</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Due Date</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Amount Paid</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Allocated Amount</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Commission</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Pre-deducted Commission</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        '.$tbody.'
+                    </tbody>
+                </table>';
+        $content .= $table;
+        return $content;
+    }
 
     public function acceptCollection($request){
+        return $this->collectionEmail($request['payment_schedule']);
+        
         $payment_schedule   = $request['payment_schedule'];
         $student_payment    = $request['student_payment'];
         $trxn_code          = $request['student_payment']['transaction_code'];
@@ -816,6 +899,7 @@ class AgentController extends Controller
         try{
             DB::beginTransaction();
             if($payment_schedule!=null){
+                
                 foreach($payment_schedule as $ps){
                     // if(isset($ps['unverified_amount'])){
                         // if($ps['unverified_amount']!=0){
