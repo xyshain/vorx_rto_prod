@@ -48,6 +48,26 @@
                         </span>
                         </span>
                     </div>
+                    <div class="card text-left"  style="border:none">
+                        <span>
+                            <span class="fas fa-circle " style="color:#024b67"></span> 
+                            <strong>Received Amount :</strong>  
+                            {{amount_paid.toFixed(2)}} 
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <span class="fas fa-circle " style="color:#858796"></span> 
+                            <strong>Pre Deducted Comission: </strong>
+                            {{parseFloat(data.pre_deduc_comm).toFixed(2)}}
+                        </span>
+                    </div>
+                    <div class="card text-left" style="border:none">
+                        <span>
+                            <strong>Total Amount: </strong>
+                            {{(parseFloat(data.amount) + parseFloat(data.pre_deduc_comm)).toFixed(2)}}
+                        </span>
+                    </div>
                     <div class="card text-left" style="border:none">
                         <span>
                             <strong>Notes: </strong>
@@ -59,11 +79,6 @@
                             <strong>Remarks: </strong>
                             {{data.remakrs}}
                         </span>
-                    </div>
-                    <div class="card text-right"  style="border:none">
-                        <p>
-                            <span class="fas fa-circle " style="color:#024b67"></span> Amount : {{amount_paid.toFixed(2)}} 
-                        </p>
                     </div>
                     <table
                         class="table custom-table"
@@ -119,8 +134,13 @@
                                 <td class="text-center" v-else>
                                     0.00
                                 </td>
-                                 <td class="text-center">Commission</td>
-                                 <td class="text-center bg-secondary text-white">Pre deducted</td>
+                                 <td class="text-center">{{ps.commission}}</td>
+                                 <td class="text-center bg-secondary text-white" v-if="toType(findPreDeduct(ps.id))!=='undefined'">
+                                     {{findPreDeduct(ps.id)}}
+                                 </td>
+                                 <td v-else>
+                                     0.00
+                                 </td>
                              </tr>
                         </tbody>
                     </table>          
@@ -149,20 +169,28 @@ export default {
         toType(obj) {
             return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
         },
+        findPreDeduct(id){
+            for(let i = 0; i < this.student_payment.length; i++){
+                if(id == this.student_payment[i].payment_schedule_template_id){
+                    if(this.student_payment[i].pre_deduc_comm==0){
+                        return undefined;
+                    }else{
+                        return this.student_payment[i].pre_deduc_comm
+                    }
+                }
+            }
+        },
         findPaymentDetail(id){
             // return id;
             for(let i = 0; i < this.student_payment.length; i++){
                 if(id == this.student_payment[i].payment_schedule_template_id){
-                   return this.student_payment[i].amount
+                    if(this.student_payment[i].amount==0){
+                        return undefined;
+                    }else{
+                        return this.student_payment[i].amount
+                    }
                 }
             }
-            // this.student_payment.forEach(function(sp){
-            //     if(sp.payment_schedule_template_id == id){
-            //         return sp.amount;
-            //     }else{
-            //         return ' shxt';
-            //     }
-            // });
         },
         closed(){
             this.payment_schedule = [];

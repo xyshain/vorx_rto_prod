@@ -100,14 +100,15 @@
                                  <td class="text-center" :class="'bg-'+getBg(st.unverified_amount)">
                                      <!-- {{st.payable_amount}} - {{st.a}} -->
                                      <span v-if="parseFloat(st.approved_amount_paid) >= parseFloat(st.payable_amount)">
-                                         <i class="fas fa-check-circle" style="color:green"></i>
+                                         <!-- <i class="fas fa-check-circle" style="color:green"></i> -->
+                                         0.00
                                      </span>
                                      <span v-else>
                                          {{parseFloat(st.unverified_amount).toFixed(2)}}
                                      </span>
                                  </td>
                                  <td class="text-center">{{st.commission}}</td>
-                                 <td class="text-center bg-secondary text-white">{{parseFloat(st.pre_deduct_com).toFixed(2)}}</td>
+                                 <td class="text-center bg-secondary text-white">{{parseFloat(st.unverified_prededuc).toFixed(2)}}</td>
                              </tr>
                          </tbody>
                     </table>  
