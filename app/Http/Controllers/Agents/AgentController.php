@@ -703,6 +703,7 @@ class AgentController extends Controller
     public function declineCollection($request){ //funded student payment detail id
         $id         = $request['id'];
         $trxn_code  = $request['transaction_code'];
+        $remarks    = $request['remarks'];
         
         try{
             DB::beginTransaction();
@@ -714,6 +715,7 @@ class AgentController extends Controller
             
             $collection = Collection::find($id);
             $collection->verified = 2;
+            $collection->remakrs = $remarks;
             $collection->update();
 
             $org = TrainingOrganisation::first();
@@ -748,13 +750,17 @@ class AgentController extends Controller
         }
     }
 
-    public function studentPayments($id,$amount){
+    public function studentPayments(Request $request){
+        $id = $request->id;
+
         $funded_student_payments = FundedStudentPaymentDetails::where('student_course_id',$id)->where('verified',1)->get();
         $funded_payment_sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$id)->get();
-
+        
         $sched_with_payment = [];
         
-        $unverified_amount = $amount;
+        $unverified_amount = $request->amount_paid;
+        $prededuct_com = $request->pre_deduc_com;
+        
         foreach($funded_payment_sched_template as $fd){
             $fd->approved_amount_paid = $fd->approved_amount_paid;
             
@@ -771,6 +777,25 @@ class AgentController extends Controller
                     $fd->unverified_amount = 0;
                 }
             }
+            $fd->pre_deduct_com = $prededuct_com;
+            if($prededuct_com > $fd->commission){
+                $fd->pre_deduct_com = $fd->commission;
+                $prededuct_com = $prededuct_com - $fd->commission;
+            }else{
+                $fd->pre_deduct_com = $prededuct_com;
+                $prededuct_com = 0;
+            }
+            // if($prededuct_com > 0){
+            //     if($prededuct_com > $fd->commission){
+            //         $fd->prededuccom = $fd->comission;
+            //         $prededuct_com = $prededuct_com - $fd->commission;
+            //     }else if($prededuct_com < $fd->commission){
+            //         $fd->prededuccom = $prededuct_com;
+            //         $prededuct_com = 0;
+            //     }
+            // }else{
+            //     $fd->prededuccom = 0;
+            // }
         }
 
         // foreach($funded_payment_sched_template as $ff){
@@ -781,6 +806,8 @@ class AgentController extends Controller
         for($i = 0; $i < count($funded_payment_sched_template); $i++){
             // dump($i);
             if(isset($funded_payment_sched_template[$i]->unverified_amount) && $funded_payment_sched_template[$i]->unverified_amount != 0){
+                $sched_with_payment[$i] = $funded_payment_sched_template[$i];
+            }else if(isset($funded_payment_sched_template[$i]->pre_deduct_com) && $funded_payment_sched_template[$i]->pre_deduct_com > 0){
                 $sched_with_payment[$i] = $funded_payment_sched_template[$i];
             }
         }
@@ -800,8 +827,92 @@ class AgentController extends Controller
             return $this->declineCollection($request->student_payment);
         }
     }
+    
+    public function collectionEmail($payment_schedule,$student_payment){
+        // return $payment_schedule;
+        $total_amount = $student_payment['amount']+$student_payment['pre_deduc_comm'];
+        // return $total_amount;
+        $course = $student_payment['funded_student_course']['course']['code'].' - '.$student_payment['funded_student_course']['course']['name'];
+        $content = '<b>Dear '.$student_payment['student']['party']['name'].',</b><br><br>Your collection has been verified and accepted.
+        <p>Transaction Code: '.$student_payment['transaction_code'].'</p>
+        <p>Course: '.$course.'</p>
+        <p>Recieved Amount: '.number_format($student_payment['amount'],2).'</p>
+        <p>Pre-deducted Commission: '.number_format($student_payment['pre_deduc_comm'],2).'</p>
+        <p>Total Amount: '.number_format($total_amount,2).'</p>
+        <p>Notes: '.$student_payment['note'].'</p>
+        <p>Remarks: '.$student_payment['remakrs'].'</p>
+        <br>';
+        // return $content;
+        $tbody = '';
+            
+        foreach($payment_schedule as $key=>$ps){
+            $mont = $key+1;
+            $tr = '
+                <tr>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.$mont.'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.number_format($ps['balance'],2).'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.Carbon::parse($ps['due_date'])->format('d/m/Y').'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.number_format($ps['approved_amount_paid'],2).'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.number_format($ps['unverified_amount'],2).'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.number_format($ps['commission'],2).'
+                    </td>
+                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                        '.number_format($ps['pre_deduct_com'],2).'
+                    </td>
+                </tr>
+            ';
+            $tbody .= $tr;
+        }
+        // return $tbody;
+        // return 'aw';
+        $table = '<table style="border-collapse: collapse;
+        width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Month #</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Amount Due</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Due Date</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Amount Paid</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Allocated Amount</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Commission</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Pre-deducted Commission</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        '.$tbody.'
+                    </tbody>
+                </table>';
+        $content .= $table;
+
+        return $content;
+    }
 
     public function acceptCollection($request){
+        
         $payment_schedule   = $request['payment_schedule'];
         $student_payment    = $request['student_payment'];
         $trxn_code          = $request['student_payment']['transaction_code'];
@@ -816,6 +927,7 @@ class AgentController extends Controller
         try{
             DB::beginTransaction();
             if($payment_schedule!=null){
+                
                 foreach($payment_schedule as $ps){
                     // if(isset($ps['unverified_amount'])){
                         // if($ps['unverified_amount']!=0){
@@ -843,7 +955,7 @@ class AgentController extends Controller
                                 $new_payment->collection_id = $collection_id;
                                 // $new_payment->remarks = $remarks;
                                 $new_payment->user_id = $user_id;
-                                $new_payment->pre_deduc_comm = $prededuct_com;
+                                $new_payment->pre_deduc_comm = $ps['pre_deduct_com'];
                                 $new_payment->save();
         
                                 $prededuct_com = 0;
@@ -853,10 +965,11 @@ class AgentController extends Controller
                     // }                    
                 }
             }else{
+                return 'la pa nahuman';
                 $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
                 $payment_details->verified = 1;
                 $payment_details->collection_id = $student_payment['id'];
-                // $payment_details->remarks = $remarks;
+                
                 $payment_details->update();
             }
             
@@ -878,8 +991,7 @@ class AgentController extends Controller
                 return response()->json(['status'=>'error','message'=>'Agent not found']);
             }
 
-            $content = '<b>Dear ' . $name . ',</b><br><br>Your collection has been verified and accepted.<br>Trxn no: '.$trxn_code;
-
+            $content = $this->collectionEmail($request['payment_schedule'],$request['student_payment']);
             $s = $send->send_automate('Collection Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
             // $s['status']='success';
             if($s['status']=='success'){

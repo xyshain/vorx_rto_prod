@@ -63,7 +63,7 @@ Route::middleware(['rto'])->group(function () {
     // agent collection
     Route::get('agent/{id}/collections','Agents\AgentController@agentCollection');
     Route::get('agent/{id}/collections','Agents\AgentController@agentCollection');
-    Route::get('agent/student-payments/{id}/{amount}','Agents\AgentController@studentPayments');
+    Route::post('agent/student-payments','Agents\AgentController@studentPayments');
     Route::post('agent/collection/action','Agents\AgentController@collectionAction');
     Route::get('agent/collection/{id}/decline','Agents\AgentController@declineCollection');
     Route::get('agent/get-transaction/{id}/{code}','Agents\AgentController@getTransaction');

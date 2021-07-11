@@ -536,7 +536,6 @@ class StudentController extends Controller
                     $balance = $psched->payable_amount - abs($balance);
                     if($balance > 0 ){
                         $balance = $psched->payable_amount ;
-                      
                         if($commission_settings != null){
                             if($key != 0){
                                 if($commission_settings->commission_type == '%'){
@@ -590,7 +589,6 @@ class StudentController extends Controller
                 
 
                 $pd = [];
-                $ptotalAmount = 0;
                     
                 foreach($psched->payment_detail as $payment_detail){
                     if($att == null){
@@ -637,7 +635,9 @@ class StudentController extends Controller
                         $attain = false;
                     }
                 }
-                $commission1 = 0;
+                if($key !== 0){
+                    $ap_deduct = $ap_deduct +  $psched->prededucted_com;
+                }
                 if($ap_deduct > 0){
                     $ap_deduct = $ap_deduct - $commission;
                     if($ap_deduct > 0){
@@ -670,13 +670,15 @@ class StudentController extends Controller
                     'percentage'         => ( (float)$psched->approved_amount_paid / (float)$psched->payable_amount ) * 100,
                     'ap_deduct'         => $ap_deduct,
                 ];
-                $ap_deduct = $ap_deduct +  $psched->prededucted_com;
+                if($key == 0){
+                    $ap_deduct = $ap_deduct +  $psched->prededucted_com;
+                }
                
                 
             }
 
             // $compiledDetails =  $funded_course->payment_details->groupBy('transaction_code');
-            $pdetails =  $funded_course->collection()->orderBy('id','DESC')->get();
+            $pdetails =  $funded_course->collection()->with('attachment')->orderBy('id','DESC')->get();
             // dd($compiledDetails);
                 // $pdetails = [];
                 // foreach($compiledDetails as $trnx =>$details){
@@ -800,7 +802,7 @@ class StudentController extends Controller
 
     public function paymentsUpdate(Request $request, $student_id){
         $file = $request->file('file');
-        $pd = FundedStudentPaymentDetails::find($request->payment_plan);
+        $pd = Collection::find($request->payment_plan);
 
         $notify = new Notification;
 
@@ -830,8 +832,7 @@ class StudentController extends Controller
                 'note' => $request->notes,
                 'verified' => 0,
             ];
-            FundedStudentPaymentDetails::where('id',$pd->id)
-                ->update($data);
+            $pd->update($data);
 
             if($file != null){
                 $exist = PaymentAttachment::where('funded_student_payment_detail_id',$pd->id)->first();
