@@ -243,7 +243,7 @@ class OfferLetterController extends Controller
 
             if($request->agent != ''){
                 $this->addUpdateAgentCommission($offerLetter);
-                $this->emailAgent($offerLetter);
+                $this->emailAgent($funded_course_detail);
             }
            
             return response()->json(['status' => 'success']);
@@ -1609,8 +1609,53 @@ class OfferLetterController extends Controller
             }else{
                 return response()->json(['status'=>'error','message'=>'Agent not found']);
             }
+            $payment_schedule = $offerletter->payment_sched;
+            $tbody = '';
+            foreach($payment_schedule as $key=>$ps){
+                $mont = $key+1;
+                $tr = '
+                    <tr>
+                        <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                            '.$mont.'
+                        </td>
+                        <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                            '.number_format($ps['payable_amount'],2).'
+                        </td>
+                        <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                            '.Carbon::parse($ps['due_date'])->format('d/m/Y').'
+                        </td>
+                        <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                            '.number_format($ps['commission'],2).'
+                        </td>
+                    </tr>
+                ';
+                $tbody .= $tr;
+            }
+            $table = '<table style="border-collapse: collapse;
+        width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Month #</th>
 
-            $content = '<b>Dear ' . $name . ',</b><br><br>'.$student->party->name.' has been enrolled in '.$ol_details[0]->course_code.' course.<br><br>Regards,<br><br><b>Admin Team</b>';
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Amount Due</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Due Date</th>
+
+                            <th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Commission</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        '.$tbody.'
+                    </tbody>
+                </table>';
+            // $link = 'https://agentportal.vorx.com.au/student/'.$offerletter->student_id.'/payment-details/'.$ol_details->course_code;
+
+            $link = 'http://'.ENV('SANCTUM_STATEFUL_DOMAINS').'/student/'.$offerletter->student_id.'/payment-details/'.$offerletter->course_code;
+            $content = '<b>Dear ' . $name . ',</b><br><br>'.$student->party->name.' has been enrolled in '.$offerletterz->course_code.' course.<br><br> Payment Plan <br>'.$table.'<br><br> Please visit <a href="'.$link.'" target="_blank" data-saferedirecturl="'.$link.'">Agent Portal</a><br>Regards,<br><br><b>Admin Team</b>';
 
             $s = $send->send_automate('Newly Enrolled Student', $content, [$org->training_organisation_name => $org->email_address], $emailsTo,[],[]);
 

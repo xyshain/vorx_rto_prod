@@ -36,7 +36,7 @@ class CommissionController extends Controller
                 $cutoffs = [$date_holder = date('Y-m-') . $cutop[0],$date_holder = date('Y-m-') . $cutop[1]];
                 // $cutoffs = [$date_holder = date('Y-m-') . $cutop[0],$date_holder = date('Y-m-') . '10'];
                 $now = Carbon::now()->format('d');
-                // $now = 16;
+                $now = 16;
                 if ($now <= $cutop[0]) {
                     $serial = 'A' . $agent->id . '-' . date('ym') . $cutop[0];
                     $date_holder = date('Y-m-') . $cutop[0];
@@ -57,13 +57,18 @@ class CommissionController extends Controller
                     // $payment_details = $funded_course->payment_details()->with(['payment_schedule_template'])->doesntHave('commission')->get(['id as payment_id','payment_schedule_template_id','payment_date','amount','pre_deduc_comm','comm_release_status','note','verified'])->toArray();
                     // $template_i = !$funded_course->payment_sched->isEmpty() ? $funded_course->payment_sched->first()->id : null;
                     $non_tuition = $offer_details->offer_letter->fees->application_fee + $offer_details->offer_letter->fees->materials_fee;
-                    $payment_details = $funded_course->payment_details()->where('verified',1)->doesntHave('commission')->get();
+                    $payment_details = $funded_course->payment_details()->doesntHave('commission')->get();
                     $payments = collect();
                     if(!$payment_details->isEmpty()){
                         $payment_plan = $funded_course->payment_sched;
                         foreach($payment_plan as $plan){
                             if(!$plan->payment_detail->isEmpty()){
-                                $payments[] = $plan;
+                                foreach($plan->payment_detail as $detail){
+                                    if($detail->commission == null){
+                                        $payments[] = $plan;
+                                    }
+                                }
+                                
                             }
                         }
                     }
@@ -79,6 +84,7 @@ class CommissionController extends Controller
                     //     }
                     // });
                     // 
+                    // exit();
                     // $now = Carbon::now()->format('d');
                     $studentDetails = [
                         'id' => $subsetting->id,
@@ -208,234 +214,66 @@ class CommissionController extends Controller
                 throw $th;
             }
     }
-
-    public function commission_not_registered_back($settings, $payment_details, $details, $com_holder,$total_deduct,$checker){
-        // if ($settings->commission_type == '%') {
-        //     if ($settings->gst_status == 0) {
-        //         $payment_details['computed_commission'] =  round($payment_details['actual_amount'] * ($settings->commision_value / 100), 2);
-        //         if ($details['verified'] == 1) {
-        //             if($total_deduct > 0){
-        //                 $total_deduct += $total_deduct - $payment_details['computed_commission'];
-        //                 $payment_details['actual_commission'] = $total_deduct > 0 ? 0 : $payment_details['computed_commission'];
-        //                 $payment_details['accumulated'] = abs($total_deduct);
-        //             }else{
-        //                 $total_deduct = 0;
-        //             }
-
-
-        //             // $com_holder += $details['pre_deduc_comm'] - $payment_details['computed_commission'];
-        //             // $payment_details['actual_commission'] =  $details['pre_deduc_comm'] > $payment_details['computed_commission'] ? 0 : abs($payment_details['computed_commission'] - $details['pre_deduc_comm']);
-        //             // $com_holder = $total_deduct;
-        //             // $payment_details['actual_commission'] = $com_holder > 0 ? abs($payment_details['computed_commission']) :$payment_details['computed_commission'];
-        //             // if ($payment_details['computed_commission'] - $details['pre_deduc_comm'] > 0) {
-        //             //     $com_holder = 0;
-        //             // }
-        //             // $payment_details['accumulated'] = abs($com_holder);
-        //         } else {
-        //             $payment_details['actual_commission'] =  $details['pre_deduc_comm'] > $payment_details['computed_commission'] ? 0 : abs($payment_details['computed_commission'] - $details['pre_deduc_comm']);
-        //             $payment_details['accumulated'] = abs($com_holder);
-        //         }
-        //         if ($details['pre_deduc_comm'] == null) {
-        //             // dd($com_holder);
-        //             $com_holder = $payment_details['computed_commission'] - $com_holder;
-        //             if ($total_deduct < 0) {
-        //                 $payment_details['actual_commission'] = $payment_details['computed_commission'];
-        //                 $payment_details['accumulated']  = abs($total_deduct);
-        //             } else {
-        //                 $payment_details['actual_commission'] = $total_deduct;
-        //                 $payment_details['accumulated']  = 0;
-        //                 $total_deduct = 0;
-        //             }
-        //         }
-        //     } else {
-        //         $payment_details['computed_commission'] =  round($payment_details['actual_amount'] * ($settings->commision_value / 100) - ($payment_details['actual_amount'] * ($settings->commision_value / 100) * .10), 2);
-        //         if ($details['verified'] == 1) {
-
-        //             if($total_deduct > 0){
-        //                 $total_deduct += $total_deduct - $payment_details['computed_commission'];
-        //                 $payment_details['actual_commission'] = $total_deduct > 0 ? 0 : $payment_details['computed_commission'];
-        //                 $payment_details['accumulated'] = abs($total_deduct);
-        //             }else{
-        //                 $total_deduct = 0;
-        //             }
-
-        //             // $com_holder += $details['pre_deduc_comm'] - $payment_details['computed_commission'];
-        //             // $payment_details['actual_commission'] =  $details['pre_deduc_comm'] > $payment_details['computed_commission'] ? 0 : abs($payment_details['computed_commission'] - $details['pre_deduc_comm']);
-        //             // if ($payment_details['computed_commission'] - $details['pre_deduc_comm'] > 0) {
-        //             //     $com_holder = 0;
-        //             // }
-        //             // dd($com_holder);
-        //             $payment_details['accumulated'] = abs($total_deduct);
-        //         } else {
-        //             $payment_details['actual_commission'] =  $details['pre_deduc_comm'] > $payment_details['computed_commission'] ? 0 : abs($payment_details['computed_commission'] - $details['pre_deduc_comm']);
-        //             $payment_details['accumulated'] = $total_deduct;
-        //         }
-        //         if ($details['pre_deduc_comm'] == null) {
-        //             // dump($payment_details['computed_commission'] .'-'. $com_holder);
-        //             //    dump($payment_details['computed_commission'] .'-'. $com_holder);
-        //                 // $com_holder = $payment_details['computed_commission'] - $total_deduct; 
-        //                 // dump($com_holder);
-        //                 if ($total_deduct < 0) {
-        //                     $payment_details['actual_commission'] = 0;
-        //                     $payment_details['accumulated']  = abs($total_deduct);
-        //                     $total_deduct = abs($total_deduct);
-        //                 } else {
-        //                     $payment_details['actual_commission'] = $total_deduct;
-        //                     $payment_details['accumulated']  = 0;
-        //                     $total_deduct = 0;
-        //                 }
-
-        //         }
-        //     }
-        // } else {
-        //     $payment_details['computed_commission'] = $settings->commision_value;
-        // }
-        // return ['p' => $payment_details, 'c' => $total_deduct,'cc' => $checker];
-    }
-
-    public function commission_registered_back($settings,$payment_details,$details, $com_holder,$total_deduct,$checker){
-        // // dump($details);
-        // // dd($settings);
-        // // dd($settings->cutoff_period);
-        // // dump($checker);
-        // if ($settings->commission_type == '%') {
-        //     if ($settings->gst_status == 1) {
-        //         $payment_details['computed_commission'] =  round($payment_details['amount'] * ($settings->commision_value / 100), 2);
-        //             if($payment_details['pre_deduc_comm'] != 0){
-                        
-        //                 if($total_deduct > 0){
-        //                     dump($payment_details);
-        //                     // dd($payment_details['computed_commission']);
-        //                     $total_deduct = $total_deduct - $payment_details['computed_commission'];
-                          
-        //                     if($total_deduct > 0){
-        //                         $payment_details['actual_commission'] = 0;
-        //                         $payment_details['accumulated'] = abs($total_deduct);
-        //                     }else{
-        //                         $payment_details['actual_commission'] =  abs($total_deduct);
-        //                          $payment_details['accumulated'] = abs($total_deduct);
-        //                     }
-                            
-        //                 }else{
-        //                     $total_deduct = 0;
-        //                     $payment_details['actual_commission'] = $payment_details['computed_commission'];
-        //                     $payment_details['accumulated'] = abs($total_deduct);
-        //                     $checker = 0;
-        //                 }
-        //                 $checker = 1;
-        //                 // dump($checker);
-        //             }else{
-        //                 if($checker){
-        //                     $total_deduct = $total_deduct - $payment_details['computed_commission'];
-        //                     if($total_deduct > 0){
-        //                         $payment_details['actual_commission'] = 0;
-        //                         $payment_details['accumulated'] = abs($total_deduct);
-        //                     }else{
-        //                         $checker = false;
-        //                         $payment_details['actual_commission'] =  abs($total_deduct);
-        //                          $payment_details['accumulated'] = abs($total_deduct);
-        //                     }
-
-        //                 }else{
-        //                     dump($total_deduct);
-        //                     $payment_details['actual_commission'] = $payment_details['computed_commission'];
-        //                     $payment_details['accumulated'] = abs($total_deduct);
-        //                 }
-                        
-        //             }
-                   
-                  
-        //             // $com_holder += $details['pre_deduc_comm'] - $payment_details['computed_commission'];
-        //             // $payment_details['actual_commission'] =  $details['pre_deduc_comm'] > $payment_details['computed_commission'] ? 0 : abs($payment_details['computed_commission'] - $details['pre_deduc_comm']);
-        //             // if ($payment_details['computed_commission'] - $details['pre_deduc_comm'] > 0) {
-        //             //     $com_holder = 0;
-        //             // }
-        //             // $payment_details['accumulated'] = abs($com_holder);
-                
-        //         // if ($details['pre_deduc_comm'] == null) {
-        //         //     dd('nisulods');
-        //         //     $total_deduct = $payment_details['computed_commission'] - $total_deduct;
-        //         //     if ($com_holder < 0) {
-        //         //         $payment_details['actual_commission'] = $payment_details['computed_commission'];
-        //         //         $payment_details['accumulated']  = abs($total_deduct);
-        //         //     } else {
-        //         //         $payment_details['actual_commission'] = $total_deduct;
-        //         //         $payment_details['accumulated']  = 0;
-        //         //         $total_deduct = 0;
-        //         //     }
-        //         // }
-        //     }else{
-        //         dd('sulod');
-        //         $payment_details['computed_commission'] =  round($payment_details['actual_amount'] * ($settings->commision_value / 100) + ($payment_details['actual_amount']* ($settings->commision_value / 100) * .10), 2);
-        //         if ($details['verified'] == 1) {
-        //             if($payment_details['pre_deduc_comm'] != 0){
-        //                 if($total_deduct > 0){
-        //                     $total_deduct = $total_deduct - $payment_details['computed_commission'];
-                            
-        //                     if($total_deduct > 0){
-        //                         $payment_details['actual_commission'] = 0;
-        //                         $payment_details['accumulated'] = abs($total_deduct);
-        //                     }else{
-        //                         $payment_details['actual_commission'] =  abs($total_deduct);
-        //                          $payment_details['accumulated'] = abs($total_deduct);
-        //                     }
-                            
-        //                 }else{
-        //                     $total_deduct = 0;
-        //                     $payment_details['actual_commission'] = $payment_details['computed_commission'];
-        //                     $payment_details['accumulated'] = abs($total_deduct);
-        //                 }
-        //             }else{
-        //                 $payment_details['actual_commission'] = $payment_details['computed_commission'];
-        //                 $payment_details['accumulated'] = abs($total_deduct);
-        //             }
-                   
-                  
-        //             // $com_holder += $details['pre_deduc_comm'] - $payment_details['computed_commission'];
-        //             // $payment_details['actual_commission'] =  $details['pre_deduc_comm'] > $payment_details['computed_commission'] ? 0 : abs($payment_details['computed_commission'] - $details['pre_deduc_comm']);
-        //             // if ($payment_details['computed_commission'] - $details['pre_deduc_comm'] > 0) {
-        //             //     $com_holder = 0;
-        //             // }
-        //             // $payment_details['accumulated'] = abs($com_holder);
-        //         } 
-        //     }
-        // }else{
-        //     $payment_details['computed_commission'] = $settings->commision_value;
-        // }
-
-        // return ['p' => $payment_details, 'c'=> $total_deduct ,'cc' => $checker];
-    }
-
     public function payment_details($payment_plan){
         $data = collect();
         $accumulated = 0;
+        $deducted_com = 0;
         foreach ($payment_plan as  $plan) {
                 $commission = 0;
+                $deducted_com = $plan->prededucted_com;
+               
                     foreach($plan->payment_detail as $detail){
-                        if($detail['pre_deduc_comm'] != 0){
-                            $commission = 0;
-                            $accumulated = $detail['payment_schedule_template']['commission'] - $detail['pre_deduc_comm'];
-                        }else{
-                            if($accumulated > 0){
-                                $commission = $accumulated;
-                                $accumulated = $accumulated - $accumulated;
+                        if($detail->commission == null){
+                            if($detail['pre_deduc_comm'] != 0){
+                                // $commission = 0;
+                                if($deducted_com != $detail['payment_schedule_template']['commission'] ){
+                                    if($accumulated == 0){
+                                        $commission = $detail['payment_schedule_template']['commission'] - $detail['pre_deduc_comm'];
+                                    }else{
+                                        $commission = 0;
+                                    }
+                                }else{
+                                    $commission = 0;
+                                }
+                                
+                                
+                                $accumulated = $deducted_com - $detail['pre_deduc_comm'];
+                                $deducted_com = $accumulated;
                             }else{
-                                $accumulated = 0;
+                                if($deducted_com > 0){
+                                    if($accumulated > 0){
+                                        $commission = 0;
+                                        $accumulated =$accumulated;
+                                    }else{
+                                        $commission = $deducted_com -$accumulated;
+                                        $accumulated = $commission;
+                                    }
+                                    // $commission = $accumulated;
+                                    
+                                    // $accumulated = $commission;
+                                }else{
+                                    $accumulated = 0;
+                                }
                             }
+                            $data[] = [
+                                // 'agent_commission_settings_sub_id' => $detail->funded_student_course->commission->id,
+                                'payment_id'    => $detail->id,
+                                'payment_schedule_template_id' => $plan->id,
+                                'payment_date' => $detail->payment_date,
+                                'actual_amount' => $detail['amount'] + $detail['pre_deduc_comm'],
+                                'amount'        => $detail['amount'],
+                                'pre_deduc_comm' => $detail['pre_deduc_comm'],
+                                'comm_release_status' => $detail['comm_release_status'],
+                                'computed_commission' => $detail['payment_schedule_template']['commission'],
+                                'actual_commission' =>  $commission ,
+                                'accumulated' => $accumulated
+                            ];    
+                        }else{
+                            $deducted_com = $detail->commission->commission_payable;
+                            $accumulated = $detail->commission->commission_payable;
+                            // dump($detail->commission->commission_payable)       ;                     
                         }
-                        $data[] = [
-                            // 'agent_commission_settings_sub_id' => $detail->funded_student_course->commission->id,
-                            'payment_id'    => $detail->id,
-                            'payment_schedule_template_id' => $plan->id,
-                            'payment_date' => $detail->payment_date,
-                            'actual_amount' => $detail['amount'] + $detail['pre_deduc_comm'],
-                            'amount'        => $detail['amount'],
-                            'pre_deduc_comm' => $detail['pre_deduc_comm'],
-                            'comm_release_status' => $detail['comm_release_status'],
-                            'computed_commission' => $detail['payment_schedule_template']['commission'],
-                            'actual_commission' =>  $commission ,
-                            'accumulated' => $accumulated
-                        ];    
+                        
                     }
                   
         }
@@ -466,59 +304,33 @@ class CommissionController extends Controller
                         $tuition = $course->course_fee;
                     }
                     $payments = [];
-                    $deducted_com = 0;
+                    
                     $checker = 0;
                     foreach($course->payment_sched as $key =>$psched){
                         if($psched->commission1 != null){
-                            $comm = 0;
+                            $commission = 0;
                             $amount_received = 0;
+                            $deducted_com = 0;
                             
                             foreach($psched->commission1 as $cdetail){
                                 $acss = $cdetail->commission_sub;
-                                
+                                // dump($cdetail);
                                 
                                 if($cdetail['serial_no'] == $serial){
-                                    if($key != 0){
-                                        $checker = 1;
-                                        if($acss->gst_type == 'registered'){
-                                            $comm = $this->commission_registered($acss,$cdetail->amount_received);
-                                        }else{
-                                            $comm = $this->commission_not_registered($acss,$cdetail->amount_received);
-        
-                                        }
-
-                                        $amount_received = $cdetail->amount_received;
-                                        // $payments[] = [
-                                        //     'due_date' => $psched->due_date->format('d/m/Y'),
-                                        //     'due_amount' => $psched->payable_amount,
-                                        //     'date_paid' => $psched->last_payment_date,
-                                        //     'amount_paid' =>$cdetail->amount_received ,
-                                        //     'commission' => $comm - $psched->prededucted_com,
-                                        //     'deducted' => $psched->prededucted_com,
-                                        // ];
-                                    }
-                                }else{
-                                    $comm = 0;
-                                    $checker = 0;
-                                    // $payments[] = [
-                                    //     'due_date' => $psched->due_date->format('d/m/Y'),
-                                    //     'due_amount' => $psched->payable_amount,
-                                    //     'date_paid' => $psched->last_payment_date,
-                                    //     'amount_paid' =>$psched->approve_damount_paid ,
-                                    //     'commission' => 0,
-                                    //     'deducted' => 0,
-                                    // ];
+                                        $amount_received += $cdetail->amount_received;
+                                        $commission += $cdetail->commission_payable;
+                                        $deducted_com +=$cdetail->pre_deducted_comission;
                                 }
                             
                             }  
                              $payments[] = [
-                                            'due_date' => $psched->due_date->format('d/m/Y'),
-                                            'due_amount' => $psched->payable_amount,
-                                            'date_paid' => $psched->last_payment_date,
-                                            'amount_paid' =>$amount_received ,
-                                            'commission' => $checker == 1 ? $comm - $psched->prededucted_com : 0 ,
-                                            'deducted' => 0,
-                                        ];
+                                    'due_date' => $psched->due_date->format('d/m/Y'),
+                                    'due_amount' => $psched->payable_amount,
+                                    'date_paid' => $psched->last_payment_date,
+                                    'amount_paid' =>$amount_received ,
+                                    'commission' => $commission ,
+                                    'deducted' => $deducted_com,
+                                ];
                         }else{
                             $payments[] = [
                                 'due_date' => $psched->due_date->format('d/m/Y'),
