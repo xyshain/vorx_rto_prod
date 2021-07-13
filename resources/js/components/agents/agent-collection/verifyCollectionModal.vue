@@ -86,6 +86,7 @@
                                 <th class='text-center' width="15%">Amount Due</th>
                                 <th class='text-center' width="15%">Due Date</th>
                                 <!-- <th class='text-center' width="15%">Amount Paid</th> -->
+                                <th class='text-center' width="15%">Total Amount</th>
                                 <th class='text-center' width="15%">Allocated Amount</th>
                                 <th class='text-center' width="15%">Commission</th>
                                 <th class='text-center' width="15%">Pre Deducted Commission</th>
@@ -96,7 +97,7 @@
                                  <td class="text-center">{{parseInt(index)+1}}</td>
                                  <td class="text-center">{{st.balance.toFixed(2)}}</td>
                                  <td class="text-center">{{st.due_date | dateFormat}}</td>
-                                 <!-- <td class="text-center">{{st.approved_amount_paid}}</td> -->
+                                 <td class="text-center">{{toType(st.total_amount)!=='undefined' ? st.total_amount.toFixed(2) : 0.00}}</td>
                                  <td class="text-center" :class="'bg-'+getBg(st.unverified_amount)">
                                      <!-- {{st.payable_amount}} - {{st.a}} -->
                                      <span v-if="parseFloat(st.approved_amount_paid) >= parseFloat(st.payable_amount)">
@@ -108,7 +109,8 @@
                                      </span>
                                  </td>
                                  <td class="text-center">{{st.comm_balance}}</td>
-                                 <td class="text-center bg-secondary text-white">{{parseFloat(st.unverified_prededuc).toFixed(2)}}</td>
+                                 <td class="text-center bg-secondary text-white" v-if="st.unverified_prededuc > 0">{{parseFloat(st.unverified_prededuc).toFixed(2)}}</td>
+                                 <td class="text-center" v-else>{{parseFloat(st.pre_deduc_comm).toFixed(2)}}</td>
                              </tr>
                          </tbody>
                     </table>  
@@ -225,7 +227,7 @@ export default {
         getStudentPayments(){
             axios.post(`/agent/student-payments`,
             {
-                id:this.data.student_course_id,
+                id:this.data.id,
                 amount_paid:this.amount_paid,
                 pre_deduc_com:this.data.pre_deduc_comm
             }).then(
