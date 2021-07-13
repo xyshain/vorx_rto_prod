@@ -751,22 +751,27 @@ class AgentController extends Controller
 
     public function studentPayments(Request $request){
         $id = $request->id;
-
-        $funded_student_payments = FundedStudentPaymentDetails::where('student_course_id',$id)->where('verified',1)->get();
-        $funded_payment_sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$id)->get();
         
+        $collection = Collection::where('id',$id)->first();
+        
+        
+        $funded_student_payments = FundedStudentPaymentDetails::where('student_course_id',$id)->where('verified',1)->get();
+        $funded_payment_sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$collection->student_course_id)->get();
+        // return $funded_payment_sched_template;
         $sched_with_payment = [];
         
-        $unverified_amount = $request->amount_paid;
+        $unverified_amount = $request->amount_paid; //payment received
         $prededuct_com = $request->pre_deduc_com;
-        // dump($prededuct_com);
+
         foreach($funded_payment_sched_template as $fd){
             $fd->approved_amount_paid = $fd->approved_amount_paid;
             $fd->pre_deduc_comm = $fd->prededucted_com;
-
+            
             $fd->balance = $fd->payable_amount - $fd->approved_amount_paid;
             $fd->comm_balance = $fd->commission - $fd->pre_deduc_comm;
+
             
+            // dump($fd->unverified_prededuc);
             if($fd->balance > 0){
                 if($unverified_amount > $fd->balance){
                     $fd->unverified_amount = $fd->balance;
@@ -794,9 +799,12 @@ class AgentController extends Controller
             }else{
                 $fd->unverified_prededuc = 0;
             }
-           
+            $fd->comm_total = $fd->pre_deduc_comm + $fd->unverified_prededuc;
+            // dump($fd->comm_total);
+            $fd->total_amount = $fd->unverified_amount + $fd->approved_amount_paid + $fd->comm_total;
+            
         }
-
+        // return $funded_payment_sched_template;
         for($i = 0; $i < count($funded_payment_sched_template); $i++){
             // dump($i);
             if(isset($funded_payment_sched_template[$i]->unverified_amount) && $funded_payment_sched_template[$i]->unverified_amount != 0){
@@ -807,7 +815,6 @@ class AgentController extends Controller
         }
         //  return $sched_with_payment;        
         $ret = [
-            'funded_student_payments'=>$funded_student_payments,
             'funded_payment_sched_template'=>$sched_with_payment
         ];
         return $ret;
@@ -823,6 +830,7 @@ class AgentController extends Controller
     
     public function collectionEmail($payment_schedule,$student_payment,$remarks,$verified){
         // return $verified;
+        $student = $student_payment['student_id'].' - '.$student_payment['student']['party']['name'];
         $is_verified = $verified == 1 ? 'verified and accepted' : 'declined';
         $amount_text = $verified == 1 ? 'Recevied Amount' : 'Amount';
         $agent_portal = 'http://'.env('SANCTUM_STATEFUL_DOMAINS');
@@ -834,6 +842,7 @@ class AgentController extends Controller
         $course = $student_payment['funded_student_course']['course']['code'].' - '.$student_payment['funded_student_course']['course']['name'];
         $content = '<b>Dear '.$student_payment['student']['party']['name'].',</b><br><br>Your collection has been '.$is_verified.'.
         <p>Transaction Code: '.$student_payment['transaction_code'].'</p>
+        <p>Student '.$student.'</p>
         <p>Course: '.$course.'</p>
         <p>'.$amount_text.': '.number_format($student_payment['amount'],2).'</p>
         <p>Pre-deducted Commission: '.number_format($student_payment['pre_deduc_comm'],2).'</p>
