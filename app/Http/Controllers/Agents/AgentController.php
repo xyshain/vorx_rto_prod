@@ -932,7 +932,7 @@ class AgentController extends Controller
                     // if(isset($ps['unverified_amount'])){
                         // if($ps['unverified_amount']!=0){
                         if($unverified_amount != 0 || $prededuct_com>0){
-                            $amount = $unverified_amount > $ps['balance'] ? $ps['balance'] : $unverified_amount;
+                            $  = $unverified_amount > $ps['balance'] ? $ps['balance'] : $unverified_amount;
                             
                             $new_payment = new FundedStudentPaymentDetails;
                             $new_payment->student_id = $student_payment['student_id'];
@@ -981,7 +981,7 @@ class AgentController extends Controller
             }
 
             $content = $this->collectionEmail($request['payment_schedule'],$request['student_payment'],$request['remarks'],$collection->verified);
-            return $content;
+            // return $content;
             $s = $send->send_automate('Collection Verified', $content, [$org->training_organisation_name => $org->email_address], $emailsTo);
             // $s['status']='success';
             if($s['status']=='success'){
