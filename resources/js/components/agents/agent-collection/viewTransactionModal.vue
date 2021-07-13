@@ -58,7 +58,7 @@
                     <div class="card text-left" style="border:none">
                         <span>
                             <span class="fas fa-circle " style="color:#858796"></span> 
-                            <strong>Pre Deducted Comission: </strong>
+                            <strong>Deducted Comission: </strong>
                             {{parseFloat(data.pre_deduc_comm).toFixed(2)}}
                         </span>
                     </div>
@@ -116,30 +116,32 @@
                                 <th class='text-center' width="10%">Month #</th>
                                 <th class='text-center' width="15%">Amount Due</th>
                                 <th class='text-center' width="15%">Due Date</th>
-                                <th class='text-center' width="15%">Amount Paid</th>
+                                <th class='text-center' width="15%">Amount Received</th>
                                 <th class='text-center' width="15%">Allocated Amount</th>
                                 <th class='text-center' width="15%">Commission</th>
-                                <th class='text-center' width="15%">Pre Deducted Commission</th>
+                                <th class='text-center' width="15%">Deducted Commission</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(ps,index) in payment_schedule" :key="index">
                                  <td class="text-center">{{parseInt(index)+1}}</td>
+                                 <!-- <td class="text-center">{{ps.balance.toFixed(2)}}</td> -->
                                  <td class="text-center">{{ps.balance.toFixed(2)}}</td>
                                  <td class="text-center">{{ps.due_date | dateFormat}}</td>
-                                 <td class="text-center">{{ps.approved_amount_paid}}</td>
+                                 <td class="text-center">{{getReceived(ps.approved_amount_paid,ps.prededucted_com)}}</td>
                                  <td class="text-center bg-primary text-white" v-if="toType(findPaymentDetail(ps.id))!=='undefined'">
                                         {{findPaymentDetail(ps.id)}}
                                 </td>
                                 <td class="text-center" v-else>
                                     0.00
                                 </td>
-                                 <td class="text-center">{{ps.commission}}</td>
+                                 <td class="text-center">{{ps.comm_balance.toFixed(2)}}</td>
                                  <td class="text-center bg-secondary text-white" v-if="toType(findPreDeduct(ps.id))!=='undefined'">
-                                     {{findPreDeduct(ps.id)}}
+                                     <!-- {{findPreDeduct(ps.id)}} -->
+                                     {{ps.prededucted_com}}
                                  </td>
-                                 <td v-else>
-                                     0.00
+                                 <td v-else class="text-center">
+                                     {{ps.prededucted_com}}
                                  </td>
                              </tr>
                         </tbody>
@@ -166,6 +168,13 @@ export default {
         },
     },
     methods:{
+        getReceived(a,b){
+            let c = a-b;
+            if(c<0){
+                c=0;
+            }
+            return c.toFixed(2);
+        },
         toType(obj) {
             return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
         },
