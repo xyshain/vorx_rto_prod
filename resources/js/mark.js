@@ -19,6 +19,9 @@ Vue.component('application-show', require('./components/enrolments/enrolmentShow
 
 Vue.component('student-review-pca', require('./components/enrolments/pca/studentReviewPageComponent.vue').default);
 
+Vue.component('commission-list', require('./components/agents/commissions/commissionListComponent.vue').default);
+
+
 
 // new student UI
 

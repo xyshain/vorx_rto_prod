@@ -575,4 +575,34 @@ class CommissionController extends Controller
             return  round($tuition * ($setting->commision_value / 100) + ($tuition * ($setting->commision_value / 100) * .10), 2);
         }
     }
+
+    public function commission_list(){
+        return view('commissions.index');
+    }
+
+    public function getCommission($agent){
+        if($agent == 0){
+            $commission_list = AgentCommissionCutoff::orderBy('id','DESC')->get();
+        }else{
+            $commission_list = AgentCommissionCutoff::where('agent_id',$agent)->get();
+        }
+        if(!$commission_list->isEmpty()){
+            $commissions = collect();
+            foreach($commission_list as $key=>$list){
+                $commissions[] = [
+                    'index' => $key + 1,
+                    'agent' => $list->agent_detail->agent_name,
+                    'serial' => $list->serial_no,
+                    'date' => Carbon::parse($list->cutoff)->format('d/m/Y'),
+                    'total_actual_amount' => $list->total_actual_amount_received,
+                    'total_computed_commission' => $list->total_computed_commission,
+                    'total_paid_commission' => $list->total_paid_commission,
+                    'due_commission' => $list->due_commission,
+                    'total_pre_deducted_commission' => $list->total_pre_deducted_commission,
+                    'commission_release_status' => $list->commission_release_status,
+                ];
+            }
+        }
+        return $commissions;
+    }
 }
