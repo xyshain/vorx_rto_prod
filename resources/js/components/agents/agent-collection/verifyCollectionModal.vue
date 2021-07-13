@@ -85,7 +85,7 @@
                                 <th class='text-center' width="10%">Month #</th>
                                 <th class='text-center' width="15%">Amount Due</th>
                                 <th class='text-center' width="15%">Due Date</th>
-                                <th class='text-center' width="15%">Amount Paid</th>
+                                <!-- <th class='text-center' width="15%">Amount Paid</th> -->
                                 <th class='text-center' width="15%">Allocated Amount</th>
                                 <th class='text-center' width="15%">Commission</th>
                                 <th class='text-center' width="15%">Pre Deducted Commission</th>
@@ -96,7 +96,7 @@
                                  <td class="text-center">{{parseInt(index)+1}}</td>
                                  <td class="text-center">{{st.balance.toFixed(2)}}</td>
                                  <td class="text-center">{{st.due_date | dateFormat}}</td>
-                                 <td class="text-center">{{st.approved_amount_paid}}</td>
+                                 <!-- <td class="text-center">{{st.approved_amount_paid}}</td> -->
                                  <td class="text-center" :class="'bg-'+getBg(st.unverified_amount)">
                                      <!-- {{st.payable_amount}} - {{st.a}} -->
                                      <span v-if="parseFloat(st.approved_amount_paid) >= parseFloat(st.payable_amount)">
@@ -107,7 +107,7 @@
                                          {{parseFloat(st.unverified_amount).toFixed(2)}}
                                      </span>
                                  </td>
-                                 <td class="text-center">{{st.commission}}</td>
+                                 <td class="text-center">{{st.comm_balance}}</td>
                                  <td class="text-center bg-secondary text-white">{{parseFloat(st.unverified_prededuc).toFixed(2)}}</td>
                              </tr>
                          </tbody>
@@ -178,7 +178,7 @@ export default {
                         Toast.fire({
                             position: "top-end",
                             type: "success",
-                            title: 'Collection verified',
+                            title: 'Collection Updated',
                         });
                     }else{
                         Toast.fire({

@@ -701,17 +701,15 @@ class AgentController extends Controller
     }
 
     public function declineCollection($request){ //funded student payment detail id
-        $id         = $request['id'];
-        $trxn_code  = $request['transaction_code'];
+        // return $request;
+        $id         = $request['student_payment']['id'];
+        $trxn_code  = $request['student_payment']['transaction_code'];
         $remarks    = $request['remarks'];
+        // return $request['student_payment']['agent']['email'];
         
         try{
             DB::beginTransaction();
-            // $student_funded_payment_detail = FundedStudentPaymentDetails::where('id',$id)->first();
-
-            // $student_funded_payment_detail->verified = 2;
-            // $student_funded_payment_detail->remarks = $request['remarks'];
-            // $student_funded_payment_detail->update();
+            
             
             $collection = Collection::find($id);
             $collection->verified = 2;
@@ -721,10 +719,10 @@ class AgentController extends Controller
             $org = TrainingOrganisation::first();
             $send = new EmailSendingController;
 
-            if(isset($request['agent'])){
-                $name = $request['agent']['agent_name'];
-                if(isset($request['agent']['email'])){
-                    $emailsTo[] = $request['agent']['email'];
+            if(isset($request['student_payment']['agent'])){
+                $name = $request['student_payment']['agent']['agent_name'];
+                if(isset($request['student_payment']['agent']['email'])){
+                    $emailsTo[] = $request['student_payment']['agent']['email'];
                 }else{   
                     return response()->json(['status'=>'error','message'=>'Agent email not found']);
                 }
@@ -732,8 +730,9 @@ class AgentController extends Controller
                 return response()->json(['status'=>'error','message'=>'Agent not found']);
             }
 
-            $content = '<b>Dear ' . $name . ',</b><br><br>Your collection has been declined.<br>Trxn no: '.$trxn_code;
-
+            // $content = '<b>Dear ' . $name . ',</b><br><br>Your collection has been declined.<br>Trxn no: '.$trxn_code;
+            $content = $this->collectionEmail($request['payment_schedule'],$request['student_payment'],$remarks,$collection->verified);
+            // return $content;
             $s = $send->send_automate('Collection Declined', $content, ['Vorx' => $org->email_address], $emailsTo);
             // $s['status']='success';
             if($s['status']=='success'){
@@ -815,23 +814,28 @@ class AgentController extends Controller
     }
 
     public function collectionAction(Request $request){
-        // return $request->all();
         if($request->action == 'accept'){
             return $this->acceptCollection($request->all());
         }else{
-            return $this->declineCollection($request->student_payment);
+            return $this->declineCollection($request->all());
         }
     }
     
-    public function collectionEmail($payment_schedule,$student_payment,$remarks){
-        // return $payment_schedule;
+    public function collectionEmail($payment_schedule,$student_payment,$remarks,$verified){
+        // return $verified;
+        $is_verified = $verified == 1 ? 'verified and accepted' : 'declined';
+        $amount_text = $verified == 1 ? 'Recevied Amount' : 'Amount';
+        $agent_portal = 'http://'.env('SANCTUM_STATEFUL_DOMAINS');
+        // return $agent_portal;
+        $redirect_link = $agent_portal.'/student/'.$student_payment['student_id'].'/payment-details/'.$student_payment['funded_student_course']['course_code'];
+        // return $redirect_link;
         $total_amount = $student_payment['amount']+$student_payment['pre_deduc_comm'];
         // return $total_amount;
         $course = $student_payment['funded_student_course']['course']['code'].' - '.$student_payment['funded_student_course']['course']['name'];
-        $content = '<b>Dear '.$student_payment['student']['party']['name'].',</b><br><br>Your collection has been verified and accepted.
+        $content = '<b>Dear '.$student_payment['student']['party']['name'].',</b><br><br>Your collection has been '.$is_verified.'.
         <p>Transaction Code: '.$student_payment['transaction_code'].'</p>
         <p>Course: '.$course.'</p>
-        <p>Recieved Amount: '.number_format($student_payment['amount'],2).'</p>
+        <p>'.$amount_text.': '.number_format($student_payment['amount'],2).'</p>
         <p>Pre-deducted Commission: '.number_format($student_payment['pre_deduc_comm'],2).'</p>
         <p>Total Amount: '.number_format($total_amount,2).'</p>
         <p>Notes: '.$student_payment['note'].'</p>
@@ -853,14 +857,14 @@ class AgentController extends Controller
                     <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
                         '.Carbon::parse($ps['due_date'])->format('d/m/Y').'
                     </td>
-                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                    <!--<td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
                         '.number_format($ps['approved_amount_paid'],2).'
-                    </td>
+                    </td>-->
                     <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
                         '.number_format($ps['unverified_amount'],2).'
                     </td>
                     <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
-                        '.number_format($ps['commission'],2).'
+                        '.number_format($ps['comm_balance'],2).'
                     </td>
                     <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
                         '.number_format($ps['unverified_prededuc'],2).'
@@ -884,8 +888,8 @@ class AgentController extends Controller
                             <th style="text-align:left; border: 1px solid #ddd;
                             padding: 8px;">Due Date</th>
 
-                            <th style="text-align:left; border: 1px solid #ddd;
-                            padding: 8px;">Amount Paid</th>
+                            <!--<th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Amount Paid</th>-->
 
                             <th style="text-align:left; border: 1px solid #ddd;
                             padding: 8px;">Allocated Amount</th>
@@ -902,6 +906,7 @@ class AgentController extends Controller
                     </tbody>
                 </table>';
         $content .= $table;
+        $content .= '<br>Access <i><a href='.$redirect_link.' target="_blank">'.$redirect_link.'</a> </i>to redirect to Agent Portal.';
 
         return $content;
     }
@@ -975,7 +980,8 @@ class AgentController extends Controller
                 return response()->json(['status'=>'error','message'=>'Agent not found']);
             }
 
-            $content = $this->collectionEmail($request['payment_schedule'],$request['student_payment'],$request['remarks']);
+            $content = $this->collectionEmail($request['payment_schedule'],$request['student_payment'],$request['remarks'],$collection->verified);
+            return $content;
             $s = $send->send_automate('Collection Verified', $content, [$org->training_organisation_name => $org->email_address], $emailsTo);
             // $s['status']='success';
             if($s['status']=='success'){
@@ -1064,8 +1070,10 @@ class AgentController extends Controller
         
         foreach($payment_sched_template as $fd){
             $fd->approved_amount_paid = $fd->approved_amount_paid;
+            $fd->prededucted_com = $fd->prededucted_com;
             
             $fd->balance = $fd->payable_amount - $fd->approved_amount_paid;
+            $fd->comm_balance = $fd->commission - $fd->prededucted_com;
         }
         
         $res = json_encode(['student_funded_payment_detail'=>$student_funded_payment_detail,'payment_sched_template'=>$payment_sched_template]);
