@@ -36,7 +36,7 @@ class CommissionController extends Controller
                 $cutoffs = [$date_holder = date('Y-m-') . $cutop[0],$date_holder = date('Y-m-') . $cutop[1]];
                 // $cutoffs = [$date_holder = date('Y-m-') . $cutop[0],$date_holder = date('Y-m-') . '10'];
                 $now = Carbon::now()->format('d');
-                $now = 16;
+                // $now = 16;
                 if ($now <= $cutop[0]) {
                     $serial = 'A' . $agent->id . '-' . date('ym') . $cutop[0];
                     $date_holder = date('Y-m-') . $cutop[0];
