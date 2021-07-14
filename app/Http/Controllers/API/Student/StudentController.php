@@ -514,7 +514,7 @@ class StudentController extends Controller
                     ];
                 }
                
-                if($psched->payable_amount == $psched->approved_amount_paid){
+                if($psched->payable_amount == $psched->approved_amount_paid + $psched->prededucted_com ){
                     $attain = false;
                 }else{
                     if(!$x){
@@ -540,7 +540,7 @@ class StudentController extends Controller
                 //     // dump($ap_deduct);
                 // }
                 
-
+                $total = (float)$psched->approved_amount_paid + (float)$psched->prededucted_com;
                 $pl[]= [
                     'number'             => $ctr++,
                     'id'                 => $psched->id,
@@ -558,7 +558,7 @@ class StudentController extends Controller
                     'collection'         => $psched->collection()->with('attachment')->orderBy('id','DESC')->get(),   
                     'attain'             => $attain ,
                     'commission'         => $psched->commission - $psched->prededucted_com,
-                    'percentage'         => ( (float)$psched->approved_amount_paid / (float)$psched->payable_amount ) * 100,
+                    'percentage'         => ( $total / (float)$psched->payable_amount ) * 100,
                     // 'ap_deduct'         => $ap_deduct,
                 ];
                 if($key == 0){
