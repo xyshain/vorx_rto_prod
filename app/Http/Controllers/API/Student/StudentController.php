@@ -477,117 +477,6 @@ class StudentController extends Controller
             $attachment = null;
             $ap_deduct = 0;
             foreach($funded_course->payment_sched as $key => $psched){
-                $commission = 0;
-                $prev_balance = $balance;
-                if($balance <= 0){
-                    if($balance != 0){
-                        $prev_balance = $balance;
-                        $balance =  $balance + $psched->payable_amount ;
-                        if($balance > 0){
-                            if($commission_settings != null){
-                                if($commission_settings->commission_type == '%'){
-                                    if($commission_settings->gst_type == 'not_registered'){
-                                        if($key != 0){
-                                            if($commission_settings->gst_status == 0){
-                                                $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
-                                            }else{
-                                                $commission =  round($balance * ($commission_settings->commision_value / 100) - ($balance * ($commission_settings->commision_value / 100) * .10), 2);
-                                            }
-                                        }else{
-                                            $commission = 0;
-                                        }
-                                    }else{
-                                        if($key != 0){
-                                            if($commission_settings->gst_status == 1){
-                                                $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
-                                            }else{
-                                                $commission =  round($balance * ($commission_settings->commision_value / 100) + ($balance * ($commission_settings->commision_value / 100) * .10), 2);
-                                            }
-                                        }else{
-                                            $commission = 0;
-                                        }
-                                    }
-                                    
-                                }
-                            }
-                        }
-                    }else{
-                        $balance =$psched->payable_amount ;
-                        if($commission_settings != null){
-                            if($commission_settings->commission_type == '%'){
-                                if($commission_settings->gst_type == 'not_registered'){
-                                    if($commission_settings->gst_status == 0){
-                                        $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
-                                    }else{
-                                        $commission =  round($balance * ($commission_settings->commision_value / 100) - ($balance * ($commission_settings->commision_value / 100) * .10), 2);
-                                    }
-                                }else{
-                                    if($commission_settings->gst_status == 1){
-                                        $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
-                                    }else{
-                                        $commission =  round($balance * ($commission_settings->commision_value / 100) + ($balance * ($commission_settings->commision_value / 100) * .10), 2);
-                                    }
-                                }
-                                
-                            }
-                        }
-                    }
-                }else{
-                    $balance = $psched->payable_amount - abs($balance);
-                    if($balance > 0 ){
-                        $balance = $psched->payable_amount ;
-                        if($commission_settings != null){
-                            if($key != 0){
-                                if($commission_settings->commission_type == '%'){
-                                    if($commission_settings->gst_type == 'not_registered'){
-                                        if($commission_settings->gst_status == 0){
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
-                                        }else{
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100) - ($balance * ($commission_settings->commision_value / 100) * .10), 2);
-                                        }
-                                    }else{
-                                        if($commission_settings->gst_status == 1){
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
-                                        }else{
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100) + ($balance * ($commission_settings->commision_value / 100) * .10), 2);
-                                        }
-                                    }
-                                    
-                                }
-                            }else{
-                                $commission = 0;
-                            }
-                        }
-                    }else{
-                        if($commission_settings != null){
-                            if($key != 0){
-                                $balance = $psched->payable_amount ;
-                                if($commission_settings->commission_type == '%'){
-                                    if($commission_settings->gst_type == 'not_registered'){
-                                        if($commission_settings->gst_status == 0){
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
-                                        }else{
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100) - ($balance * ($commission_settings->commision_value / 100) * .10), 2);
-                                        }
-                                    }else{
-                                        if($commission_settings->gst_status == 1){
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100), 2);
-                                        }else{
-                                            $commission =  round($balance * ($commission_settings->commision_value / 100) + ($balance * ($commission_settings->commision_value / 100) * .10), 2);
-                                        }
-                                    }
-                                    
-                                }
-                            }else{
-                                $balance = 0 ;
-                                $commission = 0;
-                            }
-                        }
-                    }
-                }
-               
-                
-
                 $pd = [];
                     
                 foreach($psched->payment_detail as $payment_detail){
@@ -625,7 +514,7 @@ class StudentController extends Controller
                     ];
                 }
                
-                if($psched->payable_amount == $psched->approved_amount_paid){
+                if($psched->payable_amount == $psched->approved_amount_paid + $psched->prededucted_com ){
                     $attain = false;
                 }else{
                     if(!$x){
@@ -635,40 +524,42 @@ class StudentController extends Controller
                         $attain = false;
                     }
                 }
-                if($key !== 0){
-                    $ap_deduct = $ap_deduct +  $psched->prededucted_com;
-                }
-                if($ap_deduct > 0){
-                    $ap_deduct = $ap_deduct - $commission;
-                    if($ap_deduct > 0){
-                        $commission = 0;
-                    }else{
-                        $commission = abs($ap_deduct);
-                    }
+                // if($key !== 0){
+                //     $ap_deduct = $ap_deduct +  $psched->prededucted_com;
+                // }
+                // if($ap_deduct > 0){
+                //     $ap_deduct = $ap_deduct - $commission;
+                //     if($ap_deduct > 0){
+                //         $commission = 0;
+                //     }else{
+                //         $commission = abs($ap_deduct);
+                //     }
                    
-                }else{
-                    $ap_deduct =0;
-                    // dump($ap_deduct);
-                }
+                // }else{
+                //     $ap_deduct =0;
+                //     // dump($ap_deduct);
+                // }
                 
-
+                $total = (float)$psched->approved_amount_paid + (float)$psched->prededucted_com;
                 $pl[]= [
                     'number'             => $ctr++,
                     'id'                 => $psched->id,
                     'name'               => $psched->id,
                     'due_date'           => Carbon::parse($psched->due_date)->format('d/m/Y'),
                     'adjusted_date'      => $psched->adjusted_date != '' ? Carbon::parse($psched->adjusted_date)->format('d/m/Y') : null,
-                    'payable_amount'     => $psched->payable_amount - $psched->approved_amount_paid,
+                    'due_amount'         => $psched->payable_amount,
+                    'approve_amount'         => $psched->approved_amount_paid,
+                    'pre_deducted'         => $psched->prededucted_com,
+                    'payable_amount'     => $psched->payable_amount - $psched->approved_amount_paid - $psched->prededucted_com,
                     'payment_details'    => $pd,
                     'total_paid'         => $psched->amount_paid,
                     'total_paid_approved'=> $psched->approved_amount_paid,
                     'balance'            => $balance ,
-                    'collection'         => $psched->collection()->orderBy('id','DESC')->get(),   
-                    'prev_balance'       => $prev_balance ,
+                    'collection'         => $psched->collection()->with('attachment')->orderBy('id','DESC')->get(),   
                     'attain'             => $attain ,
-                    'commission'         => $commission,
-                    'percentage'         => ( (float)$psched->approved_amount_paid / (float)$psched->payable_amount ) * 100,
-                    'ap_deduct'         => $ap_deduct,
+                    'commission'         => $psched->commission - $psched->prededucted_com,
+                    'percentage'         => ( $total / (float)$psched->payable_amount ) * 100,
+                    // 'ap_deduct'         => $ap_deduct,
                 ];
                 if($key == 0){
                     $ap_deduct = $ap_deduct +  $psched->prededucted_com;

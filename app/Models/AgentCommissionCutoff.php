@@ -22,6 +22,7 @@ class AgentCommissionCutoff extends Model
         'total_over_payment'
     ];
 
+
     public function commission_details(){
         return $this->hasMany(CommissionDetail::class,'serial_no','serial_no');
     }

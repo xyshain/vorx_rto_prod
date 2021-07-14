@@ -701,17 +701,15 @@ class AgentController extends Controller
     }
 
     public function declineCollection($request){ //funded student payment detail id
-        $id         = $request['id'];
-        $trxn_code  = $request['transaction_code'];
+        // return $request;
+        $id         = $request['student_payment']['id'];
+        $trxn_code  = $request['student_payment']['transaction_code'];
         $remarks    = $request['remarks'];
+        // return $request['student_payment']['agent']['email'];
         
         try{
             DB::beginTransaction();
-            // $student_funded_payment_detail = FundedStudentPaymentDetails::where('id',$id)->first();
-
-            // $student_funded_payment_detail->verified = 2;
-            // $student_funded_payment_detail->remarks = $request['remarks'];
-            // $student_funded_payment_detail->update();
+            
             
             $collection = Collection::find($id);
             $collection->verified = 2;
@@ -721,10 +719,10 @@ class AgentController extends Controller
             $org = TrainingOrganisation::first();
             $send = new EmailSendingController;
 
-            if(isset($request['agent'])){
-                $name = $request['agent']['agent_name'];
-                if(isset($request['agent']['email'])){
-                    $emailsTo[] = $request['agent']['email'];
+            if(isset($request['student_payment']['agent'])){
+                $name = $request['student_payment']['agent']['agent_name'];
+                if(isset($request['student_payment']['agent']['email'])){
+                    $emailsTo[] = $request['student_payment']['agent']['email'];
                 }else{   
                     return response()->json(['status'=>'error','message'=>'Agent email not found']);
                 }
@@ -732,9 +730,10 @@ class AgentController extends Controller
                 return response()->json(['status'=>'error','message'=>'Agent not found']);
             }
 
-            $content = '<b>Dear ' . $name . ',</b><br><br>Your collection has been declined.<br>Trxn no: '.$trxn_code;
-
-            $s = $send->send_automate('Collection Declined', $content, ['Vorx' => $org->email_address], $emailsTo);
+            // $content = '<b>Dear ' . $name . ',</b><br><br>Your collection has been declined.<br>Trxn no: '.$trxn_code;
+            $content = $this->collectionEmail($request['payment_schedule'],$request['student_payment'],$remarks,$collection->verified);
+            // return $content;
+            $s = $send->send_automate('Collection Declined', $content, [$org->training_organisation_name => $org->email_address], $emailsTo);
             // $s['status']='success';
             if($s['status']=='success'){
                 DB::commit();
@@ -752,20 +751,27 @@ class AgentController extends Controller
 
     public function studentPayments(Request $request){
         $id = $request->id;
-
-        $funded_student_payments = FundedStudentPaymentDetails::where('student_course_id',$id)->where('verified',1)->get();
-        $funded_payment_sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$id)->get();
         
+        $collection = Collection::where('id',$id)->first();
+        
+        
+        $funded_student_payments = FundedStudentPaymentDetails::where('student_course_id',$id)->where('verified',1)->get();
+        $funded_payment_sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$collection->student_course_id)->get();
+        // return $funded_payment_sched_template;
         $sched_with_payment = [];
         
-        $unverified_amount = $request->amount_paid;
+        $unverified_amount = $request->amount_paid; //payment received
         $prededuct_com = $request->pre_deduc_com;
-        
+
         foreach($funded_payment_sched_template as $fd){
             $fd->approved_amount_paid = $fd->approved_amount_paid;
+            $fd->pre_deduc_comm = $fd->prededucted_com;
             
             $fd->balance = $fd->payable_amount - $fd->approved_amount_paid;
+            $fd->comm_balance = $fd->commission - $fd->pre_deduc_comm;
+
             
+            // dump($fd->unverified_prededuc);
             if($fd->balance > 0){
                 if($unverified_amount > $fd->balance){
                     $fd->unverified_amount = $fd->balance;
@@ -776,71 +782,120 @@ class AgentController extends Controller
                 }else{
                     $fd->unverified_amount = 0;
                 }
-            }
-            $fd->pre_deduct_com = $prededuct_com;
-            if($prededuct_com > $fd->commission){
-                $fd->pre_deduct_com = $fd->commission;
-                $prededuct_com = $prededuct_com - $fd->commission;
             }else{
-                $fd->pre_deduct_com = $prededuct_com;
-                $prededuct_com = 0;
+                $fd->unverified_amount = 0;
             }
-            // if($prededuct_com > 0){
-            //     if($prededuct_com > $fd->commission){
-            //         $fd->prededuccom = $fd->comission;
-            //         $prededuct_com = $prededuct_com - $fd->commission;
-            //     }else if($prededuct_com < $fd->commission){
-            //         $fd->prededuccom = $prededuct_com;
-            //         $prededuct_com = 0;
-            //     }
-            // }else{
-            //     $fd->prededuccom = 0;
-            // }
+            
+            if($fd->comm_balance > 0){
+                if($prededuct_com > $fd->comm_balance){
+                    $fd->unverified_prededuc = $fd->comm_balance;
+                    $prededuct_com = $prededuct_com - $fd->comm_balance;
+                }else if($prededuct_com <= $fd->comm_balance && $prededuct_com > 0){
+                    $fd->unverified_prededuc = $prededuct_com;
+                    $prededuct_com = $prededuct_com - $prededuct_com;
+                }else{
+                    $fd->unverified_prededuc = 0;
+                }
+            }else{
+                $fd->unverified_prededuc = 0;
+            }
+            $fd->comm_total = $fd->pre_deduc_comm + $fd->unverified_prededuc;
+            // dump($fd->comm_total);
+            if($fd->unverified_amount > 0){
+                $fd->unverified_total_amount = $fd->unverified_amount + $fd->approved_amount_paid + $fd->comm_total;
+            }
+            
+        }
+        // return $funded_payment_sched_template;
+        $remaining = 0;
+        foreach($funded_payment_sched_template as $fpst){
+            if($remaining == 0){
+                if(isset($fpst->unverified_total_amount)){
+                    if($fpst->unverified_total_amount > $fpst->balance){
+                        $remainz = $fpst->unverified_total_amount - $fpst->balance;
+                        $remaining = $remaining + $remainz;
+                        // dd($fpst->unverified_amount,$remainz);
+                        $fpst->unverified_amount = $fpst->unverified_amount - $remainz;
+                        // dd($fpst->unverified_amount);
+                        $fpst->unverified_total_amount = $fpst->unverified_total_amount - $remainz; 
+                    }
+                }
+            }else{
+                $fpst->unverified_amount = $fpst->unverified_amount + $remaining;
+                $fpst->unverified_total_amount = $fpst->unverified_amount + $fpst->approved_amount_paid + $fd->comm_total;
+
+                if($fpst->unverified_total_amount > $fpst->balance){
+                    $remainz = $fpst->unverified_total_amount - $fpst->balance;
+                    $remaining = $remaining + $remainz;
+                    $fpst->unverified_amount = $fpst->unverified_amount - $remainz;
+                    $fpst->unverified_total_amount = $fpst->unverified_total_amount - $remainz; 
+                }else{
+                    $remaining = 0;
+                }
+            }
+            // dump($remaining);
         }
 
-        // foreach($funded_payment_sched_template as $ff){
-        //     if(isset($ff->unverified_amount) && $ff->unverified_amount!=0){
-        //         array_push($sched_with_payment,$ff);
+        // $remaining = 0;
+        // foreach($funded_payment_sched_template as $fpst){
+        //     if($fpst->total_amount > $fpst->balance && $remaining == 0){
+        //         $remaining = $remaining + ($fpst->total_amount - $fpst->balance);
+        //         $fpst->total_amount = $fpst->balance;
+        //     }else if($fpst->total_amount > $fpst->balance && $remaining > 0){
+        //         $fpst->unverified_amount = $fpst->unverified_amount + $remaining;
+        //         $fpst->total_amount = $fpst->total_amount + $fpst->unverified_amount;
+        //         if($fpst->total_amount > $fpst->balance ){
+        //             $remaining = $fpst->total_amount - $fpst->balance;
+        //             $fpst->total_amount = $fpst->balance;
+        //         }
         //     }
+        //     dump($remaining);
         // }
+
         for($i = 0; $i < count($funded_payment_sched_template); $i++){
             // dump($i);
             if(isset($funded_payment_sched_template[$i]->unverified_amount) && $funded_payment_sched_template[$i]->unverified_amount != 0){
                 $sched_with_payment[$i] = $funded_payment_sched_template[$i];
-            }else if(isset($funded_payment_sched_template[$i]->pre_deduct_com) && $funded_payment_sched_template[$i]->pre_deduct_com > 0){
+            }else if(isset($funded_payment_sched_template[$i]->unverified_prededuc) && $funded_payment_sched_template[$i]->unverified_prededuc > 0){
                 $sched_with_payment[$i] = $funded_payment_sched_template[$i];
             }
         }
         //  return $sched_with_payment;        
         $ret = [
-            'funded_student_payments'=>$funded_student_payments,
             'funded_payment_sched_template'=>$sched_with_payment
         ];
         return $ret;
     }
 
     public function collectionAction(Request $request){
-        // return $request->all();
         if($request->action == 'accept'){
             return $this->acceptCollection($request->all());
         }else{
-            return $this->declineCollection($request->student_payment);
+            return $this->declineCollection($request->all());
         }
     }
     
-    public function collectionEmail($payment_schedule,$student_payment){
-        // return $payment_schedule;
+    public function collectionEmail($payment_schedule,$student_payment,$remarks,$verified){
+        // return $verified;
+        $student = $student_payment['student_id'].' - '.$student_payment['student']['party']['name'];
+        $is_verified = $verified == 1 ? 'verified and accepted' : 'declined';
+        $amount_text = $verified == 1 ? 'Recevied Amount' : 'Amount';
+        $agent_portal = 'http://'.env('SANCTUM_STATEFUL_DOMAINS');
+        // return $agent_portal;
+        $redirect_link = $agent_portal.'/student/'.$student_payment['student_id'].'/payment-details/'.$student_payment['funded_student_course']['course_code'];
+        // return $redirect_link;
         $total_amount = $student_payment['amount']+$student_payment['pre_deduc_comm'];
         // return $total_amount;
         $course = $student_payment['funded_student_course']['course']['code'].' - '.$student_payment['funded_student_course']['course']['name'];
-        $content = '<b>Dear '.$student_payment['student']['party']['name'].',</b><br><br>Your collection has been verified and accepted.
+        $content = '<b>Dear '.$student_payment['student']['party']['name'].',</b><br><br>Your collection has been '.$is_verified.'.
         <p>Transaction Code: '.$student_payment['transaction_code'].'</p>
+        <p>Student '.$student.'</p>
         <p>Course: '.$course.'</p>
-        <p>Recieved Amount: '.number_format($student_payment['amount'],2).'</p>
+        <p>'.$amount_text.': '.number_format($student_payment['amount'],2).'</p>
         <p>Pre-deducted Commission: '.number_format($student_payment['pre_deduc_comm'],2).'</p>
         <p>Total Amount: '.number_format($total_amount,2).'</p>
         <p>Notes: '.$student_payment['note'].'</p>
-        <p>Remarks: '.$student_payment['remakrs'].'</p>
+        <p>Remarks: '.$remarks.'</p>
         <br>';
         // return $content;
         $tbody = '';
@@ -858,17 +913,17 @@ class AgentController extends Controller
                     <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
                         '.Carbon::parse($ps['due_date'])->format('d/m/Y').'
                     </td>
-                    <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
+                    <!--<td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
                         '.number_format($ps['approved_amount_paid'],2).'
-                    </td>
+                    </td>-->
                     <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
                         '.number_format($ps['unverified_amount'],2).'
                     </td>
                     <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
-                        '.number_format($ps['commission'],2).'
+                        '.number_format($ps['comm_balance'],2).'
                     </td>
                     <td style="text-align:left; border: 1px solid #ddd;padding: 8px;">
-                        '.number_format($ps['pre_deduct_com'],2).'
+                        '.number_format($ps['unverified_prededuc'],2).'
                     </td>
                 </tr>
             ';
@@ -889,8 +944,8 @@ class AgentController extends Controller
                             <th style="text-align:left; border: 1px solid #ddd;
                             padding: 8px;">Due Date</th>
 
-                            <th style="text-align:left; border: 1px solid #ddd;
-                            padding: 8px;">Amount Paid</th>
+                            <!--<th style="text-align:left; border: 1px solid #ddd;
+                            padding: 8px;">Amount Paid</th>-->
 
                             <th style="text-align:left; border: 1px solid #ddd;
                             padding: 8px;">Allocated Amount</th>
@@ -907,17 +962,18 @@ class AgentController extends Controller
                     </tbody>
                 </table>';
         $content .= $table;
+        $content .= '<br>Access <i><a href='.$redirect_link.' target="_blank">'.$redirect_link.'</a> </i>to redirect to Agent Portal.';
 
         return $content;
     }
 
     public function acceptCollection($request){
-        
+        // return $request;
         $payment_schedule   = $request['payment_schedule'];
         $student_payment    = $request['student_payment'];
         $trxn_code          = $request['student_payment']['transaction_code'];
-        $prededuct_com      = $request['student_payment']['pre_deduc_comm'];
-        $unverified_amount  = $request['student_payment']['amount'];
+        // $prededuct_com      = $request['student_payment']['pre_deduc_comm'];
+        // $unverified_amount  = $request['student_payment']['amount'];
         $remarks            = $request['remarks'];
         $collection_id      = $request['student_payment']['id'];
         $user_id            = \Auth::user()->id;
@@ -931,47 +987,36 @@ class AgentController extends Controller
                 foreach($payment_schedule as $ps){
                     // if(isset($ps['unverified_amount'])){
                         // if($ps['unverified_amount']!=0){
-                        if($unverified_amount != 0){
-                            $amount = $unverified_amount > $ps['balance'] ? $ps['balance'] : $unverified_amount;
-                            // if($student_payment['payment_schedule_template_id'] == $ps['id']){
-                            //     $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
-                            //     $payment_details->amount = $ps['unverified_amount'];
-                            //     $payment_details->verified = 1;
-                            //     // $payment_details->remarks = $remarks;
-                            //     $payment_details->collection_id = $student_payment['id'];
-                            //     $payment_details->update();
-                            //     $prededuct_com = 0;
-                            // }else{
-                                $new_payment = new FundedStudentPaymentDetails;
-                                $new_payment->student_id = $student_payment['student_id'];
-                                $new_payment->agent_id = $student_payment['agent_id'];
-                                $new_payment->student_course_id = $student_payment['student_course_id'];
-                                $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
-                                $new_payment->transaction_code = $student_payment['transaction_code'];
-                                $new_payment->payment_schedule_template_id = $ps['id'];
-                                $new_payment->payment_date = $student_payment['payment_date'];
-                                $new_payment->amount = $amount;
-                                $new_payment->verified = 1;
-                                $new_payment->collection_id = $collection_id;
-                                // $new_payment->remarks = $remarks;
-                                $new_payment->user_id = $user_id;
-                                $new_payment->pre_deduc_comm = $ps['pre_deduct_com'];
-                                $new_payment->save();
-        
-                                $prededuct_com = 0;
-                                $unverified_amount = $unverified_amount - $amount;
-                            // }
-                        }
-                    // }                    
+                        // if($ps['unverified_amount'] != 0 || $ps['prededuct_com']>0){
+                            // $amount  = $unverified_amount > $ps['balance'] ? $ps['balance'] : $unverified_amount;
+                            
+                            $new_payment = new FundedStudentPaymentDetails;
+                            $new_payment->student_id = $student_payment['student_id'];
+                            $new_payment->agent_id = $student_payment['agent_id'];
+                            $new_payment->student_course_id = $student_payment['student_course_id'];
+                            $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
+                            $new_payment->transaction_code = $student_payment['transaction_code'];
+                            $new_payment->payment_schedule_template_id = $ps['id'];
+                            $new_payment->payment_date = $student_payment['payment_date'];
+                            $new_payment->amount = $ps['unverified_amount'];
+                            $new_payment->verified = 1;
+                            $new_payment->collection_id = $collection_id;
+                            $new_payment->user_id = $user_id;
+                            $new_payment->pre_deduc_comm = $ps['unverified_prededuc'];
+                            $new_payment->save();
+    
+                            // $prededuct_com = $prededuct_com - $ps['unverified_prededuc'];
+                            // $unverified_amount = $unverified_amount - $amount;
+                        }         
                 }
-            }else{
-                return 'la pa nahuman';
-                $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
-                $payment_details->verified = 1;
-                $payment_details->collection_id = $student_payment['id'];
+            // }else{
+            //     return 'la pa nahuman';
+            //     $payment_details = FundedStudentPaymentDetails::where('id',$student_payment['id'])->first();
+            //     $payment_details->verified = 1;
+            //     $payment_details->collection_id = $student_payment['id'];
                 
-                $payment_details->update();
-            }
+            //     $payment_details->update();
+            // }
             
             $collection->verified = 1;
             $collection->remakrs = $remarks;
@@ -991,8 +1036,9 @@ class AgentController extends Controller
                 return response()->json(['status'=>'error','message'=>'Agent not found']);
             }
 
-            $content = $this->collectionEmail($request['payment_schedule'],$request['student_payment']);
-            $s = $send->send_automate('Collection Verified', $content, ['Vorx' => $org->email_address], $emailsTo);
+            $content = $this->collectionEmail($request['payment_schedule'],$request['student_payment'],$request['remarks'],$collection->verified);
+            // return $content;
+            $s = $send->send_automate('Collection Verified', $content, [$org->training_organisation_name => $org->email_address], $emailsTo);
             // $s['status']='success';
             if($s['status']=='success'){
                 DB::commit();
@@ -1059,21 +1105,19 @@ class AgentController extends Controller
     }
 
     public function getTransaction($id,$trxn_code){
-        if($trxn_code!='null'){
-            $student_funded_payment_detail = FundedStudentPaymentDetails::with('agent','payment_schedule_template')->where('transaction_code',$trxn_code)->get();
-            $payment_sched_template = PaymentScheduleTemplate::where('funded_student_course_id',$student_funded_payment_detail[0]->student_course_id)->get();
+        $collection = Collection::with('agent','funded_student_course.payment_sched','payment_details')->where('id',$id)->first();
+        $student_funded_payment_detail = $collection->payment_details;
+        $payment_sched_template = $collection->funded_student_course->payment_sched;
+        
+        foreach($payment_sched_template as $fd){
+            $fd->approved_amount_paid = $fd->approved_amount_paid;
+            $fd->prededucted_com = $fd->prededucted_com;
             
-            foreach($payment_sched_template as $fd){
-                $fd->approved_amount_paid = $fd->approved_amount_paid;
-                
-                $fd->balance = $fd->payable_amount - $fd->approved_amount_paid;
-            }
-
-            $res = json_encode(['student_funded_payment_detail'=>$student_funded_payment_detail,'payment_sched_template'=>$payment_sched_template]);
-        }else{
-            $student_funded_payment_detail = FundedStudentPaymentDetails::with('agent','payment_schedule_template')->where('id',$id)->get();
-            $res = json_encode(['student_funded_payment_detail'=>$student_funded_payment_detail,'payment_sched_template'=>null]);     
+            $fd->balance = ($fd->payable_amount - $fd->approved_amount_paid) - $fd->prededucted_com;
+            $fd->comm_balance = $fd->commission - $fd->prededucted_com;
         }
+        
+        $res = json_encode(['student_funded_payment_detail'=>$student_funded_payment_detail,'payment_sched_template'=>$payment_sched_template]);
 
         return $res;
     }
