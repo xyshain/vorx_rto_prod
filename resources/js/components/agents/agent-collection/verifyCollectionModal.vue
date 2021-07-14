@@ -97,7 +97,7 @@
                                  <td class="text-center">{{parseInt(index)+1}}</td>
                                  <td class="text-center">{{st.balance.toFixed(2)}}</td>
                                  <td class="text-center">{{st.due_date | dateFormat}}</td>
-                                 <td class="text-center">{{toType(st.total_amount)!=='undefined' ? st.total_amount.toFixed(2) : 0.00}}</td>
+                                 <td class="text-center">{{toType(st.unverified_total_amount)!=='undefined' ? st.unverified_total_amount.toFixed(2) : 0.00}}</td>
                                  <td class="text-center" :class="'bg-'+getBg(st.unverified_amount)">
                                      <!-- {{st.payable_amount}} - {{st.a}} -->
                                      <span v-if="parseFloat(st.approved_amount_paid) >= parseFloat(st.payable_amount)">
