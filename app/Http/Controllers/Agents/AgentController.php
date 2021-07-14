@@ -941,7 +941,7 @@ class AgentController extends Controller
                     // if(isset($ps['unverified_amount'])){
                         // if($ps['unverified_amount']!=0){
                         if($unverified_amount != 0 || $prededuct_com>0){
-                            $  = $unverified_amount > $ps['balance'] ? $ps['balance'] : $unverified_amount;
+                            $amount  = $unverified_amount > $ps['balance'] ? $ps['balance'] : $unverified_amount;
                             
                             $new_payment = new FundedStudentPaymentDetails;
                             $new_payment->student_id = $student_payment['student_id'];

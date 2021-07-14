@@ -272,6 +272,8 @@ class OfferLetterController extends Controller
         'course_details.funded_course.collection.payment_sched',
         'course_details.funded_course.collection.funded_student_course.course',
         'course_details.funded_course.collection.attachment',
+        'course_details.funded_course.payment_sched',
+        'course_details.funded_course.payment_details',
         'course_details.payments',
         'course_details.payments.agent' ,
         'course_details.package.detail.course.detail', 
