@@ -794,9 +794,6 @@ class AgentController extends Controller
                 }
             }
         }
-        // dd($collection_amount);
-        // exceeding amount checker and auto breakdown
-        // return $sched_with_balance;
         $exceeding_amount = 0;
         foreach($sched_with_balance as $key=>$sb){
             $allocated_comm = isset($sb->allocated_comm) ? $sb->allocated_comm : 0;
@@ -815,7 +812,6 @@ class AgentController extends Controller
                 $unverified_collection = isset($sb->unverified_collection) ? $sb->unverified_collection : 0;
                 $unverified_prededuct = isset($sb->unverified_prededuct) ? $sb->unverified_prededuct : 0;
                 $unverified_total = $sb->unverified_collection + $sb->unverified_prededuct + $exceeding_amount;
-                
 
                 if($unverified_total > $sb->payable_amount){
                     $exceeding_amount -=$exceeding_amount;
@@ -838,7 +834,6 @@ class AgentController extends Controller
                     $sb->allocated_comm = $allocated_comm;
                 }
             }
-            // dump($exceeding_amount);
         }
 
         // filter out ang walay allocated amount
@@ -848,7 +843,14 @@ class AgentController extends Controller
                 $sched_with_allocation[$key] = $ss;
             }
         }
-        // return $sched_with_allocation;
+        foreach($sched_with_allocation as $sa){ //NaN setter
+            if(!isset($sa->allocated_amount)){
+                $sa->allocated_amount = 0;
+            }
+            if(!isset($sa->allocated_comm)){
+                $sa->allocated_comm = 0;
+            }
+        }
         $ret = [
             'funded_payment_sched_template'=>$sched_with_allocation
         ];
