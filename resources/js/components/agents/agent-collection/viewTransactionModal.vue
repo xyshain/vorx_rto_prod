@@ -116,7 +116,7 @@
                                 <th class='text-center' width="10%">Month #</th>
                                 <th class='text-center' width="15%">Amount Due</th>
                                 <th class='text-center' width="15%">Due Date</th>
-                                <th class='text-center' width="15%">Amount Received</th>
+                                <!-- <th class='text-center' width="15%">Amount Received</th> -->
                                 <th class='text-center' width="15%">Allocated Amount</th>
                                 <th class='text-center' width="15%">Commission</th>
                                 <th class='text-center' width="15%">Deducted Commission</th>
@@ -128,7 +128,7 @@
                                  <!-- <td class="text-center">{{ps.balance.toFixed(2)}}</td> -->
                                  <td class="text-center">{{ps.balance.toFixed(2)}}</td>
                                  <td class="text-center">{{ps.due_date | dateFormat}}</td>
-                                 <td class="text-center">{{getReceived(ps.approved_amount_paid,ps.prededucted_com)}}</td>
+                                 <!-- <td class="text-center">{{getReceived(ps.approved_amount_paid,ps.prededucted_com)}}</td> -->
                                  <td class="text-center bg-primary text-white" v-if="toType(findPaymentDetail(ps.id))!=='undefined'">
                                         {{findPaymentDetail(ps.id)}}
                                 </td>
