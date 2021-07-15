@@ -102,9 +102,13 @@
                                  <td :class="'text-center bg-warning text-white'" v-if="toType(st.allocated_amount) !== 'undefined' && st.allocated_amount > 0">
                                          {{parseFloat(st.allocated_amount).toFixed(2)}}<sup class="pull-right">{{st.approved_amount_paid}}</sup>
                                  </td>
-                                 <td v-else class="text-center">
+                                 <td v-else-if="toType(st.deducted_approved)!=='undefined'" class="text-center">
                                         {{parseFloat(st.deducted_approved).toFixed(2)}}<sup class="pull-right">{{st.approved_amount_paid}}</sup>
+                                        <p class="bg-black" style="margin-bottom:-25px;">&#8595;</p>
                                  </td>
+                                 <td v-else class="text-center">
+                                         {{parseFloat(st.allocated_amount).toFixed(2)}}<sup class="pull-right">{{st.approved_amount_paid}}</sup>
+                                 </td>  
                                  <td class="text-center">{{st.comm_balance.toFixed(2)}}</td>
                                  <td class="text-center bg-secondary text-white" v-if="st.allocated_comm > 0">{{parseFloat(st.allocated_comm).toFixed(2)}} <sup class="pull-right">{{st.approved_commission}}</sup></td>
                                  <td class="text-center" v-else>{{st.allocated_comm.toFixed(2)}} <sup class="pull-right">{{st.approved_commission}}</sup> </td>

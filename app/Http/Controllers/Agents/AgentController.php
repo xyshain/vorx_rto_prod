@@ -1098,8 +1098,9 @@ class AgentController extends Controller
         try{
             DB::beginTransaction();
             if($payment_schedule!=null){
-                
+                $total_received = 0; //received amount auto compute kung naay adjusted or wala
                 foreach($payment_schedule as $ps){
+                    $total_received += $ps['allocated_amount'];
                     // dump($ps);
                     if(isset($ps['deducted_approved'])){ // pasabot ani naay e update sa previous 
                         $deducted_amount = $ps['deducted_amount'];
@@ -1113,8 +1114,6 @@ class AgentController extends Controller
                                 $payment_detail->update();
                             }
                         }
-                        // $deducted_approved_amount = $ps['deducted_approved']; // bag ong amount para sa commission amount bruh
-                        // dd($ps['funded_student_course_id']);
                         $funded_student_payment = FundedStudentPaymentDetails::where('student_course_id',$ps['funded_student_course_id'])->orderBy('id','desc')->first();
                         $funded_student_payment->amount = $funded_student_payment->amount -  $deducted_amount;
                         $funded_student_payment->update();
@@ -1141,7 +1140,6 @@ class AgentController extends Controller
                         $koleksyon->amount = $koleksyon->amount - $deducted_amount;
                         $koleksyon->update();
                     }else{
-                        // dd('yawa');
                         $new_payment = new FundedStudentPaymentDetails;
                         $new_payment->student_id = $student_payment['student_id'];
                         $new_payment->agent_id = $student_payment['agent_id'];
@@ -1158,13 +1156,12 @@ class AgentController extends Controller
                         $new_payment->save();
                     }
                    
-
-                }         
+                }       
             }
-           
             
             $collection->verified = 1;
             $collection->remakrs = $remarks;
+            $collection->amount = $total_received;
             $collection->update();
             
             $org = TrainingOrganisation::first();
@@ -1186,7 +1183,7 @@ class AgentController extends Controller
             $s = $send->send_automate('Collection Verified', $content, [$org->training_organisation_name => $org->email_address], $emailsTo);
             // $s['status']='success';
             if($s['status']=='success'){
-                DB::commit();
+                // DB::commit();
                 $student_payment['verified'] = 1;
                 $this->notifyAgent($student_payment);
                 return response()->json(['status'=>'success']);
