@@ -98,10 +98,12 @@
                                  <td class="text-center">{{st.balance.toFixed(2)}}</td>
                                  <td class="text-center">{{st.due_date | dateFormat}}</td>
                                  <!-- <td class="text-center">{{toType(st.unverified_total_amount)!=='undefined' ? st.unverified_total_amount.toFixed(2) : 0.00}}</td> -->
-                                 <td class="text-center" :class="'bg-warning text-white'">
-                                     <!-- {{st.payable_amount}} - {{st.a}} -->
-                                     
+                                
+                                 <td :class="'text-center bg-warning text-white'" v-if="toType(st.allocated_amount) !== 'undefined' && st.allocated_amount > 0">
                                          {{parseFloat(st.allocated_amount).toFixed(2)}}<sup class="pull-right">{{st.approved_amount_paid}}</sup>
+                                 </td>
+                                 <td v-else class="text-center">
+                                        {{parseFloat(st.deducted_approved).toFixed(2)}}<sup class="pull-right">{{st.approved_amount_paid}}</sup>
                                  </td>
                                  <td class="text-center">{{st.comm_balance.toFixed(2)}}</td>
                                  <td class="text-center bg-secondary text-white" v-if="st.allocated_comm > 0">{{parseFloat(st.allocated_comm).toFixed(2)}} <sup class="pull-right">{{st.approved_commission}}</sup></td>
