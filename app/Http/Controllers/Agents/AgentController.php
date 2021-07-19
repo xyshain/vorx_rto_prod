@@ -807,7 +807,8 @@ class AgentController extends Controller
                     $exceed = $unverified_total - $sb->payable_amount;
                     $exceeding_amount += $exceed;
                     $sb->unverified_collection -= $exceed;
-                    // dump($exceed);
+                    
+                    $sb->adjusted = true;
                     if(isset($sb->comm_balance) && $sb->balance == 0){ //kung naa pa syay commission balance
                         $sb->deducted_approved = $sb->approved_amount_paid - $exceed;
                         $sb->deducted_amount = $exceed;
@@ -821,13 +822,19 @@ class AgentController extends Controller
                 $unverified_collection = isset($sb->unverified_collection) ? $sb->unverified_collection : 0;
                 $unverified_prededuct = isset($sb->unverified_prededuct) ? $sb->unverified_prededuct : 0;
                 $unverified_total = $sb->unverified_collection + $sb->unverified_prededuct + $exceeding_amount;
-
+                // dump($unverified_total);
                 if($unverified_total > $sb->payable_amount){
                     $exceeding_amount -=$exceeding_amount;
                     $exceed = $unverified_total - $sb->payable_amount;
                     $unverified_amount = $unverified_total - $exceed;
                     
-                    $allocated = $unverified_amount - $sb->unverified_prededuct;
+                    $sb->adjusted = true;
+                    // if(){
+
+                    // }
+                                    
+                    // $allocated = $unverified_amount - $sb->unverified_prededuct;
+                    $allocated = $sb->balance;
                     
                     $sb->allocated_amount = $allocated;
                     
@@ -839,8 +846,11 @@ class AgentController extends Controller
                     $sb->unverified_collection += $unverified_amount;
                     $exceeding_amount -= $unverified_amount;
                     $sb->allocated_comm = $allocated_comm;
+
+                    $sb->adjusted = false;
                 }
             }
+            // dump($exceeding_amount);
         }
         // return $sched_with_balance;
         // filter out ang walay allocated amount
@@ -1102,10 +1112,10 @@ class AgentController extends Controller
             if($payment_schedule!=null){
                 $total_received = 0; //received amount auto compute kung naay adjusted or wala
                 foreach($payment_schedule as $ps){
-                    $total_received += $ps['allocated_amount'];
                     // dump($ps);
                     if(isset($ps['deducted_approved'])){ // pasabot ani naay e update sa previous 
-                        $deducted_amount = $ps['deducted_amount'];
+                    $total_received += $ps['allocated_amount'];
+                    $deducted_amount = $ps['deducted_amount'];
                         $payment_details = $ps['payment_detail'];
                         // e check nato kung naay mas dako na amount kaysa sa e deduct aron dili mag negative ang amount sa table
                         // return $deducted_amount;
@@ -1147,6 +1157,7 @@ class AgentController extends Controller
                         $koleksyon->update();
                     }else{
                         if($ps['balance'] > 0){
+                            $total_received += $ps['allocated_amount'];
                             $new_payment = new FundedStudentPaymentDetails;
                             $new_payment->student_id = $student_payment['student_id'];
                             $new_payment->agent_id = $student_payment['agent_id'];
@@ -1163,8 +1174,10 @@ class AgentController extends Controller
                             $new_payment->save();
                         }
                     }
+                    // dump($total_received);
                 }       
             }
+            // dd($total_received);
             
             $collection->verified = 1;
             $collection->remakrs = $remarks;
