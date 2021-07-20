@@ -135,6 +135,12 @@
                                 <td class="text-center" v-else>
                                     0.00
                                 </td>
+                                <!-- <td v-if="ps.amountz!==0" class="text-center bg-primary text-white">
+                                    {{ps.amountz}}
+                                </td>
+                                <td v-else class="text-center">
+                                    0.00
+                                </td> -->
                                  <td class="text-center">{{ps.comm_balance.toFixed(2)}}</td>
                                  <td class="text-center bg-secondary text-white" v-if="toType(findPreDeduct(ps.id))!=='undefined'">
                                      <!-- {{findPreDeduct(ps.id)}} -->
@@ -191,15 +197,22 @@ export default {
         },
         findPaymentDetail(id){
             // return id;
+            // return id;
+            var amount = 0;
             for(let i = 0; i < this.student_payment.length; i++){
                 if(id == this.student_payment[i].payment_schedule_template_id){
                     if(this.student_payment[i].amount==0){
                         return undefined;
                     }else{
-                        return this.student_payment[i].amount
+                        // return this.student_payment[i].amount
+                        amount += parseFloat(this.student_payment[i].amount);
                     }
                 }
             }
+            if(amount==0){
+                return undefined;
+            }
+            return amount.toFixed(2);
         },
         closed(){
             this.payment_schedule = [];

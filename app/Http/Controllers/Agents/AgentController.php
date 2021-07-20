@@ -1097,8 +1097,214 @@ class AgentController extends Controller
 
         return $content;
     }
-
     public function acceptCollection($request){
+        $payment_schedule   = $request['payment_schedule'];
+        $student_payment    = $request['student_payment'];
+        $trxn_code          = $request['student_payment']['transaction_code'];
+        // $prededuct_com      = $request['student_payment']['pre_deduc_comm'];
+        // $unverified_amount  = $request['student_payment']['amount'];
+        $remarks            = $request['remarks'];
+        $collection_id      = $request['student_payment']['id'];
+        $user_id            = \Auth::user()->id;
+
+        // return $payment_schedule;
+        $collection = Collection::find($collection_id);
+        $collections_with_excess = [];
+        try{
+            DB::beginTransaction();
+            if($payment_schedule!==null){
+                $excess = 0;
+                
+                foreach($payment_schedule as $ps){
+                    if(isset($ps['deducted_amount'])){
+                        // dump('nay negatives owh');
+                        $deducted_amount = $ps['deducted_amount'];
+                        $excess += $deducted_amount;
+
+                        $payment_details = $ps['payment_detail'];
+                            // e check nato kung naay mas dako na amount kaysa sa e deduct aron dili mag negative ang amount sa table
+                            // return $deducted_amount;
+                        $deducted_na = false;
+                        foreach($payment_details as $pd){
+                            if($pd['amount'] > $deducted_amount && $deducted_na == false){
+                                $payment_detail = FundedStudentPaymentDetails::find($pd['id']);
+                                $payment_detail->amount = $payment_detail->amount - $deducted_amount;
+                                $payment_detail->update();
+                                $deducted_na = true;
+
+                                $koleksyon = ['id'=>$payment_detail->collection_id,'deducted_amount'=>$deducted_amount];
+                                array_push($collections_with_excess,$koleksyon);
+                                
+                            }
+                        }
+
+                        $new_payment = new FundedStudentPaymentDetails;
+                        $new_payment->student_id = $student_payment['student_id'];
+                        $new_payment->agent_id = $student_payment['agent_id'];
+                        $new_payment->student_course_id = $student_payment['student_course_id'];
+                        $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
+                        $new_payment->transaction_code = $student_payment['transaction_code'];
+                        $new_payment->payment_schedule_template_id = $ps['id'];
+                        $new_payment->payment_date = $student_payment['payment_date'];
+                        $new_payment->amount = 0; //zero lang kay la syay pulos || gi update ra ang previous na payment kanang $funded_student_payment sa taas
+                        $new_payment->verified = 1;
+                        $new_payment->collection_id = $collection_id;
+                        $new_payment->user_id = $user_id;
+                        $new_payment->pre_deduc_comm = $ps['allocated_comm'];
+                        $new_payment->save();
+
+                    }else if($ps['allocated_amount'] < 0){
+                        $deducted_amount = abs($ps['allocated_amount']);
+                        $excess += $deducted_amount;
+
+                        $payment_details = $ps['payment_detail'];
+                            // e check nato kung naay mas dako na amount kaysa sa e deduct aron dili mag negative ang amount sa table
+                            // return $deducted_amount;
+                        $deducted_na = false;
+                        foreach($payment_details as $pd){
+                            if($pd['amount'] > $deducted_amount && $deducted_na == false){
+                                $payment_detail = FundedStudentPaymentDetails::find($pd['id']);
+                                $payment_detail->amount = $payment_detail->amount - $deducted_amount;
+                                $payment_detail->update();
+                                $deducted_na = true;
+
+                                $koleksyon = ['id'=>$payment_detail->collection_id,'deducted_amount'=>$deducted_amount];
+                                array_push($collections_with_excess,$koleksyon);
+                            }
+                        }
+
+                        $new_payment = new FundedStudentPaymentDetails;
+                        $new_payment->student_id = $student_payment['student_id'];
+                        $new_payment->agent_id = $student_payment['agent_id'];
+                        $new_payment->student_course_id = $student_payment['student_course_id'];
+                        $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
+                        $new_payment->transaction_code = $student_payment['transaction_code'];
+                        $new_payment->payment_schedule_template_id = $ps['id'];
+                        $new_payment->payment_date = $student_payment['payment_date'];
+                        $new_payment->amount = 0; //zero lang kay la syay pulos || gi update ra ang previous na payment kanang $funded_student_payment sa taas
+                        $new_payment->verified = 1;
+                        $new_payment->collection_id = $collection_id;
+                        $new_payment->user_id = $user_id;
+                        $new_payment->pre_deduc_comm = $ps['allocated_comm'];
+                        $new_payment->save();
+
+                    }else{
+                        $new_payment = new FundedStudentPaymentDetails;
+                        $new_payment->student_id = $student_payment['student_id'];
+                        $new_payment->agent_id = $student_payment['agent_id'];
+                        $new_payment->student_course_id = $student_payment['student_course_id'];
+                        $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
+                        $new_payment->transaction_code = $student_payment['transaction_code'];
+                        $new_payment->payment_schedule_template_id = $ps['id'];
+                        $new_payment->payment_date = $student_payment['payment_date'];
+                        $new_payment->amount = $ps['allocated_amount'];
+                        $new_payment->verified = 1;
+                        $new_payment->collection_id = $collection_id;
+                        $new_payment->user_id = $user_id;
+                        $new_payment->pre_deduc_comm = $ps['allocated_comm'];
+                        $new_payment->save();
+                    }
+                }
+                if(count($collections_with_excess) > 0){
+                    foreach($collections_with_excess as $cwe){
+                        $amount = $cwe['deducted_amount'];
+                        $colz = Collection::where('id',$cwe['id'])->first();
+                        // return $colz->student_course_id;
+                        $fresh_template = PaymentScheduleTemplate::where('funded_student_course_id',$colz->student_course_id)->get();
+                        $colz_template = [];
+                        foreach($fresh_template as $ft){
+                            $ft->balance = $ft->payable_amount - $ft->approved_amount_paid - $ft->approved_commission;
+                            // $ft->comm_balance = $ft->approved_commission - $ft->commission;
+                            if($ft->balance > 0){
+                                // $colz_template = $ft;
+                                array_push($colz_template,$ft);
+                            }
+                        }
+                        // return $fresh_template;
+                        //diri nako dapit
+                        foreach($colz_template as $ct){
+                            if($amount > 0 && $ct->balance > 0){
+                                if($amount > $ct->balance){
+                                    $amount_to_be_paid = $ct->balance;
+                                    // dd($ct->id);
+                                    $new_payment = new FundedStudentPaymentDetails;
+                                    $new_payment->student_id = $colz['student_id'];
+                                    $new_payment->agent_id = $colz['agent_id'];
+                                    $new_payment->student_course_id = $colz['student_course_id'];
+                                    // $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
+                                    $new_payment->transaction_code = $colz['transaction_code'];
+                                    $new_payment->payment_schedule_template_id = $ct['id'];
+                                    $new_payment->payment_date = $colz['payment_date'];
+                                    $new_payment->amount = $amount_to_be_paid;
+                                    $new_payment->verified = 1;
+                                    $new_payment->collection_id = $colz['id'];
+                                    $new_payment->user_id = $user_id;
+                                    $new_payment->pre_deduc_comm = 0;
+                                    $new_payment->save();
+    
+                                    $amount -= $amount_to_be_paid;
+                                }else{
+                                    // dd($ct);
+                                    $amount_to_be_paid = $amount;
+    
+                                    $new_payment = new FundedStudentPaymentDetails;
+                                    $new_payment->student_id = $colz['student_id'];
+                                    $new_payment->agent_id = $colz['agent_id'];
+                                    $new_payment->student_course_id = $colz['student_course_id'];
+                                    // $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
+                                    $new_payment->transaction_code = $colz['transaction_code'];
+                                    $new_payment->payment_schedule_template_id = $ct['id'];
+                                    $new_payment->payment_date = $colz['payment_date'];
+                                    $new_payment->amount = $amount_to_be_paid;
+                                    $new_payment->verified = 1;
+                                    $new_payment->collection_id = $colz['od'];
+                                    $new_payment->user_id = $user_id;
+                                    $new_payment->pre_deduc_comm = 0;
+                                    $new_payment->save();
+    
+                                    $amount -= $amount_to_be_paid;
+                                }
+                            }
+                        }   
+                    }
+                }
+                $collection->verified = 1;
+                $collection->remakrs = $remarks;
+                $collection->update();
+                //ug mu gana ni fuck u
+                $org = TrainingOrganisation::first();
+                $send = new EmailSendingController;
+                // return $student_payment;
+                if(isset($student_payment['agent'])){
+                    $name = $student_payment['agent']['agent_name'];
+                    if(isset($student_payment['agent']['email'])){
+                        $emailsTo[] = $student_payment['agent']['email'];
+                    }else{   
+                        return response()->json(['status'=>'error','message'=>'Agent email not found']);
+                    }
+                }else{
+                    return response()->json(['status'=>'error','message'=>'Agent not found']);
+                }
+
+                $content = $this->collectionEmail($request['payment_schedule'],$request['student_payment'],$request['remarks'],$collection->verified,$name);
+                // return $content;
+                // $s = $send->send_automate('Collection Verified', $content, [$org->training_organisation_name => $org->email_address], $emailsTo);
+                $s['status']='success';
+                if($s['status']=='success'){
+                    DB::commit();
+                    $student_payment['verified'] = 1;
+                    $this->notifyAgent($student_payment);
+                    return response()->json(['status'=>'success']);
+                }else{
+                    DB::rollback();
+                    return response()->json(['status'=>'error','message'=>'Email error']);
+                }
+            }
+        }catch(Throwable $th){
+            return $th;
+        }
+    }
+    public function acceptCollection_working($request){
         
         $payment_schedule   = $request['payment_schedule'];
         $student_payment    = $request['student_payment'];
@@ -1300,6 +1506,13 @@ class AgentController extends Controller
             
             $fd->balance = ($fd->payable_amount - $fd->approved_amount_paid) - $fd->prededucted_com;
             $fd->comm_balance = $fd->commission - $fd->prededucted_com;
+            // $amount = 0;
+
+            // foreach($fd->payment_detail as $pd){
+            //     $amount += $pd->amount;
+            // }
+            // $fd->amountz = $amount;
+            // dump($fd->amountz);
         }
         
         $res = json_encode(['student_funded_payment_detail'=>$student_funded_payment_detail,'payment_sched_template'=>$payment_sched_template]);
