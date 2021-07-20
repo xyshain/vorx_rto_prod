@@ -753,10 +753,12 @@ class AgentController extends Controller
         $id = $request->id;
         $collection_amount = $request->amount_paid;
         $pre_deduct_com = $request->pre_deduc_com;
-
+        // dd($collection_amount);
         $collection = Collection::where('id',$id)->first();
         // dd($collection_amount);
-        $funded_payment_sched_template = PaymentScheduleTemplate::with(['payment_detail'=>function($q){
+        $funded_payment_sched_template = PaymentScheduleTemplate::with(['collection'=>function($q){
+            $q->orderBy('id','desc');//para makuha latest na collection
+        }])->with(['payment_detail'=>function($q){
             $q->orderBy('id','desc');
         }])->where('funded_student_course_id',$collection->student_course_id)->get();
         $sched_with_balance = [];
@@ -797,6 +799,7 @@ class AgentController extends Controller
                 }
             }
         }
+        // return $sched_with_balance;
         $exceeding_amount = 0;
         foreach($sched_with_balance as $key=>$sb){
             $allocated_comm = isset($sb->allocated_comm) ? $sb->allocated_comm : 0;
@@ -822,35 +825,36 @@ class AgentController extends Controller
                 $unverified_collection = isset($sb->unverified_collection) ? $sb->unverified_collection : 0;
                 $unverified_prededuct = isset($sb->unverified_prededuct) ? $sb->unverified_prededuct : 0;
                 $unverified_total = $sb->unverified_collection + $sb->unverified_prededuct + $exceeding_amount;
-                // dump($unverified_total);
+                
+                // dump($unverified_total,$key);
                 if($unverified_total > $sb->payable_amount){
                     $exceeding_amount -=$exceeding_amount;
                     $exceed = $unverified_total - $sb->payable_amount;
                     $unverified_amount = $unverified_total - $exceed;
-                    
                     $sb->adjusted = true;
-                    // if(){
-
-                    // }
                                     
                     // $allocated = $unverified_amount - $sb->unverified_prededuct;
-                    $allocated = $sb->balance;
+                    $allocated = $sb->balance - $allocated_comm;
                     
                     $sb->allocated_amount = $allocated;
                     
                     $exceeding_amount += $exceed;
                     $sb->allocated_comm = $allocated_comm;
+                    
                 }else{
+                    // return $sb['collection'];
                     $unverified_amount = $exceeding_amount;
-                    $sb->allocated_amount += $unverified_amount;
+                    // $sb->allocated_amount += $unverified_amount;
+                    $sb->new_allocated = $sb->allocated_amount + $unverified_amount;
                     $sb->unverified_collection += $unverified_amount;
+                    $sb->exceeding_amount = $exceeding_amount;
                     $exceeding_amount -= $unverified_amount;
                     $sb->allocated_comm = $allocated_comm;
-
                     $sb->adjusted = false;
+                    // dd($sb);
                 }
+                // dump($sb->allocated_amount);
             }
-            // dump($exceeding_amount);
         }
         // return $sched_with_balance;
         // filter out ang walay allocated amount
@@ -1095,7 +1099,7 @@ class AgentController extends Controller
     }
 
     public function acceptCollection($request){
-        // return $request;
+        
         $payment_schedule   = $request['payment_schedule'];
         $student_payment    = $request['student_payment'];
         $trxn_code          = $request['student_payment']['transaction_code'];
@@ -1105,6 +1109,7 @@ class AgentController extends Controller
         $collection_id      = $request['student_payment']['id'];
         $user_id            = \Auth::user()->id;
         
+        // dd($student_payment['amount']);
         $collection = Collection::find($collection_id);
         // return $payment_schedule;
         try{
@@ -1112,52 +1117,29 @@ class AgentController extends Controller
             if($payment_schedule!=null){
                 $total_received = 0; //received amount auto compute kung naay adjusted or wala
                 foreach($payment_schedule as $ps){
-                    // dump($ps);
                     if(isset($ps['deducted_approved'])){ // pasabot ani naay e update sa previous 
-                    $total_received += $ps['allocated_amount'];
-                    $deducted_amount = $ps['deducted_amount'];
-                        $payment_details = $ps['payment_detail'];
-                        // e check nato kung naay mas dako na amount kaysa sa e deduct aron dili mag negative ang amount sa table
-                        // return $deducted_amount;
-                        $deducted_na = false;
-                        foreach($payment_details as $pd){
-                            if($pd['amount'] > $deducted_amount && $deducted_na == false){
-                                $payment_detail = FundedStudentPaymentDetails::find($pd['id']);
-                                $payment_detail->amount = $payment_detail->amount - $deducted_amount;
-                                $payment_detail->update();
-                                $deducted_na = true;
+                        $total_received += $ps['allocated_amount'];
+                        $deducted_amount = $ps['deducted_amount'];
+                            $payment_details = $ps['payment_detail'];
+                            // e check nato kung naay mas dako na amount kaysa sa e deduct aron dili mag negative ang amount sa table
+                            // return $deducted_amount;
+                            $deducted_na = false;
+                            foreach($payment_details as $pd){
+                                if($pd['amount'] > $deducted_amount && $deducted_na == false){
+                                    $payment_detail = FundedStudentPaymentDetails::find($pd['id']);
+                                    $payment_detail->amount = $payment_detail->amount - $deducted_amount;
+                                    $payment_detail->update();
+                                    $deducted_na = true;
+                                }
                             }
-                        }
-                        $funded_student_payment = FundedStudentPaymentDetails::where('student_course_id',$ps['funded_student_course_id'])->orderBy('id','desc')->first();
-                        // $funded_student_payment->amount = $funded_student_payment->amount -  $deducted_amount;
-                        // dd($funded_student_payment->amount,$deducted_amount);
-                        // return $funded_student_payment;
-                        // $funded_student_payment->update();
-                        $previous_collection_id = $funded_student_payment->collection_id;
-                        //diri nako dapit
-                        //add ta ug new payment detail para sa current na collection ? chorvuh
-                        $new_payment = new FundedStudentPaymentDetails;
-                        $new_payment->student_id = $student_payment['student_id'];
-                        $new_payment->agent_id = $student_payment['agent_id'];
-                        $new_payment->student_course_id = $student_payment['student_course_id'];
-                        $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
-                        $new_payment->transaction_code = $student_payment['transaction_code'];
-                        $new_payment->payment_schedule_template_id = $ps['id'];
-                        $new_payment->payment_date = $student_payment['payment_date'];
-                        $new_payment->amount = 0; //zero lang kay la syay pulos || gi update ra ang previous na payment kanang $funded_student_payment sa taas
-                        $new_payment->verified = 1;
-                        $new_payment->collection_id = $collection_id;
-                        $new_payment->user_id = $user_id;
-                        $new_payment->pre_deduc_comm = $ps['allocated_comm'];
-                        $new_payment->save();
-
-                        //update ang previous collection
-                        $koleksyon = Collection::where('id',$previous_collection_id)->first();
-                        $koleksyon->amount = $koleksyon->amount - $deducted_amount;
-                        $koleksyon->update();
-                    }else{
-                        if($ps['balance'] > 0){
-                            $total_received += $ps['allocated_amount'];
+                            $funded_student_payment = FundedStudentPaymentDetails::where('student_course_id',$ps['funded_student_course_id'])->orderBy('id','desc')->first();
+                            // $funded_student_payment->amount = $funded_student_payment->amount -  $deducted_amount;
+                            // dd($funded_student_payment->amount,$deducted_amount);
+                            // return $funded_student_payment;
+                            // $funded_student_payment->update();
+                            $previous_collection_id = $funded_student_payment->collection_id;
+                            //diri nako dapit
+                            //add ta ug new payment detail para sa current na collection ? chorvuh
                             $new_payment = new FundedStudentPaymentDetails;
                             $new_payment->student_id = $student_payment['student_id'];
                             $new_payment->agent_id = $student_payment['agent_id'];
@@ -1166,16 +1148,57 @@ class AgentController extends Controller
                             $new_payment->transaction_code = $student_payment['transaction_code'];
                             $new_payment->payment_schedule_template_id = $ps['id'];
                             $new_payment->payment_date = $student_payment['payment_date'];
-                            $new_payment->amount = $ps['allocated_amount'];
+                            $new_payment->amount = 0; //zero lang kay la syay pulos || gi update ra ang previous na payment kanang $funded_student_payment sa taas
                             $new_payment->verified = 1;
                             $new_payment->collection_id = $collection_id;
                             $new_payment->user_id = $user_id;
                             $new_payment->pre_deduc_comm = $ps['allocated_comm'];
                             $new_payment->save();
+
+                            //update ang previous collection
+                            $koleksyon = Collection::where('id',$previous_collection_id)->first();
+                            $koleksyon->amount = $koleksyon->amount - $deducted_amount;
+                            $koleksyon->update();
+                    }else{
+                        if($ps['balance'] > 0 || $ps['comm_balance'] > 0){
+                            if(isset($ps['exceeding_amount'])){
+                                $total_received += $ps['new_allocated'];
+
+                                $new_payment = new FundedStudentPaymentDetails;
+                                $new_payment->student_id = $student_payment['student_id'];
+                                $new_payment->agent_id = $student_payment['agent_id'];
+                                $new_payment->student_course_id = $student_payment['student_course_id'];
+                                $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
+                                $new_payment->transaction_code = $student_payment['transaction_code'];
+                                $new_payment->payment_schedule_template_id = $ps['id'];
+                                $new_payment->payment_date = $student_payment['payment_date'];
+                                $new_payment->amount = $ps['unverified_collection'];
+                                $new_payment->verified = 1;
+                                $new_payment->collection_id = $collection_id;
+                                $new_payment->user_id = $user_id;
+                                $new_payment->pre_deduc_comm = $ps['allocated_comm'];
+                                $new_payment->save();
+                            }else{
+                                $total_received += $ps['allocated_amount'];
+                                $new_payment = new FundedStudentPaymentDetails;
+                                $new_payment->student_id = $student_payment['student_id'];
+                                $new_payment->agent_id = $student_payment['agent_id'];
+                                $new_payment->student_course_id = $student_payment['student_course_id'];
+                                $new_payment->offer_letter_course_detail_id = $ps['offer_letter_course_detail_id'];
+                                $new_payment->transaction_code = $student_payment['transaction_code'];
+                                $new_payment->payment_schedule_template_id = $ps['id'];
+                                $new_payment->payment_date = $student_payment['payment_date'];
+                                $new_payment->amount = $ps['allocated_amount'];
+                                $new_payment->verified = 1;
+                                $new_payment->collection_id = $collection_id;
+                                $new_payment->user_id = $user_id;
+                                $new_payment->pre_deduc_comm = $ps['allocated_comm'];
+                                $new_payment->save();
+                            }
                         }
                     }
                     // dump($total_received);
-                }       
+                }      
             }
             // dd($total_received);
             
