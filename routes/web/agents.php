@@ -68,6 +68,8 @@ Route::middleware(['rto'])->group(function () {
     Route::get('agent/collection/{id}/decline','Agents\AgentController@declineCollection');
     Route::get('agent/get-transaction/{id}/{code}','Agents\AgentController@getTransaction');
 
+    Route::get('/agent/collection/delete_sana_all','Agents\AgentController@sanaAll');
+
     // Resource
     Route::resource('agent', 'Agents\AgentController');
 });
