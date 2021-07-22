@@ -56,7 +56,7 @@ class PaymentScheduleTemplate extends Model implements AuditableContract
         $t = 0;
         foreach ($amount as $v) {
             if ($v->verified == 1) {
-                $t = $t + $v->commission->commission_payable;
+                $t = $t + $v->pre_deduc_comm;
             }
         }
         return number_format($t, 2,'.','');
